@@ -1,0 +1,6 @@
+<launch>
+    <arg name="bag_path" default="Desktop"/>
+    <arg name="bag_name_prefix" default="exploration"/>
+    <node pkg="rosbag" type="record" name="rosbag_record_sensor_coverage_planner"
+          args="record -o $(env HOME)/$(arg bag_path)/$(arg bag_name_prefix) -e '/sensor_coverage_planner/(.*)' /tf /registered_scan /state_estimation /state_estimation_at_scan /velodyne_cloud_registered /integrated_to_init /aft_mapped_to_init /way_point /runtime"/>
+</launch>

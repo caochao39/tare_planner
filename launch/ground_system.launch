@@ -1,0 +1,26 @@
+<launch>
+    <arg name="rosbag_record" default="false"/>
+    <arg name="rviz" default="true"/>
+    <arg name="use_boundary" default="false"/>
+    <arg name="robot_name" default="ugv1"/>
+    <arg name="scenario" default="default"/>
+    <arg name="bag_path" default="Desktop"/>
+    <arg name="bag_name_prefix" default="tare_ground"/>
+
+    <group if="$(arg rviz)">
+        <node launch-prefix="nice" pkg="rviz" type="rviz" name="tare_planner_ground_rviz" args="-d $(find tare_planner)/rviz/tare_planner_ground.rviz" respawn="true"/>
+    </group>
+    
+    <group if="$(arg rosbag_record)">
+        <include file="$(find tare_planner)/launch/record_bag.launch">
+        <arg name="bag_path" value="$(arg bag_path)"/>
+        <arg name="bag_name_prefix" value="$(arg bag_name_prefix)"/>
+        </include>
+    </group>
+
+    <node pkg="tare_planner" type="tare_planner_node" name="tare_planner_node" output="screen" ns="sensor_coverage_planner">
+        <rosparam command="load" file="$(find tare_planner)/config/$(arg scenario).yaml" />
+        <param name="robot_name_" value="$(arg robot_name)"/>
+    </node>
+
+</launch>
