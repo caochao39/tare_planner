@@ -1,6 +1,6 @@
 This is a ROS package that implements an exploration planner for ground robots.
 
-## Paper and Citation
+## Publications
 ```
 @inproceedings{chao2021exploring,
   title={Exploring Large and Complex Environments
