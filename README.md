@@ -1,4 +1,4 @@
-This is a ROS package that implements an exploration planner for ground robots.
+This is a ROS package that implements the TARE exploration planner for ground robots.
 
 ## Publications
 - C. Cao, H. Zhu, H. Choset, and J. Zhang: Exploring Large and Complex Environments
