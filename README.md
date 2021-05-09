@@ -8,8 +8,10 @@ Fast and Efficiently. International Conference on Robotics and Automation (ICRA)
   title={Exploring Large and Complex Environments
 Fast and Efficiently},
   author={Chao, Cao and Hongbiao, Zhu and Howie, Choset and Ji, Zhang},
-  booktitle={Proc. IEEE International Conference on Robotics and Automation (ICRA)},
+  booktitle={IEEE International Conference on Robotics and Automation (ICRA)},
   year={2021},
+  month={June},
+  address={Xi'an, China}
 }
 ```
 ## Usage
