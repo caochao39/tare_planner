@@ -2,7 +2,7 @@ This is a ROS package that implements the TARE exploration planner for ground ro
 
 ## Publications
 - C. Cao, H. Zhu, H. Choset, and J. Zhang: Exploring Large and Complex Environments
-Fast and Efficiently. International Conference on Robotics and Automation (ICRA), 2021.
+Fast and Efficiently. International Conference on Robotics and Automation (ICRA), Xi'an, China, June 2021.
 ```
 @inproceedings{chao2021exploring,
   title={Exploring Large and Complex Environments
