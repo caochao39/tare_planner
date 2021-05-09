@@ -1,5 +1,15 @@
 This is a ROS package that implements an exploration planner for ground robots.
 
+## Paper and Citation
+```
+@inproceedings{chao2021exploring,
+  title={Exploring Large and Complex Environments
+Fast and Efficiently},
+  author={Chao, Cao and Hongbiao, Zhu and Howie, Choset and Ji, Zhang},
+  booktitle={Proc. IEEE International Conference on Robotics and Automation (ICRA)},
+  year={2021},
+}
+```
 ## Usage
 To setup TARE Planner, clone our repository.
 ```
