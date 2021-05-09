@@ -37,4 +37,4 @@ Chao Cao (ccao1@andrew.cmu.edu)\
 Ji Zhang (zhangji@cmu.edu)
 
 ### Credit
-or_tools is from Google
+[OR-Tools](https://developers.google.com/optimization) is from Google
