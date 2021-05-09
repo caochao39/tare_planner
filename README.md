@@ -12,7 +12,7 @@ cd tare_planner
 git checkout <distribution>
 catkin_make
 ```
-To run the code, go to the [development environment](cmu-exploration.com) folder in a terminal, source the ROS workspace, and launch.
+To run the code, go to the [development environment](http://cmu-exploration.com) folder in a terminal, source the ROS workspace, and launch.
 ```
 source devel/setup.sh
 roslaunch vehicle_simulator system_garage.launch
