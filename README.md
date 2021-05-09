@@ -32,7 +32,7 @@ roslaunch tare_planner ground_system.launch scenario:=<environment>
 
 * rviz: launch Rviz for visualization or not. If ```=true```, Rviz will be launched.
 
-### Author 
+### Authors 
 Chao Cao (ccao1@andrew.cmu.edu)\
 Ji Zhang (zhangji@cmu.edu)
 
