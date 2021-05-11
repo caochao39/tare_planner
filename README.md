@@ -48,7 +48,6 @@ roslaunch tare_planner ground_system.launch scenario:=<environment>
 
 ### Authors 
 Chao Cao (ccao1@andrew.cmu.edu)\
-Ji Zhang (zhangji@cmu.edu)
 
 ### Credit
 [OR-Tools](https://developers.google.com/optimization) is from Google
