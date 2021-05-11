@@ -1,0 +1,13 @@
+<launch>
+    <arg name="rosbag_record" default="false"/>
+    <arg name="bag_path" default="Desktop"/>
+    <arg name="bag_name_prefix" default="tare"/>
+    <arg name="rviz" default="true"/>
+    <include file="$(find tare_planner)/launch/system.launch">
+        <arg name="scenario" value="garage"/>
+        <arg name="rosbag_record" value="$(arg rosbag_record)"/>
+        <arg name="bag_path" value="$(arg bag_path)"/>
+        <arg name="bag_name_prefix" value="$(arg bag_name_prefix)"/>
+        <arg name="rviz" value="$(arg rviz)"/>
+    </include>
+</launch>

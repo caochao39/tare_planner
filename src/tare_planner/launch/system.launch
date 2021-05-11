@@ -1,9 +1,7 @@
 <launch>
-    <arg name="rosbag_record" default="false"/>
+    <arg name="scenario" default="garage"/>
     <arg name="rviz" default="true"/>
-    <arg name="use_boundary" default="false"/>
-    <arg name="robot_name" default="ugv1"/>
-    <arg name="scenario" default="default"/>
+    <arg name="rosbag_record" default="false"/>
     <arg name="bag_path" default="Desktop"/>
     <arg name="bag_name_prefix" default="tare_ground"/>
 
@@ -20,7 +18,6 @@
 
     <node pkg="tare_planner" type="tare_planner_node" name="tare_planner_node" output="screen" ns="sensor_coverage_planner">
         <rosparam command="load" file="$(find tare_planner)/config/$(arg scenario).yaml" />
-        <param name="robot_name_" value="$(arg robot_name)"/>
     </node>
 
 </launch>
