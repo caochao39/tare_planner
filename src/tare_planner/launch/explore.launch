@@ -3,7 +3,7 @@
     <arg name="rviz" default="true"/>
     <arg name="rosbag_record" default="false"/>
     <arg name="bag_path" default="Desktop"/>
-    <arg name="bag_name_prefix" default="tare_ground"/>
+    <arg name="bag_name_prefix" default="tare"/>
 
     <group if="$(arg rviz)">
         <node launch-prefix="nice" pkg="rviz" type="rviz" name="tare_planner_ground_rviz" args="-d $(find tare_planner)/rviz/tare_planner_ground.rviz" respawn="true"/>

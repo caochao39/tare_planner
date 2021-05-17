@@ -31,7 +31,7 @@ KeyposeGraph::KeyposeGraph()
   , kAddEdgeCollisionCheckResolution(0.4)
   , kAddEdgeCollisionCheckRadius(0.3)
   , kAddEdgeCollisionCheckPointNumThr(1)
-  , kAddEdgeConnectDistThr(2.0)
+  , kAddEdgeConnectDistThr(3.0)
   , kAddEdgeToLastKeyposeDistThr(3.0)
   , kAddEdgeVerticalThreshold(1.0)
 {
@@ -733,12 +733,12 @@ int KeyposeGraph::AddKeyposeNode(const nav_msgs::Odometry& keypose, const planni
         in_range_node_dist.push_back(dist);
       }
     }
-    // If the closest node is some distance away
+    // If the closest keypose node is some distance away
     if (min_dist_ind >= 0 && min_dist_ind < nodes_.size())
     {
       if (min_dist > kAddNodeMinDist)
       {
-        // If the last keypose if within range
+        // If the last keypose is within range
         if (last_keypose_dist < kAddEdgeToLastKeyposeDistThr && last_keypose_ind >= 0 &&
             last_keypose_ind < nodes_.size())
         {

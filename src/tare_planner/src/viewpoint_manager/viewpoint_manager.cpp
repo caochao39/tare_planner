@@ -1945,18 +1945,12 @@ int ViewPointManager::GetBoundaryViewpointIndex(const exploration_path_ns::Explo
       for (int i = 0; i < global_path.nodes_.size(); i++)
       {
         if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::GLOBAL_VIEWPOINT ||
-            global_path.nodes_[i].type_ == exploration_path_ns::NodeType::HOME)
+            global_path.nodes_[i].type_ == exploration_path_ns::NodeType::HOME ||
+            !InLocalPlanningHorizon(global_path.nodes_[i].position_))
         {
           break;
         }
-        else
-        {
-          if (!InLocalPlanningHorizon(global_path.nodes_[i].position_))
-          {
-            boundary_viewpoint_index = GetNearestCandidateViewPointInd(global_path.nodes_[i - 1].position_);
-            break;
-          }
-        }
+        boundary_viewpoint_index = GetNearestCandidateViewPointInd(global_path.nodes_[i].position_);
       }
     }
   }
@@ -2255,9 +2249,13 @@ void ViewPointManager::GetSelectedViewPointVisCloud(pcl::PointCloud<pcl::PointXY
     {
       point.intensity = 0.0;
     }
-    else if (viewpoint_index == start_viewpoint_ind_ || viewpoint_index == end_viewpoint_ind_)
+    else if (viewpoint_index == start_viewpoint_ind_)
     {
       point.intensity = 1.0;
+    }
+    else if (viewpoint_index == end_viewpoint_ind_)
+    {
+      point.intensity = 2.0;
     }
     else
     {

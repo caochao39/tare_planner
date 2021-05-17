@@ -1,9 +1,9 @@
 <launch>
     <arg name="rosbag_record" default="false"/>
     <arg name="bag_path" default="Desktop"/>
-    <arg name="bag_name_prefix" default="tare"/>
+    <arg name="bag_name_prefix" default="tare_tunnel"/>
     <arg name="rviz" default="true"/>
-    <include file="$(find tare_planner)/launch/system.launch">
+    <include file="$(find tare_planner)/launch/explore.launch">
         <arg name="scenario" value="tunnel"/>
         <arg name="rosbag_record" value="$(arg rosbag_record)"/>
         <arg name="bag_path" value="$(arg bag_path)"/>
