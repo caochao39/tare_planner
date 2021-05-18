@@ -28,7 +28,7 @@ kLookAheadDistance : 8
 # PlanningEnv
 kUseFrontier : true
 kFrontierClusterTolerance : 1.0
-kFrontierClusterMinSize : 40
+kFrontierClusterMinSize : 30
 kOccupancyGridOriginX: -100 
 kOccupancyGridOriginY: -50 
 kOccupancyGridOriginZ: -10 
@@ -99,7 +99,7 @@ kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
 kMinAddPointNumSmall : 40 
 kMinAddPointNumBig : 60
-kMinAddFrontierPointNum : 30
+kMinAddFrontierPointNum : 20
 kCellExploringToCoveredThr : 1
 kCellCoveredToExploringThr: 10
 kCellExploringToAlmostCoveredThr: 10 

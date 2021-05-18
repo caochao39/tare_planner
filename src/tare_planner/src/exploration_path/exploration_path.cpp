@@ -90,7 +90,7 @@ nav_msgs::Path ExplorationPath::GetPath() const
     pose.pose.position.x = nodes_[i].position_.x();
     pose.pose.position.y = nodes_[i].position_.y();
     pose.pose.position.z = nodes_[i].position_.z();
-    pose.pose.orientation.w = static_cast<int>(nodes_[i].type_);
+    // pose.pose.orientation.w = static_cast<int>(nodes_[i].type_);
     path.poses.push_back(pose);
   }
   return path;

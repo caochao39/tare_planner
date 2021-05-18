@@ -1230,7 +1230,6 @@ void GridWorld::AddPathsInBetweenCells(const std::unique_ptr<viewpoint_manager_n
                                                          to_cell_roadmap_connection_position);
         if (!connected)
         {
-          ROS_ERROR_STREAM("Path not connecting cell " << from_cell_ind << " to " << to_cell_ind);
           // Reset both cells' roadmap connection points
           // std::cout << "Resetting both cells connection points" << std::endl;
           subspaces_->GetCell(from_cell_ind).SetRoadmapConnectionPointSet(false);
