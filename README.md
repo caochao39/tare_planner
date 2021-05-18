@@ -34,12 +34,12 @@ roslaunch vehicle_simulator system_garage.launch
 In another terminal, go to the TARE Planner folder, source the ROS workspace, and launch with the corresponding scenario.
 ```
 source devel/setup.sh
-roslaunch tare_planner system_garage.launch
+roslaunch tare_planner explore_garage.launch
 ```
 Now, users should see autonomous exploration in action. To launch with a different environment, use the command lines below instead and replace '\<environment\>' with one of the environment names in the development environment, i.e. 'campus', 'indoor', 'garage', 'tunnel', and 'forest'.
 ```
 roslaunch vehicle_simulator system_<environment>.launch
-roslaunch tare_planner system_<environment>.launch
+roslaunch tare_planner explore_<environment>.launch
 ```
 #### Launch with arguments
 * rosbag_record: record a rosbag or not. If ```=true```, rosbags will be recorded to ```[home]/<bag_path>/<bag_name_prefix>_<timestamp>.bag``` with both the input and output topics from the planner. Note that '\<bag_path\>' and '\<bag_name_prefix\>' are both launch arguments that can be specified by the user.
