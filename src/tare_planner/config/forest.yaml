@@ -13,11 +13,12 @@ pub_runtime_topic_ : /runtime
 pub_waypoint_topic_ : /way_point
 
 kAutoStart : true 
-kRushHome : false 
-kUseTerrainHeight : true 
+kRushHome : true 
+kUseTerrainHeight : false 
 kCheckTerrainCollision : true 
 kCheckRegisteredCloudCollision : false 
-kExtendWayPoint : false 
+kExtendWayPoint : true 
+kUseLineOfSightLookAheadPoint : true
 kExtendWayPointDistance : 8.0
 kKeyposeCloudDwzFilterLeafSize : 0.2
 kRushHomeDist : 10
@@ -29,11 +30,11 @@ kSkipOdometryDistance : 1.5
 kUseFrontier : true 
 kFrontierClusterTolerance : 1.0
 kFrontierClusterMinSize : 30
-kOccupancyGridOriginX: -15
-kOccupancyGridOriginY: -240 
+kOccupancyGridOriginX: -70
+kOccupancyGridOriginY: -80
 kOccupancyGridOriginZ: -1 
-kOccupancyGridSizeX : 250
-kOccupancyGridSizeY : 350
+kOccupancyGridSizeX : 500
+kOccupancyGridSizeY : 500
 kOccupancyGridSizeZ : 10
 kOccupancyGridResolutionX : 0.3
 kOccupancyGridResolutionY : 0.3
@@ -97,9 +98,9 @@ kGridWorldZNum : 121
 kGridWorldCellSize : 9.6
 kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
-kMinAddPointNumSmall : 40 
-kMinAddPointNumBig : 60
-kMinAddFrontierPointNum : 30
+kMinAddPointNumSmall : 60 
+kMinAddPointNumBig : 80
+kMinAddFrontierPointNum : 50
 kCellExploringToCoveredThr : 1
 kCellCoveredToExploringThr: 10
 kCellExploringToAlmostCoveredThr: 10 

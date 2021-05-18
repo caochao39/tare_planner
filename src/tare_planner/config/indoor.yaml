@@ -13,14 +13,15 @@ pub_runtime_topic_ : /runtime
 pub_waypoint_topic_ : /way_point
 
 kAutoStart : true 
-kRushHome : false 
+kRushHome : true 
 kUseTerrainHeight : false 
 kCheckTerrainCollision : true
 kCheckRegisteredCloudCollision : true
 kExtendWayPoint : true
+kUseLineOfSightLookAheadPoint : true
 kExtendWayPointDistance : 8.0
 kKeyposeCloudDwzFilterLeafSize : 0.2
-kRushHomeDist : 10
+kRushHomeDist : 5 
 kTerrainCollisionThreshold : 0.5
 kLookAheadDistance : 8
 

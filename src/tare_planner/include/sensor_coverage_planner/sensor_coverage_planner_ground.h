@@ -79,6 +79,7 @@ struct PlannerParameters
   bool kCheckTerrainCollision;
   bool kCheckRegisteredCloudCollision;
   bool kExtendWayPoint;
+  bool kUseLineOfSightLookAheadPoint;
 
   // Double
   double kKeyposeCloudDwzFilterLeafSize;

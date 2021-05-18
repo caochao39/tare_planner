@@ -43,6 +43,7 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   kCheckTerrainCollision = misc_utils_ns::getParam<bool>(nh, "kCheckTerrainCollision", true);
   kCheckRegisteredCloudCollision = misc_utils_ns::getParam<bool>(nh, "kCheckRegisteredCloudCollision", true);
   kExtendWayPoint = misc_utils_ns::getParam<bool>(nh, "kExtendWayPoint", true);
+  kUseLineOfSightLookAheadPoint = misc_utils_ns::getParam<bool>(nh, "kUseLineOfSightLookAheadPoint", true);
 
   // Double
   kKeyposeCloudDwzFilterLeafSize = misc_utils_ns::getParam<double>(nh, "kKeyposeCloudDwzFilterLeafSize", 0.2);
@@ -813,7 +814,7 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
       path_angle += angle;
       in_line_of_sight = pd_.viewpoint_manager_->InCurrentFrameLineOfSight(local_path.nodes_[i + 1].position_);
     }
-    if ((length_from_robot > pp_.kLookAheadDistance || !in_line_of_sight ||
+    if ((length_from_robot > pp_.kLookAheadDistance || (pp_.kUseLineOfSightLookAheadPoint && !in_line_of_sight) ||
          local_path.nodes_[i].type_ == exploration_path_ns::NodeType::LOCAL_VIEWPOINT ||
          local_path.nodes_[i].type_ == exploration_path_ns::NodeType::LOCAL_PATH_START ||
          local_path.nodes_[i].type_ == exploration_path_ns::NodeType::LOCAL_PATH_END ||
@@ -843,7 +844,7 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
       path_angle += angle;
       in_line_of_sight = pd_.viewpoint_manager_->InCurrentFrameLineOfSight(local_path.nodes_[i - 1].position_);
     }
-    if ((length_from_robot > pp_.kLookAheadDistance || !in_line_of_sight ||
+    if ((length_from_robot > pp_.kLookAheadDistance || (pp_.kUseLineOfSightLookAheadPoint && !in_line_of_sight) ||
          local_path.nodes_[i].type_ == exploration_path_ns::NodeType::LOCAL_VIEWPOINT ||
          local_path.nodes_[i].type_ == exploration_path_ns::NodeType::LOCAL_PATH_START ||
          local_path.nodes_[i].type_ == exploration_path_ns::NodeType::LOCAL_PATH_END || i == 0))
