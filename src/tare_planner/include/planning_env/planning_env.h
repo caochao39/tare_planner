@@ -117,7 +117,7 @@ private:
   pcl::search::KdTree<pcl::PointXYZI>::Ptr kdtree_frontier_cloud_;
 
 public:
-  PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::string world_frame_id = "/map");
+  PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::string world_frame_id = "map");
   ~PlanningEnv() = default;
   double GetPlannerCloudResolution()
   {
