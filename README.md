@@ -1,8 +1,8 @@
 This repository implements the TARE exploration planner for ground robots.
 
-TARE hierarchical exploration framework overview. 
+## Method Overview
 ![overview](src/tare_planner/img/method.png)
-Inside the local planning horizon, data is densely maintained and a local detailed path (dark-blue) is computed. At the global scale, data is sparsely maintained in the distant subspaces and a global coarse path (light-blue) is computed. The local path and global path are connected on the boundary of the local planning horizon to form the exploration path.
+TARE hierarchical exploration framework: Inside the local planning horizon, data is densely maintained and a local detailed path (dark-blue) is computed. At the global scale, data is sparsely maintained in the distant subspaces and a global coarse path (light-blue) is computed. The local path and global path are connected on the boundary of the local planning horizon to form the exploration path.
 ## Usage
 To setup TARE Planner, clone our repository.
 ```
