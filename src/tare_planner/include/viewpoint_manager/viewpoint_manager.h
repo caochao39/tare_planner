@@ -357,6 +357,8 @@ public:
   void GetSelectedViewPointVisCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud);
   void GetCollisionViewPointVisCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud);
 
+  typedef std::unique_ptr<ViewPointManager> Ptr;
+
 private:
   bool initialized_;
   ViewPointManagerParameter vp_;
