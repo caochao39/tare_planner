@@ -5,23 +5,24 @@
 #ifndef SENSOR_COVERAGE_PLANNER_KEYPOSE_GRAPH_H
 #define SENSOR_COVERAGE_PLANNER_KEYPOSE_GRAPH_H
 
+#include <functional>
+#include <memory>
+#include <queue>
+#include <utility>
+#include <vector>
+
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <visualization_msgs/Marker.h>
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
-#include <vector>
+#include <visualization_msgs/Marker.h>
+
+#include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <utils/misc_utils.h>
-#include <utility>
-#include <functional>
-#include <queue>
-#include <vector>
-#include <memory>
+
 #include <planning_env/planning_env.h>
-#include <visualization_msgs/Marker.h>
+#include <utils/misc_utils.h>
 
 namespace viewpoint_manager_ns
 {
