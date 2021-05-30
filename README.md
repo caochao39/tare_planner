@@ -1,19 +1,8 @@
-This is a ROS package that implements the TARE exploration planner for ground robots.
+This repository implements the TARE exploration planner for ground robots.
 
-## Publications
-- C. Cao, H. Zhu, H. Choset, and J. Zhang: Exploring Large and Complex Environments
-Fast and Efficiently. International Conference on Robotics and Automation (ICRA), Xi'an, China, June 2021.
-```
-@inproceedings{chao2021exploring,
-  title={Exploring Large and Complex Environments
-Fast and Efficiently},
-  author={Chao, Cao and Hongbiao, Zhu and Howie, Choset and Ji, Zhang},
-  booktitle={IEEE International Conference on Robotics and Automation (ICRA)},
-  year={2021},
-  month={June},
-  address={Xi'an, China}
-}
-```
+TARE hierarchical exploration framework overview: Inside the local planning horizon, data is densely maintained and a local detailed path (dark-blue) is computed. At the global scale, data is sparsely maintained in the distant subspaces and a global coarse path (light-blue) is computed. The local path and global path are connected on the boundary of the local planning horizon to form the exploration path.
+![overview](src/tare_planner/img/method.png)
+
 ## Usage
 To setup TARE Planner, clone our repository.
 ```
@@ -46,8 +35,36 @@ roslaunch tare_planner explore_<environment>.launch
 
 * rviz: launch Rviz for visualization or not. If ```=true```, Rviz will be launched.
 
+## Publications
+- C. Cao, H. Zhu, H. Choset, and J. Zhang. TARE: A Hierarchical Framework for Efficiently Exploring Complex 3D Environments. Robotics: Science and Systems Conference (RSS). Virtual, July 2021.
+- C. Cao, H. Zhu, H. Choset, and J. Zhang: Exploring Large and Complex Environments
+Fast and Efficiently. International Conference on Robotics and Automation (ICRA), Xi'an, China, June 2021.
+```
+@inproceedings{chao2021tare,
+  title={TARE: A Hierarchical Framework for Efficiently Exploring Complex 3D Environments},
+  author={Chao, Cao and Hongbiao, Zhu and Howie, Choset and Ji, Zhang},
+  booktitle={Robotics: Science and Systems Conference (RSS)},
+  year={2021},
+  month={July},
+  address={Virtual}
+}
+@inproceedings{chao2021exploring,
+  title={Exploring Large and Complex Environments
+Fast and Efficiently},
+  author={Chao, Cao and Hongbiao, Zhu and Howie, Choset and Ji, Zhang},
+  booktitle={IEEE International Conference on Robotics and Automation (ICRA)},
+  year={2021},
+  month={June},
+  address={Xi'an, China}
+}
+```
+## Application
+TARE planner has been used by the [CMU-OSU Team](https://www.subt-explorer.com/) in attending the [DARPA Subterranean Challenge](https://www.subtchallenge.com/).
+![urban](src/tare_planner/img/urban.jpg)
+Urban circuit competition result from DARPA Subterranean Challenge in Satsop Nuclear Plant, WA. Our vehicle travels over 886m in 1458s to explore the site, fully autonomously.
+
 ### Authors 
-Chao Cao (ccao1@andrew.cmu.edu)\
+Chao Cao (ccao1@andrew.cmu.edu)
 
 ### Credit
 [OR-Tools](https://developers.google.com/optimization) is from Google
