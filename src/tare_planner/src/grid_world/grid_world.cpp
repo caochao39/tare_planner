@@ -531,7 +531,7 @@ int GridWorld::GetCellStatusCount(grid_world_ns::CellStatus status)
   return count;
 }
 
-void GridWorld::UpdateCellStatus(const std::unique_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager)
+void GridWorld::UpdateCellStatus(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager)
 {
   int exploring_count = 0;
   int unseen_count = 0;
@@ -717,7 +717,7 @@ void GridWorld::UpdateCellStatus(const std::unique_ptr<viewpoint_manager_ns::Vie
 }
 
 exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
-    const std::unique_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
+    const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
     std::vector<int>& ordered_cell_indices, const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph)
 {
   // Determine the node on keypose graph associated with the robot
@@ -1094,7 +1094,7 @@ void GridWorld::AddPathsToKeyposeGraph(const std::unique_ptr<keypose_graph_ns::K
   }
 }
 
-void GridWorld::AddPathsInBetweenCells(const std::unique_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
+void GridWorld::AddPathsInBetweenCells(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
                                        const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph)
 {
   // Determine the connection point in each cell

@@ -384,9 +384,9 @@ public:
     return planner_cloud_->cloud_;
   }
   void UpdateCoveredArea(const lidar_model_ns::LiDARModel& robot_viewpoint,
-                         const std::unique_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager);
+                         const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager);
 
-  void GetUncoveredArea(const std::unique_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
+  void GetUncoveredArea(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
                         int& uncovered_point_num, int& uncovered_frontier_point_num);
 
   void PublishStackedCloud();

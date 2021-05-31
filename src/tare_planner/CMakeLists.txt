@@ -78,6 +78,10 @@ add_library(viewpoint_manager src/viewpoint_manager/viewpoint_manager.cpp)
 add_dependencies(viewpoint_manager ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(viewpoint_manager ${catkin_LIBRARIES} rollable_grid viewpoint grid_world)
 
+add_library(local_coverage_planner src/local_coverage_planner/local_coverage_planner.cpp)
+add_dependencies(local_coverage_planner ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(local_coverage_planner ${catkin_LIBRARIES} viewpoint_manager)
+
 add_library(grid_world src/grid_world/grid_world.cpp)
 add_dependencies(grid_world ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(grid_world ${catkin_LIBRARIES} viewpoint_manager tsp_solver keypose_graph exploration_path)
@@ -103,7 +107,7 @@ target_link_libraries(exploration_path ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 add_library(sensor_coverage_planner_ground src/sensor_coverage_planner/sensor_coverage_planner_ground.cpp)
 add_dependencies(sensor_coverage_planner_ground ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(sensor_coverage_planner_ground ${catkin_LIBRARIES} planning_env keypose_graph viewpoint_manager pointcloud_manager grid_world)
+target_link_libraries(sensor_coverage_planner_ground ${catkin_LIBRARIES} planning_env keypose_graph viewpoint_manager pointcloud_manager grid_world local_coverage_planner)
 
 add_executable(tare_planner_node src/tare_planner_node/tare_planner_node.cpp)
 add_dependencies(tare_planner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )

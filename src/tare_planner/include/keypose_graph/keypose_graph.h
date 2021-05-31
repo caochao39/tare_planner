@@ -125,7 +125,7 @@ public:
   }
   void GetConnectedNodeIndices(int query_ind, std::vector<int>& connected_node_indices, std::vector<bool> constraints);
   void CheckLocalCollision(const geometry_msgs::Point& robot_position,
-                           const std::unique_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager);
+                           const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager);
   void UpdateNodes();
   void CheckConnectivity(const geometry_msgs::Point& robot_position);
   int AddKeyposeNode(const nav_msgs::Odometry& keypose, const planning_env_ns::PlanningEnv& planning_env);

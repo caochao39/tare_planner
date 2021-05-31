@@ -213,7 +213,7 @@ bool PlanningEnv::InCollision(double x, double y, double z) const
 }
 
 void PlanningEnv::UpdateCoveredArea(const lidar_model_ns::LiDARModel& robot_viewpoint,
-                                    const std::unique_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager)
+                                    const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager)
 {
   if (planner_cloud_->cloud_->points.empty())
   {
@@ -321,7 +321,7 @@ void PlanningEnv::UpdateCoveredArea(const lidar_model_ns::LiDARModel& robot_view
   // timer3.Stop(true);
 }
 
-void PlanningEnv::GetUncoveredArea(const std::unique_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
+void PlanningEnv::GetUncoveredArea(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
                                    int& uncovered_point_num, int& uncovered_frontier_point_num)
 {
   // misc_utils_ns::Timer timer1("get uncovered area");

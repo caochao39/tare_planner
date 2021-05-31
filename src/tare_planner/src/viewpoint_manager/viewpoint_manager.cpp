@@ -203,12 +203,6 @@ void ViewPointManager::ComputeInRangeNeighborIndices()
   }
 }
 
-int ViewPointManager::GetViewPointArrayInd(int viewpoint_ind, bool use_array_ind) const
-{
-  MY_ASSERT(grid_->InRange(viewpoint_ind));
-  return (use_array_ind ? viewpoint_ind : grid_->GetArrayInd(viewpoint_ind));
-}
-
 void ViewPointManager::GetCollisionCorrespondence()
 {
   misc_utils_ns::Timer timer("get collision grid correspondence");
@@ -368,6 +362,17 @@ void ViewPointManager::UpdateOrigin()
   {
     origin_(i) = robot_position_(i) - (vp_.kResol(i) * vp_.kNum(i)) / 2.0;
   }
+}
+
+int ViewPointManager::GetViewPointArrayInd(int viewpoint_ind, bool use_array_ind) const
+{
+  MY_ASSERT(grid_->InRange(viewpoint_ind));
+  return (use_array_ind ? viewpoint_ind : grid_->GetArrayInd(viewpoint_ind));
+}
+
+int ViewPointManager::GetViewPointInd(int viewpoint_array_ind) const
+{
+  return grid_->GetInd(viewpoint_array_ind);
 }
 
 Eigen::Vector3i ViewPointManager::GetViewPointSub(Eigen::Vector3d position)
@@ -1283,24 +1288,21 @@ int ViewPointManager::GetViewPointCandidate()
   return candidate_indices_.size();
 }
 
-nav_msgs::Path ViewPointManager::GetViewPointShortestPath(const Eigen::Vector3d& start_position,
-                                                          const Eigen::Vector3d& target_position)
+nav_msgs::Path ViewPointManager::GetViewPointShortestPath(int start_viewpoint_ind, int target_viewpoint_ind)
 {
   nav_msgs::Path path;
-  if (!InLocalPlanningHorizon(start_position))
+  if (!InRange(start_viewpoint_ind))
   {
-    ROS_WARN_STREAM("ViewPointManager::GetViewPointShortestPath start position " << start_position.transpose()
-                                                                                 << " not in local planning horizon");
+    ROS_WARN_STREAM("ViewPointManager::GetViewPointShortestPath start viewpoint ind: " << start_viewpoint_ind
+                                                                                       << " not in range");
     return path;
   }
-  if (!InLocalPlanningHorizon(target_position))
+  if (!InRange(target_viewpoint_ind))
   {
-    ROS_WARN_STREAM("ViewPointManager::GetViewPointShortestPath target position " << target_position.transpose()
-                                                                                  << " not in local planning horizon");
+    ROS_WARN_STREAM("ViewPointManager::GetViewPointShortestPath target viewpoint ind: " << target_viewpoint_ind
+                                                                                        << " not in range");
     return path;
   }
-  int start_viewpoint_ind = GetNearestCandidateViewPointInd(start_position);
-  int target_viewpoint_ind = GetNearestCandidateViewPointInd(target_position);
 
   int start_graph_ind = graph_index_map_[start_viewpoint_ind];
   int target_graph_ind = graph_index_map_[target_viewpoint_ind];
@@ -1321,6 +1323,28 @@ nav_msgs::Path ViewPointManager::GetViewPointShortestPath(const Eigen::Vector3d&
     }
   }
   return path;
+}
+
+nav_msgs::Path ViewPointManager::GetViewPointShortestPath(const Eigen::Vector3d& start_position,
+                                                          const Eigen::Vector3d& target_position)
+{
+  nav_msgs::Path path;
+  if (!InLocalPlanningHorizon(start_position))
+  {
+    ROS_WARN_STREAM("ViewPointManager::GetViewPointShortestPath start position " << start_position.transpose()
+                                                                                 << " not in local planning horizon");
+    return path;
+  }
+  if (!InLocalPlanningHorizon(target_position))
+  {
+    ROS_WARN_STREAM("ViewPointManager::GetViewPointShortestPath target position " << target_position.transpose()
+                                                                                  << " not in local planning horizon");
+    return path;
+  }
+  int start_viewpoint_ind = GetNearestCandidateViewPointInd(start_position);
+  int target_viewpoint_ind = GetNearestCandidateViewPointInd(target_position);
+
+  return GetViewPointShortestPath(start_viewpoint_ind, target_viewpoint_ind);
 }
 
 bool ViewPointManager::GetViewPointShortestPathWithMaxLength(const Eigen::Vector3d& start_position,

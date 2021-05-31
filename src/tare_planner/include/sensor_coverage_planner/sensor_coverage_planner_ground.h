@@ -46,6 +46,7 @@
 #include "viewpoint_manager/viewpoint_manager.h"
 #include "grid_world/grid_world.h"
 #include "exploration_path/exploration_path.h"
+#include "local_coverage_planner/local_coverage_planner.h"
 
 namespace sensor_coverage_planner_3d_ns
 {
@@ -122,8 +123,8 @@ struct PlannerData
 
   std::unique_ptr<keypose_graph_ns::KeyposeGraph> keypose_graph_;
   std::unique_ptr<planning_env_ns::PlanningEnv> planning_env_;
-  // std::unique_ptr<viewpoint_manager_ns::ViewPointManager> viewpoint_manager_;
-  viewpoint_manager_ns::ViewPointManager::Ptr viewpoint_manager_;
+  std::shared_ptr<viewpoint_manager_ns::ViewPointManager> viewpoint_manager_;
+  std::unique_ptr<local_coverage_planner_ns::LocalCoveragePlanner> local_coverage_planner_;
   std::unique_ptr<grid_world_ns::GridWorld> grid_world_;
 
   std::unique_ptr<misc_utils_ns::Marker> keypose_graph_node_marker_;

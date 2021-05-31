@@ -102,6 +102,10 @@ public:
   std::vector<int> candidate_indices_;
   explicit ViewPointManager(ros::NodeHandle& nh);
   ~ViewPointManager() = default;
+
+  int GetViewPointArrayInd(int viewpoint_ind, bool use_array_ind = false) const;
+  int GetViewPointInd(int viewpoint_array_ind) const;
+
   inline bool InRange(int viewpoint_ind)
   {
     return grid_->InRange(viewpoint_ind);
@@ -313,6 +317,11 @@ public:
                                            bool use_array_ind = false);
 
   int GetViewPointCandidate();
+  std::vector<int> GetViewPointCandidateIndices() const
+  {
+    return candidate_indices_;
+  }
+  nav_msgs::Path GetViewPointShortestPath(int start_viewpoint_ind, int target_viewpoint_ind);
   nav_msgs::Path GetViewPointShortestPath(const Eigen::Vector3d& start_position,
                                           const Eigen::Vector3d& target_position);
   bool GetViewPointShortestPathWithMaxLength(const Eigen::Vector3d& start_position,
@@ -351,6 +360,10 @@ public:
   Eigen::Vector3d GetLocalPlanningHorizonSize()
   {
     return vp_.LocalPlanningHorizonSize;
+  }
+  bool UseFrontier()
+  {
+    return vp_.kUseFrontier;
   }
   // For visualization
   void GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& vis_cloud);
@@ -401,8 +414,6 @@ private:
   bool lookahead_point_update_;
   geometry_msgs::Polygon viewpoint_boundary_;
   std::vector<geometry_msgs::Polygon> nogo_boundary_;
-
-  int GetViewPointArrayInd(int viewpoint_ind, bool use_array_ind) const;
 
   void GetCollisionCorrespondence();
 

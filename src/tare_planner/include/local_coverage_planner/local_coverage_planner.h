@@ -15,12 +15,21 @@
 #include <ros/ros.h>
 #include <nav_msgs/Path.h>
 
-#include <grid_world/grid_world.h>
-#include <exploration_path/exploration_path.h>
-#include <viewpoint_manager/viewpoint_manager.h>
+#include "grid_world/grid_world.h"
+#include "exploration_path/exploration_path.h"
+#include "viewpoint_manager/viewpoint_manager.h"
 
 namespace local_coverage_planner_ns
 {
+struct LocalCoveragePlannerParameter
+{
+  int kMinAddPointNum;
+  int kMinAddFrontierPointNum;
+  int kGreedyViewPointSampleRange;
+  int kLocalPathOptimizationItrMax;
+
+  bool ReadParameters(ros::NodeHandle& nh);
+};
 class LocalCoveragePlanner
 {
 public:
@@ -28,72 +37,22 @@ public:
   ~LocalCoveragePlanner() = default;
 
   // Update representation
-  bool UpdateRobotPosition(const Eigen::Vector3d& robot_position);
-  void UpdateOrigin();
-  Eigen::Vector3d GetOrigin()
+  void SetRobotPosition(const Eigen::Vector3d& robot_position)
   {
-    return origin_;
+    robot_position_ = robot_position;
   }
-  inline void UpdateViewPointBoundary(const geometry_msgs::Polygon& polygon)
+  void SetViewPointManager(std::shared_ptr<viewpoint_manager_ns::ViewPointManager> const& viewpoint_manager)
   {
-    // viewpoint_boundary_ = polygon;
+    viewpoint_manager_ = viewpoint_manager;
+    use_frontier_ = viewpoint_manager_->UseFrontier();
   }
-
-  inline void UpdateNogoBoundary(const std::vector<geometry_msgs::Polygon>& nogo_boundary)
-  {
-    // nogo_boundary_ = nogo_boundary;
-  }
-
-  template <class PCLPointType>
-  void UpdateViewPointCoverage(const typename pcl::PointCloud<PCLPointType>::Ptr& cloud)
-  {
-    viewpoint_manager_->UpdateViewPointCoverage<PCLPointType>(cloud);
-  }
-  template <class PCLPointType>
-  void UpdateRolledOverViewPointCoverage(const typename pcl::PointCloud<PCLPointType>::Ptr& cloud)
-  {
-    viewpoint_manager_->UpdateRolledOverViewPointCoverage<PCLPointType>(cloud);
-  }
-
-  template <class PointType>
-  bool VisibleByViewPoint(const PointType& point, int viewpoint_ind)
-  {
-    return viewpoint_manager_->VisibleByViewPoint<PointType>(point, viewpoint_ind);
-  }
-
-  // Collision
-  void CheckViewPointBoundaryCollision();
-  void CheckViewPointCollisionWithCollisionGrid(const pcl::PointCloud<pcl::PointXYZI>::Ptr& collision_cloud);
-  void CheckViewPointCollision(const pcl::PointCloud<pcl::PointXYZI>::Ptr& collision_cloud);
-  void SetViewPointHeightWithTerrain(const pcl::PointCloud<pcl::PointXYZI>::Ptr& terrain_cloud,
-                                     double terrain_height_threshold = DBL_MAX);
-  void CheckViewPointCollisionWithTerrain(const pcl::PointCloud<pcl::PointXYZI>::Ptr& terrain_cloud,
-                                          double collision_threshold);
-  // Line of sight
-  void CheckViewPointLineOfSightHelper(const Eigen::Vector3i& start_sub, const Eigen::Vector3i& end_sub,
-                                       const Eigen::Vector3i& max_sub, const Eigen::Vector3i& min_sub);
-  void CheckViewPointLineOfSight();
-
-  // Connectivity
-  void CheckViewPointInFOV();
-  void CheckViewPointConnectivity();
-
-  // Visited
-  void UpdateViewPointVisited(const std::vector<Eigen::Vector3d>& positions);
-  void UpdateViewPointVisited(std::unique_ptr<grid_world_ns::GridWorld> const& grid_world);
-
-  int GetViewPointCandidate();
-
-  // Path planning
-  nav_msgs::Path GetViewPointShortestPath(const Eigen::Vector3d& start_position,
-                                          const Eigen::Vector3d& target_position);
-  bool GetViewPointShortestPathWithMaxLength(const Eigen::Vector3d& start_position,
-                                             const Eigen::Vector3d& target_position, double max_path_length,
-                                             nav_msgs::Path& path);
 
   // Local coverage
-  void SetLookAheadPoint(const Eigen::Vector3d& lookahead_point);
-  void UpdateCandidateViewPointCellStatus(std::unique_ptr<grid_world_ns::GridWorld> const& grid_world);
+  void SetLookAheadPoint(const Eigen::Vector3d& lookahead_point)
+  {
+    lookahead_point_ = lookahead_point;
+    lookahead_point_update_ = true;
+  }
   exploration_path_ns::ExplorationPath
   SolveLocalCoverageProblem(const exploration_path_ns::ExplorationPath& global_path, int uncovered_point_num,
                             int uncovered_frontier_point_num = 0);
@@ -112,31 +71,28 @@ public:
     return tsp_runtime_;
   }
 
-  bool InLocalPlanningHorizon(const Eigen::Vector3d& position);
-  bool InCollision(const Eigen::Vector3d& position);
-  bool InCurrentFrameLineOfSight(const Eigen::Vector3d& position);
   bool IsLocalCoverageComplete()
   {
     return local_coverage_complete_;
   }
 
-  //   Eigen::Vector3d GetLocalPlanningHorizonSize()
-  //   {
-  //     return vp_.LocalPlanningHorizonSize;
-  //   }
   // Visualization
-  void GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& vis_cloud);
   void GetSelectedViewPointVisCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud);
-  void GetCollisionViewPointVisCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud);
 
 private:
-  void ComputeConnectedNeighborIndices();
-  void ComputeInRangeNeighborIndices();
-  void GetCollisionCorrespondence();
-  void GetCandidateViewPointGraph(std::vector<std::vector<int>>& graph, std::vector<std::vector<double>>& dist,
-                                  std::vector<geometry_msgs::Point>& positions);
+  int GetBoundaryViewpointIndex(const exploration_path_ns::ExplorationPath& global_path);
+  void GetBoundaryViewpointIndices(exploration_path_ns::ExplorationPath global_path);
+  void GetNavigationViewPointIndices(exploration_path_ns::ExplorationPath global_path,
+                                     std::vector<int>& navigation_viewpoint_indices);
+  void UpdateViewPointCoveredPoint(std::vector<bool>& point_list, int viewpoint_index, bool use_array_ind = false);
+  void UpdateViewPointCoveredFrontierPoint(std::vector<bool>& frontier_point_list, int viewpoint_index,
+                                           bool use_array_ind = false);
 
-  int GetNearestCandidateViewPointInd(const Eigen::Vector3d& position);
+  void EnqueueViewpointCandidates(std::vector<std::pair<int, int>>& cover_point_queue,
+                                  std::vector<std::pair<int, int>>& frontier_queue,
+                                  const std::vector<bool>& covered_point_list,
+                                  const std::vector<bool>& covered_frontier_point_list,
+                                  const std::vector<int>& selected_viewpoint_array_indices);
 
   void SelectViewPoint(const std::vector<std::pair<int, int>>& queue, const std::vector<bool>& covered,
                        std::vector<int>& selected_viewpoint_indices, bool use_frontier = false);
@@ -146,9 +102,27 @@ private:
   exploration_path_ns::ExplorationPath SolveTSP(const std::vector<int>& selected_viewpoint_indices,
                                                 std::vector<int>& ordered_viewpoint_indices);
 
-  viewpoint_manager_ns::ViewPointManager::Ptr viewpoint_manager_;
+  // viewpoint_manager_ns::ViewPointManager::Ptr viewpoint_manager_;
+  static bool SortPairInRev(const std::pair<int, int>& a, const std::pair<int, int>& b)
+  {
+    return (a.first > b.first);
+  }
 
-  Eigen::Vector3d origin_;
+  LocalCoveragePlannerParameter parameters_;
+  std::shared_ptr<viewpoint_manager_ns::ViewPointManager> viewpoint_manager_;
+
+  Eigen::Vector3d robot_position_;
+  Eigen::Vector3d lookahead_point_;
+
+  bool lookahead_point_update_;
+  bool use_frontier_;
+  bool local_coverage_complete_;
+
+  // Viewpoint indices
+  int robot_viewpoint_ind_;
+  int start_viewpoint_ind_;
+  int end_viewpoint_ind_;
+  int lookahead_viewpoint_ind_;
 
   // Runtime
   int find_path_runtime_;
@@ -156,6 +130,7 @@ private:
   int tsp_runtime_;
   static const std::string kRuntimeUnit;
 
-  bool local_coverage_complete_;
+  std::vector<int> last_selected_viewpoint_indices_;
+  std::vector<int> last_selected_viewpoint_array_indices_;
 };
 }  // namespace local_coverage_planner_ns

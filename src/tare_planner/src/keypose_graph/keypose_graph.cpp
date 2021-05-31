@@ -451,7 +451,7 @@ void KeyposeGraph::GetConnectedNodeIndices(int query_ind, std::vector<int>& conn
 }
 
 void KeyposeGraph::CheckLocalCollision(const geometry_msgs::Point& robot_position,
-                                       const std::unique_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager)
+                                       const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager)
 {
   // Get local planning horizon xy size
   // Eigen::Vector3d local_planning_horizon_size = viewpoint_manager->GetLocalPlanningHorizonSize();

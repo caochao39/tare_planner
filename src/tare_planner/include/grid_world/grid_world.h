@@ -314,9 +314,9 @@ public:
   bool IsRobotPositionSet(int cell_ind);
   void Reset();
   int GetCellStatusCount(grid_world_ns::CellStatus status);
-  void UpdateCellStatus(const std::unique_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager);
+  void UpdateCellStatus(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager);
   exploration_path_ns::ExplorationPath
-  SolveGlobalTSP(const std::unique_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
+  SolveGlobalTSP(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
                  std::vector<int>& ordered_cell_indices,
                  const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph = nullptr);
 
@@ -353,7 +353,7 @@ public:
   }
   void GetCellViewPointPositions(std::vector<Eigen::Vector3d>& viewpoint_positions);
   void AddPathsToKeyposeGraph(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph);
-  void AddPathsInBetweenCells(const std::unique_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
+  void AddPathsInBetweenCells(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
                               const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph);
   bool PathValid(const nav_msgs::Path& path, int from_cell_ind, int to_cell_ind);
   bool HasDirectKeyposeGraphConnection(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,

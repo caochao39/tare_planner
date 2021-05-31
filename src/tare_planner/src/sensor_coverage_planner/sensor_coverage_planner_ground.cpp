@@ -88,7 +88,9 @@ void PlannerData::Initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
       nh, "viewpoint_in_collision_cloud_", kWorldFrameID);
 
   planning_env_ = std::make_unique<planning_env_ns::PlanningEnv>(nh, nh_p);
-  viewpoint_manager_ = std::make_unique<viewpoint_manager_ns::ViewPointManager>(nh_p);
+  viewpoint_manager_ = std::make_shared<viewpoint_manager_ns::ViewPointManager>(nh_p);
+  local_coverage_planner_ = std::make_unique<local_coverage_planner_ns::LocalCoveragePlanner>(nh_p);
+  local_coverage_planner_->SetViewPointManager(viewpoint_manager_);
   keypose_graph_ = std::make_unique<keypose_graph_ns::KeyposeGraph>();
   grid_world_ = std::make_unique<grid_world_ns::GridWorld>(nh_p);
   grid_world_->SetUseKeyposeGraph(true);
@@ -508,6 +510,8 @@ void SensorCoveragePlanner3D::UpdateVisitedPositions()
 
 void SensorCoveragePlanner3D::UpdateGlobalRepresentation()
 {
+  pd_.local_coverage_planner_->SetRobotPosition(
+      Eigen::Vector3d(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z));
   bool viewpoint_rollover = pd_.viewpoint_manager_->UpdateRobotPosition(
       Eigen::Vector3d(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z));
   if (!pd_.grid_world_->Initialized() || viewpoint_rollover)
@@ -584,9 +588,12 @@ void SensorCoveragePlanner3D::LocalPlanning(int uncovered_point_num, int uncover
   local_tsp_timer.Start();
   if (lookahead_point_update_)
   {
-    pd_.viewpoint_manager_->SetLookAheadPoint(pd_.lookahead_point_);
+    // pd_.viewpoint_manager_->SetLookAheadPoint(pd_.lookahead_point_);
+    pd_.local_coverage_planner_->SetLookAheadPoint(pd_.lookahead_point_);
   }
-  local_path = pd_.viewpoint_manager_->SolveLocalTSP(global_path, uncovered_point_num, uncovered_frontier_point_num);
+  // local_path = pd_.viewpoint_manager_->SolveLocalTSP(global_path, uncovered_point_num, uncovered_frontier_point_num);
+  local_path = pd_.local_coverage_planner_->SolveLocalCoverageProblem(global_path, uncovered_point_num,
+                                                                      uncovered_frontier_point_num);
   local_tsp_timer.Stop(false);
 }
 
@@ -599,7 +606,7 @@ void SensorCoveragePlanner3D::PublishLocalPlanningVisualization(const exploratio
   local_tsp_path.header.frame_id = "map";
   local_tsp_path.header.stamp = ros::Time::now();
   local_tsp_path_publisher_.publish(local_tsp_path);
-  pd_.viewpoint_manager_->GetSelectedViewPointVisCloud(pd_.selected_viewpoint_vis_cloud_->cloud_);
+  pd_.local_coverage_planner_->GetSelectedViewPointVisCloud(pd_.selected_viewpoint_vis_cloud_->cloud_);
   pd_.selected_viewpoint_vis_cloud_->Publish();
 }
 
@@ -1123,7 +1130,7 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
     exploration_finished_ = false;
     near_home_ = GetRobotToHomeDistance() < pp_.kRushHomeDist;
 
-    if (pd_.grid_world_->IsReturningHome() && pd_.viewpoint_manager_->IsLocalCoverageComplete() &&
+    if (pd_.grid_world_->IsReturningHome() && pd_.local_coverage_planner_->IsLocalCoverageComplete() &&
         (ros::Time::now() - start_time_).toSec() > 5)
     {
       exploration_finished_ = true;
