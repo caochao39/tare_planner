@@ -588,10 +588,8 @@ void SensorCoveragePlanner3D::LocalPlanning(int uncovered_point_num, int uncover
   local_tsp_timer.Start();
   if (lookahead_point_update_)
   {
-    // pd_.viewpoint_manager_->SetLookAheadPoint(pd_.lookahead_point_);
     pd_.local_coverage_planner_->SetLookAheadPoint(pd_.lookahead_point_);
   }
-  // local_path = pd_.viewpoint_manager_->SolveLocalTSP(global_path, uncovered_point_num, uncovered_frontier_point_num);
   local_path = pd_.local_coverage_planner_->SolveLocalCoverageProblem(global_path, uncovered_point_num,
                                                                       uncovered_frontier_point_num);
   local_tsp_timer.Stop(false);
@@ -1025,9 +1023,9 @@ void SensorCoveragePlanner3D::PublishWaypoint()
 
 void SensorCoveragePlanner3D::PublishRuntime()
 {
-  local_viewpoint_sampling_runtime_ = pd_.viewpoint_manager_->GetViewPointSamplingRuntime() / 1000;
+  local_viewpoint_sampling_runtime_ = pd_.local_coverage_planner_->GetViewPointSamplingRuntime() / 1000;
   local_path_finding_runtime_ =
-      (pd_.viewpoint_manager_->GetFindPathRuntime() + pd_.viewpoint_manager_->GetTSPRuntime()) / 1000;
+      (pd_.local_coverage_planner_->GetFindPathRuntime() + pd_.local_coverage_planner_->GetTSPRuntime()) / 1000;
   // std::cout << "local planning runtime breakdown: " << std::endl;
   // std::cout << "find path: " << pd_.viewpoint_manager_->GetFindPathRuntime() << std::endl;
   // std::cout << "viewpoint sampling: " << pd_.viewpoint_manager_->GetViewPointSamplingRuntime() << std::endl;
