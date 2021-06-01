@@ -720,7 +720,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
     const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
     std::vector<int>& ordered_cell_indices, const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph)
 {
-  // Determine the node on keypose graph associated with the robot
+  /****** Get the node on keypose graph associated with the robot position *****/
   double min_dist_to_robot = DBL_MAX;
   geometry_msgs::Point global_path_robot_position = robot_position_;
   Eigen::Vector3d eigen_robot_position(robot_position_.x, robot_position_.y, robot_position_.z);
@@ -761,6 +761,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
     }
   }
 
+  /****** Get all the connected exploring cells *****/
   exploration_path_ns::ExplorationPath global_path;
   std::vector<geometry_msgs::Point> exploring_cell_positions;
   std::vector<int> exploring_cell_indices;
@@ -824,6 +825,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
 
   // std::cout << "exploring cell indices num: " << exploring_cell_indices.size() << std::endl;
 
+  /****** Return home ******/
   if (exploring_cell_indices.empty())
   {
     return_home_ = true;
@@ -882,7 +884,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
   exploring_cell_positions.push_back(global_path_robot_position);
   exploring_cell_indices.push_back(-1);
 
-  // Construct the distance matrix
+  /******* Construct the distance matrix *****/
   std::vector<std::vector<int>> distance_matrix(exploring_cell_positions.size(),
                                                 std::vector<int>(exploring_cell_positions.size(), 0));
   for (int i = 0; i < exploring_cell_positions.size(); i++)
@@ -915,25 +917,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
     }
   }
 
-  // // Print distance matrix
-  // std::cout << "#####Printing distance matrix#####" << std::endl;
-  // std::cout << "\t";
-  // for (int i = 0; i < distance_matrix.size(); i++)
-  // {
-  //   std::cout << exploring_cell_indices[i] << "\t";
-  // }
-  // std::cout << std::endl;
-
-  // for (int i = 0; i < distance_matrix.size(); i++)
-  // {
-  //   std::cout << exploring_cell_indices[i] << "\t";
-  //   for (int j = 0; j < distance_matrix[i].size(); j++)
-  //   {
-  //     std::cout << distance_matrix[i][j] << "\t";
-  //   }
-  //   std::cout << std::endl;
-  // }
-  // std::cout << "#####Finishing printing distance matrix#####" << std::endl;
+  /****** Solve the TSP ******/
   tsp_solver_ns::DataModel data_model;
   data_model.distance_matrix = distance_matrix;
   data_model.depot = exploring_cell_positions.size() - 1;
