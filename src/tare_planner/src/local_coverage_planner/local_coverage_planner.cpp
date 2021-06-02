@@ -752,7 +752,7 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveLocalCoveragePro
   }
   else
   {
-    misc_utils_ns::Timer select_viewpoint_timer("viewpoint sampoing");
+    misc_utils_ns::Timer select_viewpoint_timer("viewpoint sampling");
     select_viewpoint_timer.Start();
 
     // std::cout << "entering tsp routine" << std::endl;

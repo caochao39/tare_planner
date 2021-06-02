@@ -202,6 +202,14 @@ void SensorCoveragePlanner3D::ExplorationStartCallback(const std_msgs::Bool::Con
 void SensorCoveragePlanner3D::StateEstimationCallback(const nav_msgs::Odometry::ConstPtr& state_estimation_msg)
 {
   pd_.robot_position_ = state_estimation_msg->pose.pose.position;
+  // Todo: use a boolean
+  if (std::abs(pd_.initial_position_.x()) < 0.01 && std::abs(pd_.initial_position_.y()) < 0.01 &&
+      std::abs(pd_.initial_position_.z()) < 0.01)
+  {
+    pd_.initial_position_.x() = pd_.robot_position_.x;
+    pd_.initial_position_.y() = pd_.robot_position_.y;
+    pd_.initial_position_.z() = pd_.robot_position_.z;
+  }
   double roll, pitch, yaw;
   geometry_msgs::Quaternion geo_quat = state_estimation_msg->pose.pose.orientation;
   tf::Matrix3x3(tf::Quaternion(geo_quat.x, geo_quat.y, geo_quat.z, geo_quat.w)).getRPY(roll, pitch, yaw);
@@ -530,13 +538,6 @@ void SensorCoveragePlanner3D::UpdateGlobalRepresentation()
   // pd_.grid_world_->SetCurKeyposeGraphNodeInd(pd_.cur_keypose_node_ind_);
 
   pd_.grid_world_->UpdateRobotPosition(pd_.robot_position_);
-  if (std::abs(pd_.initial_position_.x()) < 0.01 && std::abs(pd_.initial_position_.y()) < 0.01 &&
-      std::abs(pd_.initial_position_.z()) < 0.01)
-  {
-    pd_.initial_position_.x() = pd_.robot_position_.x;
-    pd_.initial_position_.y() = pd_.robot_position_.y;
-    pd_.initial_position_.z() = pd_.robot_position_.z;
-  }
   if (!pd_.grid_world_->HomeSet())
   {
     pd_.grid_world_->SetHomePosition(pd_.initial_position_);
@@ -1020,8 +1021,8 @@ void SensorCoveragePlanner3D::PublishWaypoint()
     waypoint.point.x = dx + pd_.robot_position_.x;
     waypoint.point.y = dy + pd_.robot_position_.y;
     waypoint.point.z = pd_.lookahead_point_.z();
-    misc_utils_ns::Publish<geometry_msgs::PointStamped>(waypoint_pub_, waypoint, kWorldFrameID);
   }
+  misc_utils_ns::Publish<geometry_msgs::PointStamped>(waypoint_pub_, waypoint, kWorldFrameID);
 }
 
 void SensorCoveragePlanner3D::PublishRuntime()
