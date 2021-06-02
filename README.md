@@ -1,6 +1,3 @@
-This repository implements the TARE exploration planner for ground robots.
-
-## Method Overview
 TARE planner involves a hierarchical framework for highly efficient exploration - one level in the framework maintains data densely and computes a detailed path within a local planning horizon, another level maintains data sparsely and computes a coarse path at the global scale. The paths at both levels are joined together to form the exploration path. The framework draws the insight that detailed processing is most effective close to the vehicle, while coarse processing provides sufficient utility far away from the vehicle. The framework trades-off details at the global scale for computational speed. In practice, the framework prioritizes the exploration in the surroundings of the vehicle while keeping the global picture in mind.
 <p align="center">
   <img src="img/method.png" alt="Method" width="60%"/>
@@ -19,7 +16,7 @@ In a terminal, go to the folder and compile.
 cd tare_planner
 catkin_make
 ```
-To run the code, setup [autonomous exploration development environment](http://cmu-exploration.com) (checkout the correct branch, compile, and download the simulation environments). Then, go to the folder in a terminal, source the ROS workspace, and launch.
+To run the code, setup [Autonomous Exploration Development Environment](http://cmu-exploration.com) (checkout the correct branch, compile, and download the simulation environments). Then, go to the folder in a terminal, source the ROS workspace, and launch.
 ```
 source devel/setup.sh
 roslaunch vehicle_simulator system_garage.launch
@@ -53,6 +50,7 @@ Fast and Efficiently. International Conference on Robotics and Automation (ICRA)
   month={July},
   address={Virtual}
 }
+
 @inproceedings{cao2021exploring,
   title={Exploring Large and Complex Environments
 Fast and Efficiently},
@@ -67,7 +65,7 @@ Fast and Efficiently},
 ## Applications
 TARE Planner has been used by the [CMU-OSU Team](https://www.subt-explorer.com) in attending the [DARPA Subterranean Challenge](https://www.subtchallenge.com). The team has won the 1st place in Tunnel Circuit Competition and 2nd place in Urban Circuit Competition. Below is our result from Urban Circuit Competition which took place in Satsop Nuclear Plant, WA. Our vehicle traveled over 886m in 1458s to explore the site, fully autonomously. The final event will be held in October 2021.
 <p align="center">
-  <img src="img/urban.jpg" alt="Urban Circuit" width="60%"/>
+  <img src="img/urban.jpg" alt="Urban Circuit" width="40%"/>
 </p>
 
 ### Author
