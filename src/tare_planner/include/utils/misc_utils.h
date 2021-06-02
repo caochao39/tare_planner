@@ -14,6 +14,7 @@
 #include <geometry_msgs/Polygon.h>
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
+#include <std_msgs/ColorRGBA.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -310,6 +311,10 @@ public:
     marker_.pose.orientation.w = 1.0;
   }
   ~Marker() = default;
+  void SetColorRGBA(const std_msgs::ColorRGBA& color)
+  {
+    marker_.color = color;
+  }
   void SetColorRGBA(double r, double g, double b, double a)
   {
     marker_.color.r = r;
@@ -331,6 +336,8 @@ public:
   {
     misc_utils_ns::Publish<visualization_msgs::Marker>(marker_pub_, marker_, frame_id_);
   }
+
+  typedef std::shared_ptr<Marker> Ptr;
 };
 int signum(int x);
 double mod(double value, double modulus);

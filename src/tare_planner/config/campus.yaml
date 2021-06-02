@@ -106,3 +106,17 @@ kCellCoveredToExploringThr: 10
 kCellExploringToAlmostCoveredThr: 10 
 kCellAlmostCoveredToExploringThr: 20
 kCellUnknownToExploringThr: 1
+
+# Visualization
+kExploringSubspaceMarkerColorGradientAlpha : true
+kExploringSubspaceMarkerColorMaxAlpha : 0.8
+kExploringSubspaceMarkerColorR : 0.0
+kExploringSubspaceMarkerColorG : 1.0
+kExploringSubspaceMarkerColorB : 0.0
+kExploringSubspaceMarkerColorA : 1.0
+kLocalPlanningHorizonMarkerColorR : 0.0
+kLocalPlanningHorizonMarkerColorG : 1.0
+kLocalPlanningHorizonMarkerColorB : 0.0
+kLocalPlanningHorizonMarkerColorA : 1.0
+kLocalPlanningHorizonMarkerWidth : 0.3
+kLocalPlanningHorizonHeight : 3.0

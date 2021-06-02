@@ -94,6 +94,7 @@ void PlannerData::Initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
   keypose_graph_ = std::make_unique<keypose_graph_ns::KeyposeGraph>();
   grid_world_ = std::make_unique<grid_world_ns::GridWorld>(nh_p);
   grid_world_->SetUseKeyposeGraph(true);
+  visualizer_ = std::make_unique<tare_visualizer_ns::TAREVisualizer>(nh, nh_p);
 
   initial_position_.x() = 0.0;
   initial_position_.y() = 0.0;
@@ -606,6 +607,8 @@ void SensorCoveragePlanner3D::PublishLocalPlanningVisualization(const exploratio
   local_tsp_path_publisher_.publish(local_tsp_path);
   pd_.local_coverage_planner_->GetSelectedViewPointVisCloud(pd_.selected_viewpoint_vis_cloud_->cloud_);
   pd_.selected_viewpoint_vis_cloud_->Publish();
+
+  // Visualize local planning horizon box
 }
 
 exploration_path_ns::ExplorationPath SensorCoveragePlanner3D::ConcatenateGlobalLocalPath(
@@ -1143,6 +1146,11 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
 
     overall_processing_timer.Stop(false);
     overall_runtime_ = overall_processing_timer.GetDuration("ms");
+
+    pd_.visualizer_->GetGlobalSubspaceMarker(pd_.grid_world_, global_cell_tsp_order);
+    Eigen::Vector3d viewpoint_origin = pd_.viewpoint_manager_->GetOrigin();
+    pd_.visualizer_->GetLocalPlanningHorizonMarker(viewpoint_origin.x(), viewpoint_origin.y(), viewpoint_origin.z());
+    pd_.visualizer_->PublishMarkers();
 
     PublishLocalPlanningVisualization(local_path);
     PublishGlobalPlanningVisualization(global_path);

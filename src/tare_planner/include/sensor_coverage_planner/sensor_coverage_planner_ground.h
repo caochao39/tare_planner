@@ -47,6 +47,7 @@
 #include "grid_world/grid_world.h"
 #include "exploration_path/exploration_path.h"
 #include "local_coverage_planner/local_coverage_planner.h"
+#include "tare_visualizer/tare_visualizer.h"
 
 namespace sensor_coverage_planner_3d_ns
 {
@@ -126,6 +127,7 @@ struct PlannerData
   std::shared_ptr<viewpoint_manager_ns::ViewPointManager> viewpoint_manager_;
   std::unique_ptr<local_coverage_planner_ns::LocalCoveragePlanner> local_coverage_planner_;
   std::unique_ptr<grid_world_ns::GridWorld> grid_world_;
+  std::unique_ptr<tare_visualizer_ns::TAREVisualizer> visualizer_;
 
   std::unique_ptr<misc_utils_ns::Marker> keypose_graph_node_marker_;
   std::unique_ptr<misc_utils_ns::Marker> keypose_graph_edge_marker_;
