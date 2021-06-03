@@ -184,7 +184,8 @@ private:
   ros::Subscriber nogo_boundary_sub_;
 
   // ROS publishers
-  ros::Publisher global_tsp_path_publisher_;
+  ros::Publisher global_path_full_publisher_;
+  ros::Publisher global_path_publisher_;
   ros::Publisher local_tsp_path_publisher_;
   ros::Publisher exploration_path_publisher_;
   ros::Publisher waypoint_pub_;
@@ -211,7 +212,8 @@ private:
   void UpdateVisitedPositions();
   void UpdateGlobalRepresentation();
   void GlobalPlanning(std::vector<int>& global_cell_tsp_order, exploration_path_ns::ExplorationPath& global_path);
-  void PublishGlobalPlanningVisualization(const exploration_path_ns::ExplorationPath& global_path);
+  void PublishGlobalPlanningVisualization(const exploration_path_ns::ExplorationPath& global_path,
+                                          const exploration_path_ns::ExplorationPath& local_path);
   void LocalPlanning(int uncovered_point_num, int uncovered_frontier_point_num,
                      const exploration_path_ns::ExplorationPath& global_path,
                      exploration_path_ns::ExplorationPath& local_path);

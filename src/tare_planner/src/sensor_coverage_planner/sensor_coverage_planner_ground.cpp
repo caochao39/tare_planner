@@ -180,8 +180,9 @@ bool SensorCoveragePlanner3D::initialize(ros::NodeHandle& nh, ros::NodeHandle& n
   nogo_boundary_sub_ =
       nh.subscribe(pp_.sub_nogo_boundary_topic_, 1, &SensorCoveragePlanner3D::NogoBoundaryCallback, this);
 
-  global_tsp_path_publisher_ = nh.advertise<nav_msgs::Path>("global_tsp_path", 1);
-  local_tsp_path_publisher_ = nh.advertise<nav_msgs::Path>("local_tsp_path", 1);
+  global_path_full_publisher_ = nh.advertise<nav_msgs::Path>("global_path_full", 1);
+  global_path_publisher_ = nh.advertise<nav_msgs::Path>("global_path", 1);
+  local_tsp_path_publisher_ = nh.advertise<nav_msgs::Path>("local_path", 1);
   exploration_path_publisher_ = nh.advertise<nav_msgs::Path>("exploration_path", 1);
   waypoint_pub_ = nh.advertise<geometry_msgs::PointStamped>(pp_.pub_waypoint_topic_, 2);
   exploration_finish_pub_ = nh.advertise<std_msgs::Bool>(pp_.pub_exploration_finish_topic_, 2);
@@ -379,7 +380,7 @@ void SensorCoveragePlanner3D::UpdateKeyposeGraph()
   update_keypose_graph_timer.Start();
 
   pd_.keypose_graph_->GetMarker(pd_.keypose_graph_node_marker_->marker_, pd_.keypose_graph_edge_marker_->marker_);
-  pd_.keypose_graph_node_marker_->Publish();
+  // pd_.keypose_graph_node_marker_->Publish();
   pd_.keypose_graph_edge_marker_->Publish();
   pd_.keypose_graph_vis_cloud_->cloud_->clear();
   pd_.keypose_graph_->CheckLocalCollision(pd_.robot_position_, pd_.viewpoint_manager_);
@@ -563,12 +564,68 @@ void SensorCoveragePlanner3D::GlobalPlanning(std::vector<int>& global_cell_tsp_o
 }
 
 void SensorCoveragePlanner3D::PublishGlobalPlanningVisualization(
-    const exploration_path_ns::ExplorationPath& global_path)
+    const exploration_path_ns::ExplorationPath& global_path, const exploration_path_ns::ExplorationPath& local_path)
 {
-  nav_msgs::Path global_tsp_path = global_path.GetPath();
-  global_tsp_path.header.frame_id = "map";
-  global_tsp_path.header.stamp = ros::Time::now();
-  global_tsp_path_publisher_.publish(global_tsp_path);
+  nav_msgs::Path global_path_full = global_path.GetPath();
+  global_path_full.header.frame_id = "map";
+  global_path_full.header.stamp = ros::Time::now();
+  global_path_full_publisher_.publish(global_path_full);
+  // Get the part that connects with the local path
+
+  int start_index = 0;
+  for (int i = 0; i < global_path.nodes_.size(); i++)
+  {
+    if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::GLOBAL_VIEWPOINT ||
+        global_path.nodes_[i].type_ == exploration_path_ns::NodeType::HOME ||
+        !pd_.viewpoint_manager_->InLocalPlanningHorizon(global_path.nodes_[i].position_))
+    {
+      break;
+    }
+    start_index = i;
+  }
+
+  int end_index = global_path.nodes_.size() - 1;
+  for (int i = global_path.nodes_.size() - 1; i >= 0; i--)
+  {
+    if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::GLOBAL_VIEWPOINT ||
+        global_path.nodes_[i].type_ == exploration_path_ns::NodeType::HOME ||
+        !pd_.viewpoint_manager_->InLocalPlanningHorizon(global_path.nodes_[i].position_))
+    {
+      break;
+    }
+    end_index = i;
+  }
+
+  nav_msgs::Path global_path_trim;
+  if (local_path.nodes_.size() >= 2)
+  {
+    geometry_msgs::PoseStamped first_pose;
+    first_pose.pose.position.x = local_path.nodes_.front().position_.x();
+    first_pose.pose.position.y = local_path.nodes_.front().position_.y();
+    first_pose.pose.position.z = local_path.nodes_.front().position_.z();
+    global_path_trim.poses.push_back(first_pose);
+  }
+
+  for (int i = start_index; i <= end_index; i++)
+  {
+    geometry_msgs::PoseStamped pose;
+    pose.pose.position.x = global_path.nodes_[i].position_.x();
+    pose.pose.position.y = global_path.nodes_[i].position_.y();
+    pose.pose.position.z = global_path.nodes_[i].position_.z();
+    global_path_trim.poses.push_back(pose);
+  }
+  if (local_path.nodes_.size() >= 2)
+  {
+    geometry_msgs::PoseStamped last_pose;
+    last_pose.pose.position.x = local_path.nodes_.back().position_.x();
+    last_pose.pose.position.y = local_path.nodes_.back().position_.y();
+    last_pose.pose.position.z = local_path.nodes_.back().position_.z();
+    global_path_trim.poses.push_back(last_pose);
+  }
+  global_path_trim.header.frame_id = "map";
+  global_path_trim.header.stamp = ros::Time::now();
+  global_path_publisher_.publish(global_path_trim);
+
   pd_.grid_world_->GetVisualizationCloud(pd_.grid_world_vis_cloud_->cloud_);
   pd_.grid_world_vis_cloud_->Publish();
   pd_.grid_world_->GetMarker(pd_.grid_world_marker_->marker_);
@@ -576,7 +633,7 @@ void SensorCoveragePlanner3D::PublishGlobalPlanningVisualization(
   nav_msgs::Path full_path = pd_.exploration_path_.GetPath();
   full_path.header.frame_id = "map";
   full_path.header.stamp = ros::Time::now();
-  exploration_path_publisher_.publish(full_path);
+  // exploration_path_publisher_.publish(full_path);
   pd_.exploration_path_.GetVisualizationCloud(pd_.exploration_path_cloud_->cloud_);
   pd_.exploration_path_cloud_->Publish();
   // pd_.planning_env_->PublishStackedCloud();
@@ -1046,9 +1103,12 @@ void SensorCoveragePlanner3D::PublishRuntime()
   runtime_breakdown_pub_.publish(runtime_breakdown_msg);
 
   float runtime = 0;
-  for (int i = 0; i < runtime_breakdown_msg.data.size() - 1; i++)
+  if (!exploration_finished_)
   {
-    runtime += runtime_breakdown_msg.data[i];
+    for (int i = 0; i < runtime_breakdown_msg.data.size() - 1; i++)
+    {
+      runtime += runtime_breakdown_msg.data[i];
+    }
   }
 
   std_msgs::Float32 runtime_msg;
@@ -1154,7 +1214,7 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
     pd_.visualizer_->PublishMarkers();
 
     PublishLocalPlanningVisualization(local_path);
-    PublishGlobalPlanningVisualization(global_path);
+    PublishGlobalPlanningVisualization(global_path, local_path);
     PublishRuntime();
   }
 
