@@ -184,7 +184,10 @@ void TAREVisualizer::GetGlobalSubspaceMarker(const std::unique_ptr<grid_world_ns
 void TAREVisualizer::PublishMarkers()
 {
   local_planning_horizon_marker_->Publish();
-  global_subspaces_marker_->Publish();
+  if (!global_subspaces_marker_->marker_.points.empty())
+  {
+    global_subspaces_marker_->Publish();
+  }
 }
 
 }  // namespace tare_visualizer_ns

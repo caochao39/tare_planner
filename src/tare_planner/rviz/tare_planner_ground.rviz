@@ -6,8 +6,8 @@ Panels:
       Expanded:
         - /Global1
         - /Local1
-      Splitter Ratio: 0.5835616588592529
-    Tree Height: 881
+      Splitter Ratio: 0.4389610290527344
+    Tree Height: 988
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -26,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: UncoveredCloud
+    SyncSource: ViewpointToTrack
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -34,19 +34,58 @@ Toolbars:
 Visualization Manager:
   Class: ""
   Displays:
-    - Class: rviz/Axes
-      Enabled: true
-      Length: 3
-      Name: SensorFrame
-      Radius: 0.20000000298023224
-      Reference Frame: sensor
-      Value: true
     - Class: rviz/Group
       Displays:
+        - Alpha: 0.8999999761581421
+          Autocompute Intensity Bounds: false
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz/PointCloud2
+          Color: 255; 255; 255
+          Color Transformer: Intensity
+          Decay Time: 0
+          Enabled: false
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 20
+          Min Color: 0; 0; 0
+          Min Intensity: -1
+          Name: KeyposeGraphNodes
+          Position Transformer: XYZ
+          Queue Size: 10
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.30000001192092896
+          Style: Boxes
+          Topic: /sensor_coverage_planner/keypose_graph_cloud
+          Unreliable: false
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: false
+        - Class: rviz/Marker
+          Enabled: false
+          Marker Topic: /sensor_coverage_planner/keypose_graph_edge_marker
+          Name: KeyposeGraphEdge
+          Namespaces:
+            {}
+          Queue Size: 100
+          Value: false
+        - Class: rviz/Marker
+          Enabled: true
+          Marker Topic: /sensor_coverage_planner/tare_visualizer/exploring_subspaces
+          Name: ExploringSubspaces
+          Namespaces:
+            {}
+          Queue Size: 100
+          Value: true
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
-          Color: 25; 255; 0
+          Color: 98; 240; 231
           Enabled: true
           Head Diameter: 0.30000001192092896
           Head Length: 0.20000000298023224
@@ -67,36 +106,6 @@ Visualization Manager:
           Unreliable: false
           Value: true
         - Alpha: 1
-          Autocompute Intensity Bounds: true
-          Autocompute Value Bounds:
-            Max Value: 10
-            Min Value: -10
-            Value: true
-          Axis: Z
-          Channel Name: intensity
-          Class: rviz/PointCloud2
-          Color: 204; 0; 0
-          Color Transformer: FlatColor
-          Decay Time: 0
-          Enabled: true
-          Invert Rainbow: false
-          Max Color: 255; 255; 255
-          Max Intensity: 1
-          Min Color: 0; 0; 0
-          Min Intensity: 0
-          Name: UncoveredCloud
-          Position Transformer: XYZ
-          Queue Size: 10
-          Selectable: true
-          Size (Pixels): 3
-          Size (m): 0.20000000298023224
-          Style: Flat Squares
-          Topic: /sensor_coverage_planner/uncovered_cloud
-          Unreliable: false
-          Use Fixed Frame: true
-          Use rainbow: true
-          Value: true
-        - Alpha: 1
           Autocompute Intensity Bounds: false
           Autocompute Value Bounds:
             Max Value: 10
@@ -114,7 +123,7 @@ Visualization Manager:
           Max Intensity: 2
           Min Color: 0; 0; 0
           Min Intensity: 0
-          Name: PlannerCloud
+          Name: OverallObjectSurfaces
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
@@ -126,73 +135,19 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
-        - Class: rviz/Marker
-          Enabled: false
-          Marker Topic: /sensor_coverage_planner/keypose_graph_node_marker
-          Name: KeyposeGraphNode
-          Namespaces:
-            {}
-          Queue Size: 100
-          Value: false
-        - Class: rviz/Marker
-          Enabled: true
-          Marker Topic: /sensor_coverage_planner/keypose_graph_edge_marker
-          Name: KeyposeGraphEdge
-          Namespaces:
-            "": true
-          Queue Size: 100
-          Value: true
-        - Alpha: 0.8999999761581421
-          Autocompute Intensity Bounds: false
-          Autocompute Value Bounds:
-            Max Value: 10
-            Min Value: -10
-            Value: true
-          Axis: Z
-          Channel Name: intensity
-          Class: rviz/PointCloud2
-          Color: 255; 255; 255
-          Color Transformer: Intensity
-          Decay Time: 0
-          Enabled: true
-          Invert Rainbow: false
-          Max Color: 255; 255; 255
-          Max Intensity: 20
-          Min Color: 0; 0; 0
-          Min Intensity: -1
-          Name: KeyposeGraphCloud
-          Position Transformer: XYZ
-          Queue Size: 10
-          Selectable: true
-          Size (Pixels): 3
-          Size (m): 0.30000001192092896
-          Style: Boxes
-          Topic: /sensor_coverage_planner/keypose_graph_cloud
-          Unreliable: false
-          Use Fixed Frame: true
-          Use rainbow: true
-          Value: true
-        - Class: rviz/Marker
-          Enabled: false
-          Marker Topic: /sensor_coverage_planner/grid_world_marker
-          Name: GridWorldMarker
-          Namespaces:
-            {}
-          Queue Size: 100
-          Value: false
-        - Class: rviz/Marker
-          Enabled: true
-          Marker Topic: /sensor_coverage_planner/tare_visualizer/exploring_subspaces
-          Name: ExploringSubspaces
-          Namespaces:
-            "": true
-          Queue Size: 100
-          Value: true
       Enabled: true
       Name: Global
     - Class: rviz/Group
       Displays:
-        - Alpha: 0.30000001192092896
+        - Class: rviz/Marker
+          Enabled: true
+          Marker Topic: /sensor_coverage_planner/tare_visualizer/local_planning_horizon
+          Name: LocalPlanningHorizon
+          Namespaces:
+            "": true
+          Queue Size: 100
+          Value: true
+        - Alpha: 0.5
           Autocompute Intensity Bounds: false
           Autocompute Value Bounds:
             Max Value: 10
@@ -201,28 +156,28 @@ Visualization Manager:
           Axis: Z
           Channel Name: intensity
           Class: rviz/PointCloud2
-          Color: 255; 255; 255
-          Color Transformer: Intensity
+          Color: 237; 212; 0
+          Color Transformer: FlatColor
           Decay Time: 0
           Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 2
+          Max Intensity: 100
           Min Color: 0; 0; 0
-          Min Intensity: 0
-          Name: LookaheadPoint
+          Min Intensity: -1
+          Name: ViewpointCandidates
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 2
+          Size (m): 0.5
           Style: Spheres
-          Topic: /sensor_coverage_planner/lookahead_point_cloud
+          Topic: /sensor_coverage_planner/viewpoint_vis_cloud
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
-        - Alpha: 0.8999999761581421
+        - Alpha: 1
           Autocompute Intensity Bounds: false
           Autocompute Value Bounds:
             Max Value: 10
@@ -231,8 +186,8 @@ Visualization Manager:
           Axis: Z
           Channel Name: intensity
           Class: rviz/PointCloud2
-          Color: 255; 255; 255
-          Color Transformer: Intensity
+          Color: 245; 121; 0
+          Color Transformer: FlatColor
           Decay Time: 0
           Enabled: true
           Invert Rainbow: false
@@ -240,7 +195,7 @@ Visualization Manager:
           Max Intensity: 10
           Min Color: 0; 0; 0
           Min Intensity: 0
-          Name: SelectedViewPointVisCloud
+          Name: SelectedViewPoints
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
@@ -261,27 +216,27 @@ Visualization Manager:
           Axis: Z
           Channel Name: intensity
           Class: rviz/PointCloud2
-          Color: 239; 41; 41
+          Color: 255; 255; 255
           Color Transformer: Intensity
           Decay Time: 0
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 100
+          Max Intensity: 2
           Min Color: 0; 0; 0
-          Min Intensity: -1
-          Name: ViewpointCloud
+          Min Intensity: 0
+          Name: ViewpointToTrack
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.5
+          Size (m): 2
           Style: Spheres
-          Topic: /sensor_coverage_planner/viewpoint_vis_cloud
+          Topic: /sensor_coverage_planner/lookahead_point_cloud
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: true
+          Value: false
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
@@ -305,6 +260,36 @@ Visualization Manager:
           Topic: /sensor_coverage_planner/local_path
           Unreliable: false
           Value: true
+        - Alpha: 1
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz/PointCloud2
+          Color: 204; 0; 0
+          Color Transformer: FlatColor
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 1
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: ObjectSurfacesToCover
+          Position Transformer: XYZ
+          Queue Size: 10
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.20000000298023224
+          Style: Flat Squares
+          Topic: /sensor_coverage_planner/uncovered_cloud
+          Unreliable: false
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
         - Alpha: 0.4000000059604645
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
@@ -323,7 +308,7 @@ Visualization Manager:
           Max Intensity: 8
           Min Color: 0; 0; 0
           Min Intensity: 0
-          Name: FrontierCloud
+          Name: FrontierSurfacesToCover
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
@@ -337,13 +322,20 @@ Visualization Manager:
           Value: true
         - Alpha: 1
           Class: rviz/PointStamped
-          Color: 98; 240; 231
+          Color: 204; 0; 0
           Enabled: true
           History Length: 1
           Name: Waypoint
           Radius: 1
           Topic: /way_point
           Unreliable: false
+          Value: true
+        - Class: rviz/Axes
+          Enabled: true
+          Length: 4
+          Name: Vehicle
+          Radius: 0.4000000059604645
+          Reference Frame: sensor
           Value: true
         - Alpha: 1
           Autocompute Intensity Bounds: true
@@ -357,7 +349,7 @@ Visualization Manager:
           Color: 255; 255; 255
           Color Transformer: Intensity
           Decay Time: 0
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 1
@@ -374,12 +366,12 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: true
+          Value: false
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
           Color: 25; 255; 0
-          Enabled: true
+          Enabled: false
           Head Diameter: 0.30000001192092896
           Head Length: 0.20000000298023224
           Length: 0.30000001192092896
@@ -397,15 +389,7 @@ Visualization Manager:
           Shaft Length: 0.10000000149011612
           Topic: /path
           Unreliable: false
-          Value: true
-        - Class: rviz/Marker
-          Enabled: true
-          Marker Topic: /sensor_coverage_planner/tare_visualizer/local_planning_horizon
-          Name: LocalPlanningHorizon
-          Namespaces:
-            "": true
-          Queue Size: 100
-          Value: true
+          Value: false
       Enabled: true
       Name: Local
   Enabled: true
@@ -436,35 +420,35 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 81.47267150878906
+      Distance: 95.07386779785156
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -19.653152465820312
-        Y: -5.065511703491211
-        Z: -3.829531488008797e-5
-      Focal Shape Fixed Size: true
+        X: -16.63304328918457
+        Y: 1.5384860038757324
+        Z: 0
+      Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4347964525222778
+      Pitch: 1.5697963237762451
       Target Frame: sensor
       Value: XYOrbit (rviz)
-      Yaw: 3.186488628387451
+      Yaw: 3.1353976726531982
     Saved: ~
 Window Geometry:
   Displays:
-    collapsed: false
+    collapsed: true
   Height: 1412
-  Hide Left Dock: false
+  Hide Left Dock: true
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd000000040000000000000156000004e6fc0200000008fb0000001200530065006c0065006300740069006f006e010000003d000001320000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000175000003ae000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f00000363fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000363000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000a000000003efc0100000002fb0000000800540069006d0065010000000000000a00000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000008a4000004e600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000030400000551fc0200000008fb0000001200530065006c0065006300740069006f006e0000000016000001320000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073000000014e00000419000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f00000551fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000001600000551000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000a000000003efc0100000002fb0000000800540069006d0065000000000000000a00000002eb00fffffffb0000000800540069006d0065010000000000000450000000000000000000000a000000055100000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
   Selection:
-    collapsed: false
+    collapsed: true
   Time:
     collapsed: false
   Tool Properties:
