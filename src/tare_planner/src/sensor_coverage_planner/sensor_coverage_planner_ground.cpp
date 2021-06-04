@@ -139,6 +139,7 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeH
   , exploration_finished_(false)
   , near_home_(false)
   , at_home_(false)
+  , stopped_(false)
   , test_point_update_(false)
   , viewpoint_ind_update_(false)
   , step_(false)
@@ -1226,10 +1227,10 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
       exploration_finished_ = true;
     }
 
-    if (exploration_finished_ && at_home_)
+    if (exploration_finished_ && at_home_ && !stopped_)
     {
       PrintExplorationStatus("Return home completed", false);
-      exit(0);
+      stopped_ = true;
     }
 
     pd_.exploration_path_ = ConcatenateGlobalLocalPath(global_path, local_path);
