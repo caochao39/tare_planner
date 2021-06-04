@@ -1141,8 +1141,10 @@ void SensorCoveragePlanner3D::PrintExplorationStatus(std::string status, bool cl
   {
     printf(cursup);
     printf(cursclean);
+    printf(cursup);
+    printf(cursclean);
   }
-  std::cout << "\033[1;32m" << status << "\033[0m" << std::endl;
+  std::cout << std::endl << "\033[1;32m" << status << "\033[0m" << std::endl;
 }
 
 void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
@@ -1219,14 +1221,14 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
     {
       if (!exploration_finished_)
       {
-        PrintExplorationStatus("Exploration completed, returning home");
+        PrintExplorationStatus("Exploration completed, returning home", false);
       }
       exploration_finished_ = true;
     }
 
     if (exploration_finished_ && at_home_)
     {
-      PrintExplorationStatus("Return home completed");
+      PrintExplorationStatus("Return home completed", false);
       exit(0);
     }
 
