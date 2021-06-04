@@ -116,12 +116,19 @@ private:
 
   pcl::search::KdTree<pcl::PointXYZI>::Ptr kdtree_frontier_cloud_;
 
+  void UpdateCollisionCloud();
+  void UpdateFrontiers();
+
 public:
   PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::string world_frame_id = "map");
   ~PlanningEnv() = default;
   double GetPlannerCloudResolution()
   {
     return pp_.kPlannerCloudDwzLeafSize;
+  }
+  void SetUseFrontier(bool use_frontier)
+  {
+    pp_.kUseFrontier = use_frontier;
   }
   void UpdateRobotPosition(geometry_msgs::Point robot_position)
   {
@@ -190,29 +197,12 @@ public:
         point.g = 0;
         point.b = 0;
       }
-      // for (auto& cloud : pointcloud_manager_->clouds_)
-      // {
-      //   for (auto& point : cloud->points)
-      //   {
-      //     point.r = 255;
-      //   }
-      // }
+
       pointcloud_manager_->UpdateOldCloudPoints();
+      pointcloud_manager_->UpdatePointCloud<PlannerCloudPointType>(*(coverage_cloud_->cloud_));
+      pointcloud_manager_->UpdateCoveredCloudPoints();
 
       planner_cloud_->cloud_->clear();
-      pointcloud_manager_->UpdatePointCloud<PlannerCloudPointType>(*(coverage_cloud_->cloud_));
-      // Update covered
-      // for (int i = 0; i < pointcloud_manager_->clouds_.size(); i++)
-      // {
-      //   for (int j = 0; j < pointcloud_manager_->clouds_[i]->points.size(); j++)
-      //   {
-      //     if (pointcloud_manager_->clouds_[i]->points[j].g > 0)
-      //     {
-      //       pointcloud_manager_->clouds_[i]->points[j].g = 255;
-      //     }
-      //   }
-      // }
-      pointcloud_manager_->UpdateCoveredCloudPoints();
       pointcloud_manager_->GetPointCloud(*(planner_cloud_->cloud_));
       planner_cloud_->Publish();
 
@@ -235,7 +225,6 @@ public:
 
       // Stack together
       keypose_cloud_stack_[keypose_cloud_count_]->clear();
-      // *keypose_cloud_stack_[keypose_cloud_count_] = *cloud;
       *keypose_cloud_stack_[keypose_cloud_count_] = *(coverage_cloud_->cloud_);
       keypose_cloud_count_ = (keypose_cloud_count_ + 1) % pp_.kKeyposeCloudStackNum;
       stacked_cloud_->cloud_->clear();
@@ -248,97 +237,9 @@ public:
                                         pp_.kStackedCloudDwzLeafSize, pp_.kStackedCloudDwzLeafSize);
       stacked_cloud_kdtree_->setInputCloud(stacked_cloud_->cloud_);
 
-      collision_cloud_->clear();
-      for (int i = 0; i < pp_.kKeyposeCloudStackNum; i++)
-      {
-        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
-        pcl::copyPointCloud<PlannerCloudPointType, pcl::PointXYZI>(*keypose_cloud_stack_[i], *cloud_tmp);
-        *(collision_cloud_) += *cloud_tmp;
-      }
-      collision_cloud_downsizer_.Downsize(collision_cloud_, pp_.kCollisionCloudDwzLeafSize,
-                                          pp_.kCollisionCloudDwzLeafSize, pp_.kCollisionCloudDwzLeafSize);
+      UpdateCollisionCloud();
 
-      if (pp_.kUseFrontier)
-      {
-        // misc_utils_ns::Timer get_frontier_timer("get frontier");
-        // get_frontier_timer.Start();
-        // occupancy_grid_->UpdateOccupancy<PCLPointType>(cloud);
-        // frontier_cloud_->cloud_->clear();
-        // occupancy_grid_->RayTrace(robot_position_);
-        // occupancy_grid_->GetFrontierInRange(frontier_cloud_->cloud_, robot_position_);
-        // get_frontier_timer.Stop(true);
-
-        // occupied_cloud_->cloud_->clear();
-        // free_cloud_->cloud_->clear();
-        // unknown_cloud_->cloud_->clear();
-        // occupancy_grid_->GetVisualizationCloudInRange(robot_position_, pp_.kExtractFrontierRange,
-        //                                               occupied_cloud_->cloud_, free_cloud_->cloud_,
-        //                                               unknown_cloud_->cloud_);
-        // vertical_frontier_extractor_.ExtractVerticalSurface<pcl::PointXYZI, pcl::PointXYZI>(
-        //     frontier_cloud_->cloud_, filtered_frontier_cloud_->cloud_);
-
-        // occupied_cloud_->Publish();
-        // free_cloud_->Publish();
-        // unknown_cloud_->Publish();
-        // frontier_cloud_->Publish();
-        // filtered_frontier_cloud_->Publish();
-        if (pp_.kElminateFrontierWithLastKeypose && robot_position_update_)
-        {
-          occupancy_grid_->SetEliminateFrontier(true);
-        }
-        else
-        {
-          occupancy_grid_->SetEliminateFrontier(false);
-        }
-
-        occupancy_grid_->SetEliminateFrontierOrigin(prev_robot_position_);
-        occupancy_grid_->GetFrontierInRange(frontier_cloud_->cloud_, robot_position_);
-        prev_robot_position_ = robot_position_;
-
-        if (!frontier_cloud_->cloud_->points.empty())
-        {
-          vertical_frontier_extractor_.ExtractVerticalSurface<pcl::PointXYZI, pcl::PointXYZI>(
-              frontier_cloud_->cloud_, filtered_frontier_cloud_->cloud_);
-        }
-        // frontier_cloud_->Publish();
-
-        // Cluster frontiers
-        if (!filtered_frontier_cloud_->cloud_->points.empty())
-        {
-          kdtree_frontier_cloud_->setInputCloud(filtered_frontier_cloud_->cloud_);
-          std::vector<pcl::PointIndices> cluster_indices;
-          pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
-          ec.setClusterTolerance(pp_.kFrontierClusterTolerance);
-          ec.setMinClusterSize(1);
-          ec.setMaxClusterSize(10000);
-          ec.setSearchMethod(kdtree_frontier_cloud_);
-          ec.setInputCloud(filtered_frontier_cloud_->cloud_);
-          ec.extract(cluster_indices);
-
-          pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
-          int cluster_count = 0;
-          for (int i = 0; i < cluster_indices.size(); i++)
-          {
-            if (cluster_indices[i].indices.size() < pp_.kFrontierClusterMinSize)
-            {
-              continue;
-            }
-            for (int j = 0; j < cluster_indices[i].indices.size(); j++)
-            {
-              int point_ind = cluster_indices[i].indices[j];
-              filtered_frontier_cloud_->cloud_->points[point_ind].intensity = cluster_count;
-              inliers->indices.push_back(point_ind);
-            }
-            cluster_count++;
-          }
-          pcl::ExtractIndices<pcl::PointXYZI> extract;
-          extract.setInputCloud(filtered_frontier_cloud_->cloud_);
-          extract.setIndices(inliers);
-          extract.setNegative(false);
-          extract.filter(*(filtered_frontier_cloud_->cloud_));
-          filtered_frontier_cloud_->Publish();
-        }
-      }
+      UpdateFrontiers();
     }
   }
   inline void UpdateCoverageBoundary(const geometry_msgs::Polygon& polygon)

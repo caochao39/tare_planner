@@ -187,6 +187,12 @@ void TAREVisualizer::PublishMarkers()
   local_planning_horizon_marker_->Publish();
   if (!global_subspaces_marker_->marker_.points.empty())
   {
+    global_subspaces_marker_->SetAction(visualization_msgs::Marker::ADD);
+    global_subspaces_marker_->Publish();
+  }
+  else
+  {
+    global_subspaces_marker_->SetAction(visualization_msgs::Marker::DELETE);
     global_subspaces_marker_->Publish();
   }
 }

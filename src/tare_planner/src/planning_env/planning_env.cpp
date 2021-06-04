@@ -128,6 +128,82 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
   vertical_frontier_extractor_.SetNeighborThreshold(2);
 }
 
+void PlanningEnv::UpdateCollisionCloud()
+{
+  collision_cloud_->clear();
+  for (int i = 0; i < pp_.kKeyposeCloudStackNum; i++)
+  {
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
+    pcl::copyPointCloud<PlannerCloudPointType, pcl::PointXYZI>(*keypose_cloud_stack_[i], *cloud_tmp);
+    *(collision_cloud_) += *cloud_tmp;
+  }
+  collision_cloud_downsizer_.Downsize(collision_cloud_, pp_.kCollisionCloudDwzLeafSize, pp_.kCollisionCloudDwzLeafSize,
+                                      pp_.kCollisionCloudDwzLeafSize);
+}
+
+void PlanningEnv::UpdateFrontiers()
+{
+  if (pp_.kUseFrontier)
+  {
+    if (pp_.kElminateFrontierWithLastKeypose && robot_position_update_)
+    {
+      occupancy_grid_->SetEliminateFrontier(true);
+    }
+    else
+    {
+      occupancy_grid_->SetEliminateFrontier(false);
+    }
+
+    occupancy_grid_->SetEliminateFrontierOrigin(prev_robot_position_);
+    occupancy_grid_->GetFrontierInRange(frontier_cloud_->cloud_, robot_position_);
+    prev_robot_position_ = robot_position_;
+
+    if (!frontier_cloud_->cloud_->points.empty())
+    {
+      vertical_frontier_extractor_.ExtractVerticalSurface<pcl::PointXYZI, pcl::PointXYZI>(
+          frontier_cloud_->cloud_, filtered_frontier_cloud_->cloud_);
+    }
+    // frontier_cloud_->Publish();
+
+    // Cluster frontiers
+    if (!filtered_frontier_cloud_->cloud_->points.empty())
+    {
+      kdtree_frontier_cloud_->setInputCloud(filtered_frontier_cloud_->cloud_);
+      std::vector<pcl::PointIndices> cluster_indices;
+      pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
+      ec.setClusterTolerance(pp_.kFrontierClusterTolerance);
+      ec.setMinClusterSize(1);
+      ec.setMaxClusterSize(10000);
+      ec.setSearchMethod(kdtree_frontier_cloud_);
+      ec.setInputCloud(filtered_frontier_cloud_->cloud_);
+      ec.extract(cluster_indices);
+
+      pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+      int cluster_count = 0;
+      for (int i = 0; i < cluster_indices.size(); i++)
+      {
+        if (cluster_indices[i].indices.size() < pp_.kFrontierClusterMinSize)
+        {
+          continue;
+        }
+        for (int j = 0; j < cluster_indices[i].indices.size(); j++)
+        {
+          int point_ind = cluster_indices[i].indices[j];
+          filtered_frontier_cloud_->cloud_->points[point_ind].intensity = cluster_count;
+          inliers->indices.push_back(point_ind);
+        }
+        cluster_count++;
+      }
+      pcl::ExtractIndices<pcl::PointXYZI> extract;
+      extract.setInputCloud(filtered_frontier_cloud_->cloud_);
+      extract.setIndices(inliers);
+      extract.setNegative(false);
+      extract.filter(*(filtered_frontier_cloud_->cloud_));
+      filtered_frontier_cloud_->Publish();
+    }
+  }
+}
+
 pcl::PointCloud<pcl::PointXYZI>::Ptr PlanningEnv::GetCollisionCloud(bool inflate, double inflate_size)
 {
   if (inflate && inflate_size > 0)

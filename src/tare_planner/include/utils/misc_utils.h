@@ -332,6 +332,10 @@ public:
   {
     marker_.type = type;
   }
+  void SetAction(visualization_msgs::Marker::_action_type action)
+  {
+    marker_.action = action;
+  }
   void Publish()
   {
     misc_utils_ns::Publish<visualization_msgs::Marker>(marker_pub_, marker_, frame_id_);

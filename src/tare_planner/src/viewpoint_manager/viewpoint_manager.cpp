@@ -974,6 +974,15 @@ void ViewPointManager::ResetViewPoint(int viewpoint_ind, bool use_array_ind)
   int array_ind = GetViewPointArrayInd(viewpoint_ind, use_array_ind);
   viewpoints_[array_ind].Reset();
 }
+
+void ViewPointManager::ResetViewPointCoverage()
+{
+  for (auto& viewpoint : viewpoints_)
+  {
+    viewpoint.ResetCoverage();
+  }
+}
+
 // Collision
 bool ViewPointManager::ViewPointInCollision(int viewpoint_ind, bool use_array_ind)
 {

@@ -22,6 +22,7 @@ kUseLineOfSightLookAheadPoint : false
 kExtendWayPointDistance : 8.0
 kKeyposeCloudDwzFilterLeafSize : 0.2
 kRushHomeDist : 10
+kAtHomeDistThreshold : 0.5
 kTerrainCollisionThreshold : 0.5
 kLookAheadDistance : 8
 kSkipOdometryDistance : 1.5
@@ -30,11 +31,11 @@ kSkipOdometryDistance : 1.5
 kUseFrontier : true
 kFrontierClusterTolerance : 1.0
 kFrontierClusterMinSize : 30
-kOccupancyGridOriginX: -15
+kOccupancyGridOriginX: -25
 kOccupancyGridOriginY: -240 
 kOccupancyGridOriginZ: -1 
-kOccupancyGridSizeX : 250
-kOccupancyGridSizeY : 350
+kOccupancyGridSizeX : 300
+kOccupancyGridSizeY : 400
 kOccupancyGridSizeZ : 10
 kOccupancyGridResolutionX : 0.3
 kOccupancyGridResolutionY : 0.3

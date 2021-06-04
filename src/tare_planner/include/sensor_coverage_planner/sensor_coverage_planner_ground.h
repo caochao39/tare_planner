@@ -49,6 +49,10 @@
 #include "local_coverage_planner/local_coverage_planner.h"
 #include "tare_visualizer/tare_visualizer.h"
 
+#define cursup "\033[A"
+#define cursclean "\033[2K"
+#define curshome "\033[0;0H"
+
 namespace sensor_coverage_planner_3d_ns
 {
 const std::string kWorldFrameID = "map";
@@ -86,6 +90,7 @@ struct PlannerParameters
   // Double
   double kKeyposeCloudDwzFilterLeafSize;
   double kRushHomeDist;
+  double kAtHomeDistThreshold;
   double kTerrainCollisionThreshold;
   double kLookAheadDistance;
   double kExtendWayPointDistance;
@@ -153,6 +158,7 @@ private:
   bool start_exploration_;
   bool exploration_finished_;
   bool near_home_;
+  bool at_home_;
   bool test_point_update_;
   bool viewpoint_ind_update_;
   bool step_;
@@ -227,6 +233,8 @@ private:
   void PublishWaypoint();
   bool GetLookAheadPoint(const exploration_path_ns::ExplorationPath& local_path,
                          const exploration_path_ns::ExplorationPath& global_path, Eigen::Vector3d& lookahead_point);
+
+  void PrintExplorationStatus(std::string status, bool clear_last_line = true);
 };
 
 }  // namespace sensor_coverage_planner_3d_ns

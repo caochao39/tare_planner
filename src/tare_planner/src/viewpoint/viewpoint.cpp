@@ -52,4 +52,11 @@ void ViewPoint::Reset()
   collision_frame_count_ = 0;
   terrain_height_ = 0.0;
 }
+
+void ViewPoint::ResetCoverage()
+{
+  lidar_model_.ResetCoverage();
+  covered_point_list_.clear();
+  covered_frontier_point_list_.clear();
+}
 }  // namespace viewpoint_ns

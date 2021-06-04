@@ -250,6 +250,7 @@ public:
 
   // Viewpoint management
   void ResetViewPoint(int viewpoint_ind, bool use_array_ind = false);
+  void ResetViewPointCoverage();
 
   bool ViewPointInCollision(int viewpoint_ind, bool use_array_ind = false);
   void SetViewPointCollision(int viewpoint_ind, bool in_collision, bool use_array_ind = false);

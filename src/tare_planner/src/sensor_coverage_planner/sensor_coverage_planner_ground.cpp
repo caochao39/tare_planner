@@ -48,6 +48,7 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   // Double
   kKeyposeCloudDwzFilterLeafSize = misc_utils_ns::getParam<double>(nh, "kKeyposeCloudDwzFilterLeafSize", 0.2);
   kRushHomeDist = misc_utils_ns::getParam<double>(nh, "kRushHomeDist", 10.0);
+  kAtHomeDistThreshold = misc_utils_ns::getParam<double>(nh, "kAtHomeDistThreshold", 0.5);
   kTerrainCollisionThreshold = misc_utils_ns::getParam<double>(nh, "kTerrainCollisionThreshold", 0.5);
   kLookAheadDistance = misc_utils_ns::getParam<double>(nh, "kLookAheadDistance", 5.0);
   kExtendWayPointDistance = misc_utils_ns::getParam<double>(nh, "kExtendWayPointDistance", 8.0);
@@ -137,6 +138,7 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeH
   , start_exploration_(false)
   , exploration_finished_(false)
   , near_home_(false)
+  , at_home_(false)
   , test_point_update_(false)
   , viewpoint_ind_update_(false)
   , step_(false)
@@ -144,7 +146,7 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeH
   , keypose_count_(0)
 {
   initialize(nh, nh_p);
-  ROS_INFO("Launched TARE planner");
+  PrintExplorationStatus("Exploration Started", false);
 }
 
 bool SensorCoveragePlanner3D::initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
@@ -530,6 +532,10 @@ void SensorCoveragePlanner3D::UpdateGlobalRepresentation()
   }
 
   pd_.planning_env_->UpdateRobotPosition(pd_.robot_position_);
+  if (exploration_finished_)
+  {
+    pd_.planning_env_->SetUseFrontier(false);
+  }
   pd_.planning_env_->UpdateKeyposeCloud<PlannerCloudPointType>(pd_.keypose_cloud_->cloud_);
 
   int closest_node_ind = pd_.keypose_graph_->GetClosestNodeInd(pd_.robot_position_);
@@ -1129,11 +1135,21 @@ void SensorCoveragePlanner3D::PublishExplorationState()
   exploration_finish_pub_.publish(exploration_finished_msg);
 }
 
+void SensorCoveragePlanner3D::PrintExplorationStatus(std::string status, bool clear_last_line)
+{
+  if (clear_last_line)
+  {
+    printf(cursup);
+    printf(cursclean);
+  }
+  std::cout << "\033[1;32m" << status << "\033[0m" << std::endl;
+}
+
 void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
 {
   if (!pp_.kAutoStart && !start_exploration_)
   {
-    std::cout << "waiting for start signal" << std::endl;
+    ROS_INFO("Waiting for start signal");
     return;
   }
   Timer overall_processing_timer("overall processing");
@@ -1171,11 +1187,17 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
 
     UpdateKeyposeGraph();
 
-    UpdateViewPointCoverage();
-
     int uncovered_point_num = 0;
     int uncovered_frontier_point_num = 0;
-    UpdateCoveredAreas(uncovered_point_num, uncovered_frontier_point_num);
+    if (!exploration_finished_)
+    {
+      UpdateViewPointCoverage();
+      UpdateCoveredAreas(uncovered_point_num, uncovered_frontier_point_num);
+    }
+    else
+    {
+      pd_.viewpoint_manager_->ResetViewPointCoverage();
+    }
 
     update_representation_timer.Stop(false);
     update_representation_runtime_ += update_representation_timer.GetDuration("ms");
@@ -1189,13 +1211,23 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
     exploration_path_ns::ExplorationPath local_path;
     LocalPlanning(uncovered_point_num, uncovered_frontier_point_num, global_path, local_path);
 
-    exploration_finished_ = false;
     near_home_ = GetRobotToHomeDistance() < pp_.kRushHomeDist;
+    at_home_ = GetRobotToHomeDistance() < pp_.kAtHomeDistThreshold;
 
     if (pd_.grid_world_->IsReturningHome() && pd_.local_coverage_planner_->IsLocalCoverageComplete() &&
         (ros::Time::now() - start_time_).toSec() > 5)
     {
+      if (!exploration_finished_)
+      {
+        PrintExplorationStatus("Exploration completed, returning home");
+      }
       exploration_finished_ = true;
+    }
+
+    if (exploration_finished_ && at_home_)
+    {
+      PrintExplorationStatus("Return home completed");
+      exit(0);
     }
 
     pd_.exploration_path_ = ConcatenateGlobalLocalPath(global_path, local_path);

@@ -58,11 +58,7 @@ public:
   {
     return lidar_model_.getPosition();
   }
-  void ResetCoverage()
-  {
-    lidar_model_.ResetCoverage();
-  }
-
+  void ResetCoverage();
   void Reset();
 
   void SetInCollision(bool in_collision)
