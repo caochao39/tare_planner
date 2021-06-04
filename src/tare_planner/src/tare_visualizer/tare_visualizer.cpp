@@ -61,6 +61,7 @@ bool TAREVisualizer::ReadParameters(ros::NodeHandle& nh)
   kLocalPlanningHorizonSizeX = viewpoint_num_x * viewpoint_resolution_x;
   kLocalPlanningHorizonSizeY = viewpoint_num_y * viewpoint_resolution_y;
   kLocalPlanningHorizonSizeZ = misc_utils_ns::getParam<double>(nh, "kLocalPlanningHorizonHeight", 3.0);
+  return true;
 }
 
 void TAREVisualizer::InitializeMarkers()
