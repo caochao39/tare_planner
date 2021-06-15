@@ -374,7 +374,6 @@ void SensorCoveragePlanner3D::SendInitialWaypoint()
   waypoint.point.y = pd_.robot_position_.y + dy;
   waypoint.point.z = pd_.robot_position_.z;
   waypoint_pub_.publish(waypoint);
-  std::cout << "sending initial waypoints" << std::endl;
 }
 
 void SensorCoveragePlanner3D::UpdateKeyposeGraph()
@@ -716,7 +715,6 @@ exploration_path_ns::ExplorationPath SensorCoveragePlanner3D::ConcatenateGlobalL
              local_path.nodes_.back().type_ == exploration_path_ns::NodeType::LOCAL_PATH_START)
     {
       full_path = local_path;
-      std::cout << "Reversing local path" << std::endl;
       full_path.Reverse();
     }
     else if (local_path.nodes_.front().type_ == exploration_path_ns::NodeType::LOCAL_PATH_START &&
