@@ -45,8 +45,8 @@ kExtractFrontierRangeY : 30
 kExtractFrontierRangeZ : 2
 kElminateFrontierWithLastKeypose : false 
 
-kStackedCloudDwzLeafSize : 0.3
-kPlannerCloudDwzLeafSize : 0.4
+kStackedCloudDwzLeafSize : 0.5
+kPlannerCloudDwzLeafSize : 0.5
 kCollisionCloudDwzLeafSize : 0.2
 kCollisionCheckRadius : 0.4
 kCollisionCheckPointNumThr : 1
@@ -70,7 +70,7 @@ viewpoint_manager/rollover_step_size_z : 8
 viewpoint_manager/resol_x : 1.2
 viewpoint_manager/resol_y : 1.2
 viewpoint_manager/resol_z : 1.2
-kCollisionCheckTerrainThr : 0.25
+kCollisionCheckTerrainThr : 0.25 # TODO: For checking connectivity, should change name
 kViewPointZMax : 25 
 kViewPointZMin : 0 
 kGreedyViewPointSampleRange : 3
@@ -100,8 +100,8 @@ kGridWorldCellSize : 9.6
 kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
 kMinAddPointNumSmall : 60 
-kMinAddPointNumBig : 80
-kMinAddFrontierPointNum : 50
+kMinAddPointNumBig : 80 
+kMinAddFrontierPointNum : 80
 kCellExploringToCoveredThr : 1
 kCellCoveredToExploringThr: 10
 kCellExploringToAlmostCoveredThr: 10 
