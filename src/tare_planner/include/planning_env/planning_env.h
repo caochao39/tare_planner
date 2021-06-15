@@ -1,9 +1,14 @@
-//
-// Created by caochao on 06/04/20.
-//
-
-#ifndef PLANNING_ENV_H
-#define PLANNING_ENV_H
+/**
+ * @file planning_env.h
+ * @author Chao Cao (ccao1@andrew.cmu.edu)
+ * @brief Class that manages the world representation using point clouds
+ * @version 0.1
+ * @date 2020-06-04
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+#pragma once
 
 #include <cmath>
 #include <vector>
@@ -76,59 +81,16 @@ struct planning_env_ns::PlanningEnvParameters
 
 class planning_env_ns::PlanningEnv
 {
-private:
-  PlanningEnvParameters pp_;
-
-  std::vector<typename PlannerCloudType::Ptr> keypose_cloud_stack_;
-  int keypose_cloud_count_;
-  Eigen::Vector3d robot_position_;
-  Eigen::Vector3d prev_robot_position_;
-  bool robot_position_update_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> stacked_cloud_;
-  pcl::KdTreeFLANN<PlannerCloudPointType>::Ptr stacked_cloud_kdtree_;
-  pointcloud_utils_ns::PointCloudDownsizer<PlannerCloudPointType> stacked_cloud_downsizer_;
-  pointcloud_utils_ns::PointCloudDownsizer<pcl::PointXYZI> collision_cloud_downsizer_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> coverage_cloud_;
-  pointcloud_utils_ns::VerticalSurfaceExtractor vertical_surface_extractor_;
-  pointcloud_utils_ns::VerticalSurfaceExtractor vertical_frontier_extractor_;
-
-  pcl::PointCloud<pcl::PointXYZI>::Ptr collision_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> diff_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> terrain_cloud_;
-
-  geometry_msgs::Polygon coverage_boundary_;
-
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> planner_cloud_;
-  std::unique_ptr<pointcloud_manager_ns::PointCloudManager> pointcloud_manager_;
-
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> squeezed_planner_cloud_;
-  pcl::KdTreeFLANN<PlannerCloudPointType>::Ptr squeezed_planner_cloud_kdtree_;
-
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> uncovered_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> uncovered_frontier_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> frontier_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> filtered_frontier_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> occupied_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> free_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> unknown_cloud_;
-
-  std::unique_ptr<occupancy_grid_ns::OccupancyGrid> occupancy_grid_;
-
-  pcl::search::KdTree<pcl::PointXYZI>::Ptr kdtree_frontier_cloud_;
-
-  void UpdateCollisionCloud();
-  void UpdateFrontiers();
-
 public:
   PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::string world_frame_id = "map");
   ~PlanningEnv() = default;
   double GetPlannerCloudResolution()
   {
-    return pp_.kPlannerCloudDwzLeafSize;
+    return parameters_.kPlannerCloudDwzLeafSize;
   }
   void SetUseFrontier(bool use_frontier)
   {
-    pp_.kUseFrontier = use_frontier;
+    parameters_.kUseFrontier = use_frontier;
   }
   void UpdateRobotPosition(geometry_msgs::Point robot_position)
   {
@@ -152,14 +114,14 @@ public:
     }
     else
     {
-      if (pp_.kUseFrontier)
+      if (parameters_.kUseFrontier)
       {
         occupancy_grid_->UpdateOccupancy<PCLPointType>(cloud);
         occupancy_grid_->RayTrace(robot_position_);
         occupied_cloud_->cloud_->clear();
         free_cloud_->cloud_->clear();
         unknown_cloud_->cloud_->clear();
-        occupancy_grid_->GetVisualizationCloudInRange(robot_position_, pp_.kExtractFrontierRange,
+        occupancy_grid_->GetVisualizationCloudInRange(robot_position_, parameters_.kExtractFrontierRange,
                                                       occupied_cloud_->cloud_, free_cloud_->cloud_,
                                                       unknown_cloud_->cloud_);
 
@@ -211,8 +173,8 @@ public:
         point.r = 255;
       }
       *(stacked_cloud_->cloud_) += *(coverage_cloud_->cloud_);
-      stacked_cloud_downsizer_.Downsize(stacked_cloud_->cloud_, pp_.kStackedCloudDwzLeafSize,
-                                        pp_.kStackedCloudDwzLeafSize, pp_.kStackedCloudDwzLeafSize);
+      stacked_cloud_downsizer_.Downsize(stacked_cloud_->cloud_, parameters_.kStackedCloudDwzLeafSize,
+                                        parameters_.kStackedCloudDwzLeafSize, parameters_.kStackedCloudDwzLeafSize);
       for (const auto& point : stacked_cloud_->cloud_->points)
       {
         if (point.r < 40)  // TODO: computed from the keypose cloud resolution and stacked cloud resolution
@@ -226,15 +188,15 @@ public:
       // Stack together
       keypose_cloud_stack_[keypose_cloud_count_]->clear();
       *keypose_cloud_stack_[keypose_cloud_count_] = *(coverage_cloud_->cloud_);
-      keypose_cloud_count_ = (keypose_cloud_count_ + 1) % pp_.kKeyposeCloudStackNum;
+      keypose_cloud_count_ = (keypose_cloud_count_ + 1) % parameters_.kKeyposeCloudStackNum;
       stacked_cloud_->cloud_->clear();
-      for (int i = 0; i < pp_.kKeyposeCloudStackNum; i++)
+      for (int i = 0; i < parameters_.kKeyposeCloudStackNum; i++)
       {
         *(stacked_cloud_->cloud_) += *keypose_cloud_stack_[i];
       }
 
-      stacked_cloud_downsizer_.Downsize(stacked_cloud_->cloud_, pp_.kStackedCloudDwzLeafSize,
-                                        pp_.kStackedCloudDwzLeafSize, pp_.kStackedCloudDwzLeafSize);
+      stacked_cloud_downsizer_.Downsize(stacked_cloud_->cloud_, parameters_.kStackedCloudDwzLeafSize,
+                                        parameters_.kStackedCloudDwzLeafSize, parameters_.kStackedCloudDwzLeafSize);
       stacked_cloud_kdtree_->setInputCloud(stacked_cloud_->cloud_);
 
       UpdateCollisionCloud();
@@ -255,7 +217,7 @@ public:
       geo_point.x = point.x;
       geo_point.y = point.y;
       geo_point.z = point.z;
-      if (point.z >= pp_.kCoverageZMin && point.z <= pp_.kCoverageZMax &&
+      if (point.z >= parameters_.kCoverageZMin && point.z <= parameters_.kCoverageZMax &&
           misc_utils_ns::PointInPolygon(geo_point, coverage_boundary_))
       {
         PlannerCloudPointType coverage_cloud_point;
@@ -266,7 +228,10 @@ public:
       }
     }
   }
-  pcl::PointCloud<pcl::PointXYZI>::Ptr GetCollisionCloud(bool inflate = false, double inflate_size = 0.0);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr GetCollisionCloud()
+  {
+    return collision_cloud_;
+  }
   pcl::PointCloud<PlannerCloudPointType>::Ptr GetStackedCloud()
   {
     return stacked_cloud_->cloud_;
@@ -293,6 +258,47 @@ public:
   void PublishStackedCloud();
   void PublishUncoveredCloud();
   void PublishUncoveredFrontierCloud();
-};
 
-#endif  // PLANNING_ENV_H
+private:
+  PlanningEnvParameters parameters_;
+
+  std::vector<typename PlannerCloudType::Ptr> keypose_cloud_stack_;
+  int keypose_cloud_count_;
+  Eigen::Vector3d robot_position_;
+  Eigen::Vector3d prev_robot_position_;
+  bool robot_position_update_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> stacked_cloud_;
+  pcl::KdTreeFLANN<PlannerCloudPointType>::Ptr stacked_cloud_kdtree_;
+  pointcloud_utils_ns::PointCloudDownsizer<PlannerCloudPointType> stacked_cloud_downsizer_;
+  pointcloud_utils_ns::PointCloudDownsizer<pcl::PointXYZI> collision_cloud_downsizer_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> coverage_cloud_;
+  pointcloud_utils_ns::VerticalSurfaceExtractor vertical_surface_extractor_;
+  pointcloud_utils_ns::VerticalSurfaceExtractor vertical_frontier_extractor_;
+
+  pcl::PointCloud<pcl::PointXYZI>::Ptr collision_cloud_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> diff_cloud_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> terrain_cloud_;
+
+  geometry_msgs::Polygon coverage_boundary_;
+
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> planner_cloud_;
+  std::unique_ptr<pointcloud_manager_ns::PointCloudManager> pointcloud_manager_;
+
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> squeezed_planner_cloud_;
+  pcl::KdTreeFLANN<PlannerCloudPointType>::Ptr squeezed_planner_cloud_kdtree_;
+
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> uncovered_cloud_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> uncovered_frontier_cloud_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> frontier_cloud_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> filtered_frontier_cloud_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> occupied_cloud_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> free_cloud_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> unknown_cloud_;
+
+  std::unique_ptr<occupancy_grid_ns::OccupancyGrid> occupancy_grid_;
+
+  pcl::search::KdTree<pcl::PointXYZI>::Ptr kdtree_frontier_cloud_;
+
+  void UpdateCollisionCloud();
+  void UpdateFrontiers();
+};

@@ -1,6 +1,13 @@
-//
-// Created by caochao on 06/03/20.
-//
+/**
+ * @file planning_env.cpp
+ * @author Chao Cao (ccao1@andrew.cmu.edu)
+ * @brief Class that manages the world representation using point clouds
+ * @version 0.1
+ * @date 2020-06-03
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
 
 #include <planning_env/planning_env.h>
 #include <viewpoint_manager/viewpoint_manager.h>
@@ -50,8 +57,8 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
   , vertical_frontier_extractor_()
   , robot_position_update_(false)
 {
-  pp_.ReadParameters(nh_private);
-  keypose_cloud_stack_.resize(pp_.kKeyposeCloudStackNum);
+  parameters_.ReadParameters(nh_private);
+  keypose_cloud_stack_.resize(parameters_.kKeyposeCloudStackNum);
   for (int i = 0; i < keypose_cloud_stack_.size(); i++)
   {
     keypose_cloud_stack_[i].reset(new pcl::PointCloud<PlannerCloudPointType>());
@@ -72,9 +79,9 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
   planner_cloud_ =
       std::make_unique<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>>(nh, "planner_cloud", world_frame_id);
   pointcloud_manager_ = std::make_unique<pointcloud_manager_ns::PointCloudManager>(
-      pp_.kPointCloudRowNum, pp_.kPointCloudColNum, pp_.kMaxCellPointNum, pp_.kPointCloudCellSize,
-      pp_.kPointCloudManagerNeighborCellNum);
-  pointcloud_manager_->SetCloudDwzFilterLeafSize() = pp_.kPlannerCloudDwzLeafSize;
+      parameters_.kPointCloudRowNum, parameters_.kPointCloudColNum, parameters_.kMaxCellPointNum,
+      parameters_.kPointCloudCellSize, parameters_.kPointCloudManagerNeighborCellNum);
+  pointcloud_manager_->SetCloudDwzFilterLeafSize() = parameters_.kPlannerCloudDwzLeafSize;
 
   squeezed_planner_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>>(
       nh, "squeezed_planner_cloud", world_frame_id);
@@ -94,32 +101,27 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
   free_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "free_cloud", world_frame_id);
   unknown_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "unknown_cloud", world_frame_id);
 
-  occupancy_grid_ = std::make_unique<occupancy_grid_ns::OccupancyGrid>(pp_.kOccupancyGridOrigin, pp_.kOccupancyGridSize,
-                                                                       pp_.kOccupancyGridResolution);
-  // std::cout << "Initialized occupancy grid with:" << std::endl;
-  // std::cout << "origin: " << pp_.kOccupancyGridOrigin.transpose() << std::endl;
-  // std::cout << "size: " << pp_.kOccupancyGridSize.transpose() << std::endl;
-  // std::cout << "resolution: " << pp_.kOccupancyGridResolution.transpose() << std::endl;
-  // std::cout << "eliminate frontier with last keypose: " << pp_.kElminateFrontierWithLastKeypose << std::endl;
+  occupancy_grid_ = std::make_unique<occupancy_grid_ns::OccupancyGrid>(
+      parameters_.kOccupancyGridOrigin, parameters_.kOccupancyGridSize, parameters_.kOccupancyGridResolution);
 
   kdtree_frontier_cloud_ = pcl::search::KdTree<pcl::PointXYZI>::Ptr(new pcl::search::KdTree<pcl::PointXYZI>);
 
   // TODO: Temporary
-  if (pp_.kUseFrontier)
+  if (parameters_.kUseFrontier)
   {
-    occupancy_grid_->SetExtractFrontierRange(pp_.kExtractFrontierRange);
+    occupancy_grid_->SetExtractFrontierRange(parameters_.kExtractFrontierRange);
   }
 
   // Todo: parameterize
   vertical_surface_extractor_.SetRadiusThreshold(0.2);
   vertical_surface_extractor_.SetZDiffMax(2.0);
-  vertical_surface_extractor_.SetZDiffMin(pp_.kStackedCloudDwzLeafSize);
+  vertical_surface_extractor_.SetZDiffMin(parameters_.kStackedCloudDwzLeafSize);
   vertical_frontier_extractor_.SetNeighborThreshold(2);
 
   double vertical_frontier_neighbor_search_radius =
-      std::max(pp_.kOccupancyGridResolution.x(), pp_.kOccupancyGridResolution.y());
+      std::max(parameters_.kOccupancyGridResolution.x(), parameters_.kOccupancyGridResolution.y());
   vertical_frontier_neighbor_search_radius =
-      std::max(vertical_frontier_neighbor_search_radius, pp_.kOccupancyGridResolution.z());
+      std::max(vertical_frontier_neighbor_search_radius, parameters_.kOccupancyGridResolution.z());
   vertical_frontier_extractor_.SetRadiusThreshold(vertical_frontier_neighbor_search_radius);
   double z_diff_max = vertical_frontier_neighbor_search_radius * 5;
   double z_diff_min = vertical_frontier_neighbor_search_radius;
@@ -131,21 +133,21 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
 void PlanningEnv::UpdateCollisionCloud()
 {
   collision_cloud_->clear();
-  for (int i = 0; i < pp_.kKeyposeCloudStackNum; i++)
+  for (int i = 0; i < parameters_.kKeyposeCloudStackNum; i++)
   {
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
     pcl::copyPointCloud<PlannerCloudPointType, pcl::PointXYZI>(*keypose_cloud_stack_[i], *cloud_tmp);
     *(collision_cloud_) += *cloud_tmp;
   }
-  collision_cloud_downsizer_.Downsize(collision_cloud_, pp_.kCollisionCloudDwzLeafSize, pp_.kCollisionCloudDwzLeafSize,
-                                      pp_.kCollisionCloudDwzLeafSize);
+  collision_cloud_downsizer_.Downsize(collision_cloud_, parameters_.kCollisionCloudDwzLeafSize,
+                                      parameters_.kCollisionCloudDwzLeafSize, parameters_.kCollisionCloudDwzLeafSize);
 }
 
 void PlanningEnv::UpdateFrontiers()
 {
-  if (pp_.kUseFrontier)
+  if (parameters_.kUseFrontier)
   {
-    if (pp_.kElminateFrontierWithLastKeypose && robot_position_update_)
+    if (parameters_.kElminateFrontierWithLastKeypose && robot_position_update_)
     {
       occupancy_grid_->SetEliminateFrontier(true);
     }
@@ -163,7 +165,6 @@ void PlanningEnv::UpdateFrontiers()
       vertical_frontier_extractor_.ExtractVerticalSurface<pcl::PointXYZI, pcl::PointXYZI>(
           frontier_cloud_->cloud_, filtered_frontier_cloud_->cloud_);
     }
-    // frontier_cloud_->Publish();
 
     // Cluster frontiers
     if (!filtered_frontier_cloud_->cloud_->points.empty())
@@ -171,7 +172,7 @@ void PlanningEnv::UpdateFrontiers()
       kdtree_frontier_cloud_->setInputCloud(filtered_frontier_cloud_->cloud_);
       std::vector<pcl::PointIndices> cluster_indices;
       pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
-      ec.setClusterTolerance(pp_.kFrontierClusterTolerance);
+      ec.setClusterTolerance(parameters_.kFrontierClusterTolerance);
       ec.setMinClusterSize(1);
       ec.setMaxClusterSize(10000);
       ec.setSearchMethod(kdtree_frontier_cloud_);
@@ -182,7 +183,7 @@ void PlanningEnv::UpdateFrontiers()
       int cluster_count = 0;
       for (int i = 0; i < cluster_indices.size(); i++)
       {
-        if (cluster_indices[i].indices.size() < pp_.kFrontierClusterMinSize)
+        if (cluster_indices[i].indices.size() < parameters_.kFrontierClusterMinSize)
         {
           continue;
         }
@@ -202,54 +203,6 @@ void PlanningEnv::UpdateFrontiers()
       filtered_frontier_cloud_->Publish();
     }
   }
-}
-
-pcl::PointCloud<pcl::PointXYZI>::Ptr PlanningEnv::GetCollisionCloud(bool inflate, double inflate_size)
-{
-  if (inflate && inflate_size > 0)
-  {
-    collision_cloud_->clear();
-    // int infn = ceil(inflate_size / pp_.kStackedCloudDwzLeafSize);
-    int infn = 1;
-    double inflate_resol = inflate_size / infn;
-    std::cout << "infn: " << infn << std::endl;
-    for (int i = 0; i < stacked_cloud_->cloud_->points.size(); i++)
-    {
-      for (int x = -infn; x <= infn; x++)
-      {
-        for (int y = -infn; y <= infn; y++)
-        {
-          for (int z = -infn; z <= infn; z++)
-          {
-            pcl::PointXYZI point;
-            point.x = stacked_cloud_->cloud_->points[i].x + x * inflate_resol;
-            point.y = stacked_cloud_->cloud_->points[i].y + y * inflate_resol;
-            point.z = stacked_cloud_->cloud_->points[i].z + z * inflate_resol;
-            if (x == 0 && y == 0 && z == 0)
-            {
-              point.intensity = 0.0;
-            }
-            else
-            {
-              point.intensity = 1.0;
-            }
-            collision_cloud_->points.push_back(point);
-          }
-        }
-      }
-    }
-    // Downsize
-    std::cout << "stacked cloud size: " << stacked_cloud_->cloud_->points.size() << std::endl;
-    std::cout << "inflated collision cloud size: " << collision_cloud_->points.size() << std::endl;
-    collision_cloud_downsizer_.Downsize(collision_cloud_, pp_.kStackedCloudDwzLeafSize, pp_.kStackedCloudDwzLeafSize,
-                                        pp_.kStackedCloudDwzLeafSize);
-    std::cout << "downsized collision cloud size: " << collision_cloud_->points.size() << std::endl;
-  }
-  else
-  {
-    // pcl::copyPointCloud(*(stacked_cloud_->cloud_), *collision_cloud_);
-  }
-  return collision_cloud_;
 }
 
 void PlanningEnv::UpdateTerrainCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud)
@@ -277,8 +230,9 @@ bool PlanningEnv::InCollision(double x, double y, double z) const
   check_point.z = z;
   std::vector<int> neighbor_indices;
   std::vector<float> neighbor_sqdist;
-  stacked_cloud_kdtree_->radiusSearch(check_point, pp_.kCollisionCheckRadius, neighbor_indices, neighbor_sqdist);
-  if (neighbor_indices.size() > pp_.kCollisionCheckPointNumThr)
+  stacked_cloud_kdtree_->radiusSearch(check_point, parameters_.kCollisionCheckRadius, neighbor_indices,
+                                      neighbor_sqdist);
+  if (neighbor_indices.size() > parameters_.kCollisionCheckPointNumThr)
   {
     return true;
   }
@@ -296,25 +250,21 @@ void PlanningEnv::UpdateCoveredArea(const lidar_model_ns::LiDARModel& robot_view
     std::cout << "Planning cloud empty, cannot update covered area" << std::endl;
     return;
   }
-  // misc_utils_ns::Timer timer1("get covered area");
-  // timer1.Start();
   geometry_msgs::Point robot_position = robot_viewpoint.getPosition();
   double sensor_range = viewpoint_manager->GetSensorRange();
   double coverage_occlusion_thr = viewpoint_manager->GetCoverageOcclusionThr();
   double coverage_dilation_radius = viewpoint_manager->GetCoverageDilationRadius();
   std::vector<int> covered_point_indices;
-  // double vertical_fov_ratio = tan(M_PI / 12);
   double vertical_fov_ratio = 0.3;  // bigger fov than viewpoints
   double diff_z_max = sensor_range * vertical_fov_ratio;
-  double xy_dist_threshold = 3 * (pp_.kPlannerCloudDwzLeafSize / 2) / 0.3;
-  double z_diff_threshold = 3 * pp_.kPlannerCloudDwzLeafSize;
+  double xy_dist_threshold = 3 * (parameters_.kPlannerCloudDwzLeafSize / 2) / 0.3;
+  double z_diff_threshold = 3 * parameters_.kPlannerCloudDwzLeafSize;
   for (int i = 0; i < planner_cloud_->cloud_->points.size(); i++)
   {
     PlannerCloudPointType point = planner_cloud_->cloud_->points[i];
     if (point.g > 0)
     {
       planner_cloud_->cloud_->points[i].g = 255;
-      // covered_point_indices.push_back(i);
       continue;
     }
     if (std::abs(point.z - robot_position.z) < diff_z_max)
@@ -345,16 +295,13 @@ void PlanningEnv::UpdateCoveredArea(const lidar_model_ns::LiDARModel& robot_view
       }
     }
   }
-  // timer1.Stop(true);
 
   // Dilate the covered area
-  // misc_utils_ns::Timer timer2("dilate covered area");
-  // timer2.Start();
   squeezed_planner_cloud_->cloud_->clear();
   for (const auto& point : planner_cloud_->cloud_->points)
   {
     PlannerCloudPointType squeezed_point = point;
-    squeezed_point.z = point.z / pp_.kCoverCloudZSqueezeRatio;
+    squeezed_point.z = point.z / parameters_.kCoverCloudZSqueezeRatio;
     squeezed_planner_cloud_->cloud_->points.push_back(squeezed_point);
   }
   squeezed_planner_cloud_kdtree_->setInputCloud(squeezed_planner_cloud_->cloud_);
@@ -374,12 +321,7 @@ void PlanningEnv::UpdateCoveredArea(const lidar_model_ns::LiDARModel& robot_view
       }
     }
   }
-  // timer2.Stop(true);
 
-  // Update covered pointcloud in pointcloud_manager_
-  // misc_utils_ns::Timer timer3("feedback pointcloud_manager");
-  // timer3.Start();
-  // int cloud_num = pointcloud_manager_->clouds_.size();
   for (int i = 0; i < planner_cloud_->cloud_->points.size(); i++)
   {
     PlannerCloudPointType point = planner_cloud_->cloud_->points[i];
@@ -389,19 +331,13 @@ void PlanningEnv::UpdateCoveredArea(const lidar_model_ns::LiDARModel& robot_view
       int cloud_point_idx = 0;
       pointcloud_manager_->GetCloudPointIndex(i, cloud_idx, cloud_point_idx);
       pointcloud_manager_->UpdateCoveredCloudPoints(cloud_idx, cloud_point_idx);
-      // MY_ASSERT(cloud_idx >= 0 && cloud_idx < cloud_num && cloud_point_idx >= 0 &&
-      //           cloud_point_idx < pointcloud_manager_->clouds_[cloud_idx]->points.size());
-      // pointcloud_manager_->clouds_[cloud_idx]->points[cloud_point_idx].g = 255;
     }
   }
-  // timer3.Stop(true);
 }
 
 void PlanningEnv::GetUncoveredArea(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
                                    int& uncovered_point_num, int& uncovered_frontier_point_num)
 {
-  // misc_utils_ns::Timer timer1("get uncovered area");
-  // timer1.Start();
   // Clear viewpoint covered point list
   for (const auto& viewpoint_ind : viewpoint_manager->candidate_indices_)
   {
@@ -413,7 +349,6 @@ void PlanningEnv::GetUncoveredArea(const std::shared_ptr<viewpoint_manager_ns::V
   uncovered_frontier_cloud_->cloud_->clear();
   uncovered_point_num = 0;
   uncovered_frontier_point_num = 0;
-  // std::cout << "planner cloud size: " << planner_cloud_->cloud_->points.size() << std::endl;
   for (int i = 0; i < planner_cloud_->cloud_->points.size(); i++)
   {
     PlannerCloudPointType point = planner_cloud_->cloud_->points[i];
@@ -446,7 +381,7 @@ void PlanningEnv::GetUncoveredArea(const std::shared_ptr<viewpoint_manager_ns::V
   }
 
   // Check uncovered frontiers
-  if (pp_.kUseFrontier)
+  if (parameters_.kUseFrontier)
   {
     for (int i = 0; i < filtered_frontier_cloud_->cloud_->points.size(); i++)
     {
@@ -475,9 +410,6 @@ void PlanningEnv::GetUncoveredArea(const std::shared_ptr<viewpoint_manager_ns::V
       }
     }
   }
-
-  // timer1.Stop(true);
-  // std::cout << "uncovered_point_num: " << uncovered_point_num << " unvisited viewpoint num: " < < < < std::endl;
 }
 void PlanningEnv::PublishStackedCloud()
 {
