@@ -159,6 +159,7 @@ private:
   bool exploration_finished_;
   bool near_home_;
   bool at_home_;
+  bool stopped_;
   bool test_point_update_;
   bool viewpoint_ind_update_;
   bool step_;
