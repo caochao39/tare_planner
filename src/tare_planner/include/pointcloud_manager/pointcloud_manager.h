@@ -69,6 +69,11 @@ public:
 
   void GetPointCloud(PCLCloudType& cloud_out);
   void GetMarker(visualization_msgs::Marker& marker);
+  void GetVisualizationPointCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr vis_cloud);
+  Eigen::Vector3d GetNeighborCellsOrigin()
+  {
+    return neighbor_cells_origin_;
+  }
   geometry_msgs::Point GetOrigin()
   {
     return origin_;
@@ -95,6 +100,7 @@ private:
 
   geometry_msgs::Point robot_position_;
   geometry_msgs::Point origin_;
+  Eigen::Vector3d neighbor_cells_origin_;
 
   int cur_row_idx_;
   int cur_col_idx_;

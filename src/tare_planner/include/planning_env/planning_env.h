@@ -31,6 +31,7 @@
 #include <pointcloud_manager/pointcloud_manager.h>
 #include <lidar_model/lidar_model.h>
 #include <occupancy_grid/occupancy_grid.h>
+#include "rolling_occupancy_grid/rolling_occupancy_grid.h"
 
 namespace viewpoint_manager_ns
 {
@@ -95,6 +96,10 @@ public:
   void UpdateRobotPosition(geometry_msgs::Point robot_position)
   {
     pointcloud_manager_->UpdateRobotPosition(robot_position);
+    Eigen::Vector3d pointcloud_manager_neighbor_cells_origin = pointcloud_manager_->GetNeighborCellsOrigin();
+    rolling_occupancy_grid_->InitializeOrigin(pointcloud_manager_neighbor_cells_origin);
+    rolling_occupancy_grid_->UpdateRobotPosition(Eigen::Vector3d(robot_position.x, robot_position.y, robot_position.z));
+
     robot_position_.x() = robot_position.x;
     robot_position_.y() = robot_position.y;
     robot_position_.z() = robot_position.z;
@@ -124,6 +129,11 @@ public:
         occupancy_grid_->GetVisualizationCloudInRange(robot_position_, parameters_.kExtractFrontierRange,
                                                       occupied_cloud_->cloud_, free_cloud_->cloud_,
                                                       unknown_cloud_->cloud_);
+
+        rolling_occupancy_grid_->UpdateOccupancy<PCLPointType>(cloud);
+        rolling_occupancy_grid_->RayTrace(robot_position_);
+        rolling_occupancy_grid_->GetVisualizationCloud(rolling_occupancy_grid_cloud_->cloud_);
+        rolling_occupancy_grid_cloud_->Publish();
 
         // occupied_cloud_->Publish();
         // free_cloud_->Publish();
@@ -255,6 +265,11 @@ public:
   void GetUncoveredArea(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
                         int& uncovered_point_num, int& uncovered_frontier_point_num);
 
+  Eigen::Vector3d GetPointCloudManagerNeighborCellsOrigin()
+  {
+    return pointcloud_manager_->GetNeighborCellsOrigin();
+  }
+  void GetVisualizationPointCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr vis_cloud);
   void PublishStackedCloud();
   void PublishUncoveredCloud();
   void PublishUncoveredFrontierCloud();
@@ -283,6 +298,9 @@ private:
 
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> planner_cloud_;
   std::unique_ptr<pointcloud_manager_ns::PointCloudManager> pointcloud_manager_;
+  std::unique_ptr<rolling_occupancy_grid_ns::RollingOccupancyGrid> rolling_occupancy_grid_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolling_occupancy_grid_cloud_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolling_frontier_cloud_;
 
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> squeezed_planner_cloud_;
   pcl::KdTreeFLANN<PlannerCloudPointType>::Ptr squeezed_planner_cloud_kdtree_;

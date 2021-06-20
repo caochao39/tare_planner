@@ -37,6 +37,7 @@ public:
   explicit RollingOccupancyGrid(ros::NodeHandle& nh);
   ~RollingOccupancyGrid() = default;
 
+  void InitializeOrigin(const Eigen::Vector3d& origin);
   bool UpdateRobotPosition(const Eigen::Vector3d& robot_position);
   template <class PointType>
   void UpdateOccupancy(typename pcl::PointCloud<PointType>::Ptr& cloud)
@@ -59,6 +60,7 @@ public:
   void RayTraceHelper(const Eigen::Vector3i& start_sub, const Eigen::Vector3i& end_sub,
                       std::vector<Eigen::Vector3i>& cells);
 
+  void GetFrontier(pcl::PointCloud<pcl::PointXYZI>::Ptr& frontier_cloud, const Eigen::Vector3d& origin);
   void GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& vis_cloud);
 
 private:
@@ -75,6 +77,6 @@ private:
   std::unique_ptr<grid_ns::Grid<CellState>> occupancy_array_;
   std::vector<int> updated_grid_indices_;
 
-  void InitializeOrigin();
+  // void InitializeOrigin();
 };
 }  // namespace rolling_occupancy_grid_ns

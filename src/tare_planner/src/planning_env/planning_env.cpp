@@ -83,6 +83,8 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
       parameters_.kPointCloudCellSize, parameters_.kPointCloudManagerNeighborCellNum);
   pointcloud_manager_->SetCloudDwzFilterLeafSize() = parameters_.kPlannerCloudDwzLeafSize;
 
+  rolling_occupancy_grid_ = std::make_unique<rolling_occupancy_grid_ns::RollingOccupancyGrid>(nh_private);
+
   squeezed_planner_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>>(
       nh, "squeezed_planner_cloud", world_frame_id);
   squeezed_planner_cloud_kdtree_ =
@@ -100,6 +102,12 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
       std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "occupied_cloud", world_frame_id);
   free_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "free_cloud", world_frame_id);
   unknown_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "unknown_cloud", world_frame_id);
+
+  rolling_occupancy_grid_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(
+      nh, "rolling_occupancy_grid_cloud", world_frame_id);
+
+  rolling_frontier_cloud_ =
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "rolling_frontier_cloud", world_frame_id);
 
   occupancy_grid_ = std::make_unique<occupancy_grid_ns::OccupancyGrid>(
       parameters_.kOccupancyGridOrigin, parameters_.kOccupancyGridSize, parameters_.kOccupancyGridResolution);
@@ -159,6 +167,9 @@ void PlanningEnv::UpdateFrontiers()
     occupancy_grid_->SetEliminateFrontierOrigin(prev_robot_position_);
     occupancy_grid_->GetFrontierInRange(frontier_cloud_->cloud_, robot_position_);
     prev_robot_position_ = robot_position_;
+
+    rolling_occupancy_grid_->GetFrontier(rolling_frontier_cloud_->cloud_, robot_position_);
+    rolling_frontier_cloud_->Publish();
 
     if (!frontier_cloud_->cloud_->points.empty())
     {
@@ -411,6 +422,12 @@ void PlanningEnv::GetUncoveredArea(const std::shared_ptr<viewpoint_manager_ns::V
     }
   }
 }
+
+void PlanningEnv::GetVisualizationPointCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr vis_cloud)
+{
+  pointcloud_manager_->GetVisualizationPointCloud(vis_cloud);
+}
+
 void PlanningEnv::PublishStackedCloud()
 {
   stacked_cloud_->Publish();

@@ -90,6 +90,10 @@ void PointCloudManager::UpdateRobotPosition(const geometry_msgs::Point& robot_po
       }
     }
   }
+
+  Eigen::Vector3i neighbor_cell_min_sub = robot_cell_sub - Eigen::Vector3i(N, N, 0);
+  neighbor_cells_origin_ =
+      pointcloud_grid_->Sub2Pos(neighbor_cell_min_sub) - Eigen::Vector3d(kCellSize / 2, kCellSize / 2, 0);
 }
 
 void PointCloudManager::GetPointCloud(PCLCloudType& cloud_out)
@@ -131,6 +135,21 @@ void PointCloudManager::GetMarker(visualization_msgs::Marker& marker)
     marker.colors[ind].r = 0.0;
     marker.colors[ind].g = 1.0;
     marker.colors[ind].b = 0.0;
+  }
+}
+
+void PointCloudManager::GetVisualizationPointCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr vis_cloud)
+{
+  vis_cloud->clear();
+  for (const auto& ind : neighbor_indices_)
+  {
+    Eigen::Vector3d position = pointcloud_grid_->Ind2Pos(ind);
+    pcl::PointXYZI point;
+    point.x = position.x();
+    point.y = position.y();
+    point.z = position.z();
+    point.intensity = ind;
+    vis_cloud->points.push_back(point);
   }
 }
 
