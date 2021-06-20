@@ -109,6 +109,9 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
   rolling_frontier_cloud_ =
       std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "rolling_frontier_cloud", world_frame_id);
 
+  rolling_filtered_frontier_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(
+      nh, "rolling_filtered_frontier_cloud", world_frame_id);
+
   occupancy_grid_ = std::make_unique<occupancy_grid_ns::OccupancyGrid>(
       parameters_.kOccupancyGridOrigin, parameters_.kOccupancyGridSize, parameters_.kOccupancyGridResolution);
 
@@ -175,7 +178,12 @@ void PlanningEnv::UpdateFrontiers()
     {
       vertical_frontier_extractor_.ExtractVerticalSurface<pcl::PointXYZI, pcl::PointXYZI>(
           frontier_cloud_->cloud_, filtered_frontier_cloud_->cloud_);
+
+      vertical_frontier_extractor_.ExtractVerticalSurface<pcl::PointXYZI, pcl::PointXYZI>(
+          rolling_frontier_cloud_->cloud_, rolling_filtered_frontier_cloud_->cloud_);
     }
+
+    rolling_filtered_frontier_cloud_->Publish();
 
     // Cluster frontiers
     if (!filtered_frontier_cloud_->cloud_->points.empty())
