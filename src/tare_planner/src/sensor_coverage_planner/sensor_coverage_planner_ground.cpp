@@ -87,6 +87,8 @@ void PlannerData::Initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
       std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "keypose_graph_cloud", kWorldFrameID);
   viewpoint_in_collision_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(
       nh, "viewpoint_in_collision_cloud_", kWorldFrameID);
+  rolling_occupancy_cloud_ =
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "rolling_occupancy_cloud", kWorldFrameID);
 
   planning_env_ = std::make_unique<planning_env_ns::PlanningEnv>(nh, nh_p);
   viewpoint_manager_ = std::make_shared<viewpoint_manager_ns::ViewPointManager>(nh_p);
@@ -96,6 +98,7 @@ void PlannerData::Initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
   grid_world_ = std::make_unique<grid_world_ns::GridWorld>(nh_p);
   grid_world_->SetUseKeyposeGraph(true);
   visualizer_ = std::make_unique<tare_visualizer_ns::TAREVisualizer>(nh, nh_p);
+  rolling_occupancy_grid_ = std::make_unique<rolling_occupancy_grid_ns::RollingOccupancyGrid>(nh_p);
 
   initial_position_.x() = 0.0;
   initial_position_.y() = 0.0;
@@ -549,6 +552,18 @@ void SensorCoveragePlanner3D::UpdateGlobalRepresentation()
   {
     pd_.grid_world_->SetHomePosition(pd_.initial_position_);
   }
+  // Update rolling occupancy grid
+  misc_utils_ns::Timer rolling_occupancy_grid_timer("Updating occupancy grid");
+  rolling_occupancy_grid_timer.Start();
+  pd_.rolling_occupancy_grid_->UpdateRobotPosition(
+      Eigen::Vector3d(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z));
+  pd_.rolling_occupancy_grid_->UpdateOccupancy<PlannerCloudPointType>(pd_.keypose_cloud_->cloud_);
+  pd_.rolling_occupancy_grid_->RayTrace(
+      Eigen::Vector3d(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z));
+  rolling_occupancy_grid_timer.Stop(true);
+
+  pd_.rolling_occupancy_grid_->GetVisualizationCloud(pd_.rolling_occupancy_cloud_->cloud_);
+  pd_.rolling_occupancy_cloud_->Publish();
 }
 
 void SensorCoveragePlanner3D::GlobalPlanning(std::vector<int>& global_cell_tsp_order,

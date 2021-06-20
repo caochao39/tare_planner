@@ -40,6 +40,8 @@ void RollableGrid::Roll(Eigen::Vector3i roll_dir)
   {
     return;
   }
+  misc_utils_ns::Timer roll_helper_timer("-roll helper");
+  roll_helper_timer.Start();
   if (which_grid_)
   {
     RollHelper(grid1_, grid0_, roll_dir);
@@ -48,7 +50,12 @@ void RollableGrid::Roll(Eigen::Vector3i roll_dir)
   {
     RollHelper(grid0_, grid1_, roll_dir);
   }
+  roll_helper_timer.Stop(true);
+
   which_grid_ = !which_grid_;
+
+  misc_utils_ns::Timer update_mapping_timer("-update mapping");
+  update_mapping_timer.Start();
   // Update array_ind to ind mapping
   for (int x = 0; x < size_.x(); x++)
   {
@@ -70,6 +77,7 @@ void RollableGrid::Roll(Eigen::Vector3i roll_dir)
       }
     }
   }
+  update_mapping_timer.Stop(true);
 }
 
 void RollableGrid::RollHelper(const std::unique_ptr<grid_ns::Grid<int>>& grid_in,
@@ -88,6 +96,8 @@ void RollableGrid::RollHelper(const std::unique_ptr<grid_ns::Grid<int>>& grid_in
   dir.y() = roll_dir.y() >= 0 ? roll_dir.y() : size_.y() + roll_dir.y();
   dir.z() = roll_dir.z() >= 0 ? roll_dir.z() : size_.z() + roll_dir.z();
 
+  misc_utils_ns::Timer update_index_timer("--update grid indices");
+  update_index_timer.Start();
   for (int x = 0; x < size_.x(); x++)
   {
     for (int y = 0; y < size_.y(); y++)
@@ -101,6 +111,8 @@ void RollableGrid::RollHelper(const std::unique_ptr<grid_ns::Grid<int>>& grid_in
       }
     }
   }
+  update_index_timer.Stop(true);
+
   Eigen::Vector3i start_idx, end_idx;
   start_idx.x() = roll_dir.x() >= 0 ? 0 : size_.x() + roll_dir.x();
   start_idx.y() = roll_dir.y() >= 0 ? 0 : size_.y() + roll_dir.y();
@@ -110,6 +122,8 @@ void RollableGrid::RollHelper(const std::unique_ptr<grid_ns::Grid<int>>& grid_in
   end_idx.y() = roll_dir.y() >= 0 ? roll_dir.y() - 1 : size_.y() - 1;
   end_idx.z() = roll_dir.z() >= 0 ? roll_dir.z() - 1 : size_.z() - 1;
 
+  misc_utils_ns::Timer get_indices_timer("--get indices");
+  get_indices_timer.Start();
   updated_indices_.clear();
   if (dir.x() > 0)
   {
@@ -118,16 +132,52 @@ void RollableGrid::RollHelper(const std::unique_ptr<grid_ns::Grid<int>>& grid_in
   }
   if (dir.y() > 0)
   {
-    GetIndices(updated_indices_, Eigen::Vector3i(0, start_idx.y(), 0),
-               Eigen::Vector3i(size_.x() - 1, end_idx.y(), size_.z() - 1));
+    int x_start = 0;
+    int x_end = size_.x() - 1;
+    if (start_idx.x() == 0)
+    {
+      x_start = end_idx.x() + 1;
+      x_end = size_.x() - 1;
+    }
+    else
+    {
+      x_start = 0;
+      x_end = start_idx.x() - 1;
+    }
+    GetIndices(updated_indices_, Eigen::Vector3i(x_start, start_idx.y(), 0),
+               Eigen::Vector3i(x_end, end_idx.y(), size_.z() - 1));
   }
   if (dir.z() > 0)
   {
-    GetIndices(updated_indices_, Eigen::Vector3i(0, 0, start_idx.z()),
-               Eigen::Vector3i(size_.x() - 1, size_.y() - 1, end_idx.z()));
+    int x_start = 0;
+    int x_end = size_.x() - 1;
+    int y_start = 0;
+    int y_end = size_.y() - 1;
+    if (start_idx.x() == 0)
+    {
+      x_start = end_idx.x() + 1;
+      x_end = size_.x() - 1;
+    }
+    else
+    {
+      x_start = 0;
+      x_end = start_idx.x() - 1;
+    }
+    if (start_idx.y() == 0)
+    {
+      y_start = end_idx.y() + 1;
+      y_end = size_.y() - 1;
+    }
+    else
+    {
+      y_start = 0;
+      y_end = start_idx.y() - 1;
+    }
+    GetIndices(updated_indices_, Eigen::Vector3i(x_start, y_start, start_idx.z()),
+               Eigen::Vector3i(x_end, y_end, end_idx.z()));
   }
 
-  misc_utils_ns::UniquifyIntVector(updated_indices_);
+  get_indices_timer.Stop(true);
 }
 
 void RollableGrid::GetIndices(std::vector<int>& indices, Eigen::Vector3i start_idx, Eigen::Vector3i end_idx) const

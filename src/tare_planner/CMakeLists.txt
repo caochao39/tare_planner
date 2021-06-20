@@ -98,6 +98,10 @@ add_library(occupancy_grid src/occupancy_grid/occupancy_grid.cpp)
 add_dependencies(occupancy_grid ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(occupancy_grid ${catkin_LIBRARIES})
 
+add_library(rolling_occupancy_grid src/rolling_occupancy_grid/rolling_occupancy_grid.cpp)
+add_dependencies(rolling_occupancy_grid ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(rolling_occupancy_grid ${catkin_LIBRARIES})
+
 add_library(planning_env src/planning_env/planning_env.cpp)
 add_dependencies(planning_env ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(planning_env ${catkin_LIBRARIES} ${PCL_LIBRARIES} occupancy_grid)
@@ -112,7 +116,7 @@ target_link_libraries(tare_visualizer ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 add_library(sensor_coverage_planner_ground src/sensor_coverage_planner/sensor_coverage_planner_ground.cpp)
 add_dependencies(sensor_coverage_planner_ground ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(sensor_coverage_planner_ground ${catkin_LIBRARIES} planning_env keypose_graph viewpoint_manager pointcloud_manager grid_world local_coverage_planner tare_visualizer)
+target_link_libraries(sensor_coverage_planner_ground ${catkin_LIBRARIES} planning_env keypose_graph viewpoint_manager pointcloud_manager grid_world local_coverage_planner tare_visualizer rolling_occupancy_grid)
 
 add_executable(tare_planner_node src/tare_planner_node/tare_planner_node.cpp)
 add_dependencies(tare_planner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )

@@ -23,9 +23,9 @@ public:
   explicit Grid(const Eigen::Vector3i& size, _T init_value, const Eigen::Vector3d& origin = Eigen::Vector3d(0, 0, 0),
                 const Eigen::Vector3d& resolution = Eigen::Vector3d(1, 1, 1), int dimension = 3)
   {
-    MY_ASSERT(size.x() > 0);
-    MY_ASSERT(size.y() > 0);
-    MY_ASSERT(size.z() > 0);
+    // MY_ASSERT(size.x() > 0);
+    // MY_ASSERT(size.y() > 0);
+    // MY_ASSERT(size.z() > 0);
 
     origin_ = origin;
     size_ = size;
@@ -106,7 +106,7 @@ public:
 
   Eigen::Vector3i Ind2Sub(int ind) const
   {
-    MY_ASSERT(InRange(ind));
+    // MY_ASSERT(InRange(ind));
     Eigen::Vector3i sub;
     sub.z() = ind / (size_.x() * size_.y());
     ind -= (sub.z() * size_.x() * size_.y());
@@ -122,7 +122,7 @@ public:
 
   int Sub2Ind(const Eigen::Vector3i& sub) const
   {
-    MY_ASSERT(InRange(sub));
+    // MY_ASSERT(InRange(sub));
     return sub.x() + (sub.y() * size_.x()) + (sub.z() * size_.x() * size_.y());
   }
 
@@ -141,6 +141,12 @@ public:
     return pos;
   }
 
+  Eigen::Vector3d Ind2Pos(int ind) const
+  {
+    // MY_ASSERT(InRange(ind));
+    return Sub2Pos(Ind2Sub(ind));
+  }
+
   Eigen::Vector3i Pos2Sub(double x, double y, double z) const
   {
     return Pos2Sub(Eigen::Vector3d(x, y, z));
@@ -156,6 +162,11 @@ public:
     return sub;
   }
 
+  int Pos2Ind(const Eigen::Vector3d& pos) const
+  {
+    return Sub2Ind(Pos2Sub(pos));
+  }
+
   _T& GetCell(int x, int y, int z)
   {
     return GetCell(Eigen::Vector3i(x, y, z));
@@ -163,14 +174,14 @@ public:
 
   _T& GetCell(const Eigen::Vector3i& sub)
   {
-    MY_ASSERT(InRange(sub));
+    // MY_ASSERT(InRange(sub));
     int index = Sub2Ind(sub);
     return cells_[index];
   }
 
   _T& GetCell(int index)
   {
-    MY_ASSERT(InRange(index));
+    // MY_ASSERT(InRange(index));
     return cells_[index];
   }
 
@@ -181,14 +192,14 @@ public:
 
   _T GetCellValue(const Eigen::Vector3i& sub) const
   {
-    MY_ASSERT(InRange(sub));
+    // MY_ASSERT(InRange(sub));
     int index = Sub2Ind(sub);
     return cells_[index];
   }
 
   _T GetCellValue(int index) const
   {
-    MY_ASSERT(InRange(index));
+    // MY_ASSERT(InRange(index));
     return cells_[index];
   }
 
@@ -199,14 +210,14 @@ public:
 
   void SetCellValue(const Eigen::Vector3i& sub, _T value)
   {
-    MY_ASSERT(InRange(sub));
+    // MY_ASSERT(InRange(sub));
     int index = Sub2Ind(sub);
     cells_[index] = value;
   }
 
-  void SetCellValue(int index, _T value)
+  void SetCellValue(int index, const _T& value)
   {
-    MY_ASSERT(InRange(index));
+    // MY_ASSERT(InRange(index));
     cells_[index] = value;
   }
 
