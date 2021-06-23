@@ -336,6 +336,7 @@ private:
   std::unique_ptr<occupancy_grid_ns::OccupancyGrid> occupancy_grid_;
 
   pcl::search::KdTree<pcl::PointXYZI>::Ptr kdtree_frontier_cloud_;
+  pcl::search::KdTree<pcl::PointXYZI>::Ptr kdtree_rolling_frontier_cloud_;
 
   void UpdateCollisionCloud();
   void UpdateFrontiers();

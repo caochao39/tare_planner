@@ -121,6 +121,7 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
       parameters_.kOccupancyGridOrigin, parameters_.kOccupancyGridSize, parameters_.kOccupancyGridResolution);
 
   kdtree_frontier_cloud_ = pcl::search::KdTree<pcl::PointXYZI>::Ptr(new pcl::search::KdTree<pcl::PointXYZI>);
+  kdtree_rolling_frontier_cloud_ = pcl::search::KdTree<pcl::PointXYZI>::Ptr(new pcl::search::KdTree<pcl::PointXYZI>);
 
   // TODO: Temporary
   if (parameters_.kUseFrontier)
@@ -188,8 +189,6 @@ void PlanningEnv::UpdateFrontiers()
           rolling_frontier_cloud_->cloud_, rolling_filtered_frontier_cloud_->cloud_);
     }
 
-    rolling_filtered_frontier_cloud_->Publish();
-
     // Cluster frontiers
     if (!filtered_frontier_cloud_->cloud_->points.empty())
     {
@@ -225,6 +224,42 @@ void PlanningEnv::UpdateFrontiers()
       extract.setNegative(false);
       extract.filter(*(filtered_frontier_cloud_->cloud_));
       filtered_frontier_cloud_->Publish();
+    }
+
+    if (!rolling_filtered_frontier_cloud_->cloud_->points.empty())
+    {
+      kdtree_rolling_frontier_cloud_->setInputCloud(rolling_filtered_frontier_cloud_->cloud_);
+      std::vector<pcl::PointIndices> cluster_indices;
+      pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
+      ec.setClusterTolerance(parameters_.kFrontierClusterTolerance);
+      ec.setMinClusterSize(1);
+      ec.setMaxClusterSize(10000);
+      ec.setSearchMethod(kdtree_rolling_frontier_cloud_);
+      ec.setInputCloud(rolling_filtered_frontier_cloud_->cloud_);
+      ec.extract(cluster_indices);
+
+      pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+      int cluster_count = 0;
+      for (int i = 0; i < cluster_indices.size(); i++)
+      {
+        if (cluster_indices[i].indices.size() < parameters_.kFrontierClusterMinSize)
+        {
+          continue;
+        }
+        for (int j = 0; j < cluster_indices[i].indices.size(); j++)
+        {
+          int point_ind = cluster_indices[i].indices[j];
+          rolling_filtered_frontier_cloud_->cloud_->points[point_ind].intensity = cluster_count;
+          inliers->indices.push_back(point_ind);
+        }
+        cluster_count++;
+      }
+      pcl::ExtractIndices<pcl::PointXYZI> extract;
+      extract.setInputCloud(rolling_filtered_frontier_cloud_->cloud_);
+      extract.setIndices(inliers);
+      extract.setNegative(false);
+      extract.filter(*(rolling_filtered_frontier_cloud_->cloud_));
+      rolling_filtered_frontier_cloud_->Publish();
     }
   }
 }
