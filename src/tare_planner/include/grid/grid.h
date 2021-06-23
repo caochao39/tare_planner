@@ -40,6 +40,7 @@ public:
     for (int i = 0; i < cell_number_; i++)
     {
       cells_.push_back(init_value);
+      subs_.push_back(ind2sub_(i));
     }
   }
 
@@ -107,23 +108,18 @@ public:
   Eigen::Vector3i Ind2Sub(int ind) const
   {
     // MY_ASSERT(InRange(ind));
-    Eigen::Vector3i sub;
-    sub.z() = ind / (size_.x() * size_.y());
-    ind -= (sub.z() * size_.x() * size_.y());
-    sub.y() = ind / size_.x();
-    sub.x() = ind % size_.x();
-    return sub;
+    return subs_[ind];
   }
 
   int Sub2Ind(int x, int y, int z) const
   {
-    return Sub2Ind(Eigen::Vector3i(x, y, z));
+    return x + (y * size_.x()) + (z * size_.x() * size_.y());
   }
 
   int Sub2Ind(const Eigen::Vector3i& sub) const
   {
     // MY_ASSERT(InRange(sub));
-    return sub.x() + (sub.y() * size_.x()) + (sub.z() * size_.x() * size_.y());
+    return Sub2Ind(sub.x(), sub.y(), sub.z());
   }
 
   Eigen::Vector3d Sub2Pos(int x, int y, int z) const
@@ -187,14 +183,14 @@ public:
 
   _T GetCellValue(int x, int y, int z) const
   {
-    return GetCellValue(Eigen::Vector3i(x, y, z));
+    int index = Sub2Ind(x, y, z);
+    return cells_[index];
   }
 
   _T GetCellValue(const Eigen::Vector3i& sub) const
   {
     // MY_ASSERT(InRange(sub));
-    int index = Sub2Ind(sub);
-    return cells_[index];
+    return GetCellValue(sub.x(), sub.y(), sub.z());
   }
 
   _T GetCellValue(int index) const
@@ -205,14 +201,14 @@ public:
 
   void SetCellValue(int x, int y, int z, _T value)
   {
-    SetCellValue(Eigen::Vector3i(x, y, z), value);
+    int index = Sub2Ind(x, y, z);
+    cells_[index] = value;
   }
 
   void SetCellValue(const Eigen::Vector3i& sub, _T value)
   {
     // MY_ASSERT(InRange(sub));
-    int index = Sub2Ind(sub);
-    cells_[index] = value;
+    SetCellValue(sub.x(), sub.y(), sub.z(), value);
   }
 
   void SetCellValue(int index, const _T& value)
@@ -227,7 +223,19 @@ private:
   Eigen::Vector3d resolution_;
   Eigen::Vector3d resolution_inv_;
   std::vector<_T> cells_;
+  std::vector<Eigen::Vector3i> subs_;
   int cell_number_;
   int dimension_;
+
+  Eigen::Vector3i ind2sub_(int ind) const
+  {
+    // MY_ASSERT(InRange(ind));
+    Eigen::Vector3i sub;
+    sub.z() = ind / (size_.x() * size_.y());
+    ind -= (sub.z() * size_.x() * size_.y());
+    sub.y() = ind / size_.x();
+    sub.x() = ind % size_.x();
+    return sub;
+  }
 };
 }  // namespace grid_ns

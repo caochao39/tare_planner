@@ -41,13 +41,23 @@ PointCloudManager::PointCloudManager(int row_num, int col_num, int max_cell_poin
   pointcloud_grid_ = std::make_unique<grid_ns::Grid<PCLCloudTypePtr>>(
       pointcloud_grid_size, cloud_ptr_tmp, pointcloud_grid_origin, pointcloud_grid_resolution, 2);
 
+  pcl::PointCloud<pcl::PointXYZI>::Ptr occupancy_cloud_ptr_tmp;
+  occupancy_cloud_grid_ = std::make_unique<grid_ns::Grid<pcl::PointCloud<pcl::PointXYZI>::Ptr>>(
+      pointcloud_grid_size, occupancy_cloud_ptr_tmp, pointcloud_grid_origin, pointcloud_grid_resolution, 2);
+
   for (int i = 0; i < pointcloud_grid_->GetCellNumber(); i++)
   {
     pointcloud_grid_->GetCell(i) = PCLCloudTypePtr(new PCLCloudType);
     pointcloud_grid_->GetCell(i)->points.reserve(kMaxCellPointNum);
   }
 
+  for (int i = 0; i < occupancy_cloud_grid_->GetCellNumber(); i++)
+  {
+    occupancy_cloud_grid_->GetCell(i) = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
+  }
+
   cloud_dwz_filter_.setLeafSize(kCloudDwzFilterLeafSize, kCloudDwzFilterLeafSize, kCloudDwzFilterLeafSize);
+  rolled_in_occupancy_cloud_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
 }
 
 void PointCloudManager::UpdateOrigin()
@@ -56,9 +66,10 @@ void PointCloudManager::UpdateOrigin()
   origin_.y = robot_position_.y - (kCellSize * kColNum) / 2;
   origin_.z = 0.0;
   pointcloud_grid_->SetOrigin(Eigen::Vector3d(origin_.x, origin_.y, origin_.z));
+  occupancy_cloud_grid_->SetOrigin(Eigen::Vector3d(origin_.x, origin_.y, origin_.z));
 }
 
-void PointCloudManager::UpdateRobotPosition(const geometry_msgs::Point& robot_position)
+bool PointCloudManager::UpdateRobotPosition(const geometry_msgs::Point& robot_position)
 {
   robot_position_ = robot_position;
   if (!initialized_)
@@ -71,6 +82,7 @@ void PointCloudManager::UpdateRobotPosition(const geometry_msgs::Point& robot_po
       pointcloud_grid_->Pos2Sub(Eigen::Vector3d(robot_position_.x, robot_position_.y, robot_position_.z));
 
   // Get neighbor indices
+  prev_neighbor_indices_ = neighbor_indices_;
   neighbor_indices_.clear();
   int row_idx;
   int col_idx;
@@ -91,9 +103,20 @@ void PointCloudManager::UpdateRobotPosition(const geometry_msgs::Point& robot_po
     }
   }
 
+  std::vector<int> indices_diff;
+  misc_utils_ns::SetDifference(neighbor_indices_, prev_neighbor_indices_, indices_diff);
+  bool rolling = false;
+  if (!indices_diff.empty())
+  {
+    new_neighbor_indices_ = indices_diff;
+    rolling = true;
+  }
+
   Eigen::Vector3i neighbor_cell_min_sub = robot_cell_sub - Eigen::Vector3i(N, N, 0);
   neighbor_cells_origin_ =
       pointcloud_grid_->Sub2Pos(neighbor_cell_min_sub) - Eigen::Vector3d(kCellSize / 2, kCellSize / 2, 0);
+
+  return rolling;
 }
 
 void PointCloudManager::GetPointCloud(PCLCloudType& cloud_out)
@@ -102,6 +125,30 @@ void PointCloudManager::GetPointCloud(PCLCloudType& cloud_out)
   for (const auto& neighbor_ind : neighbor_indices_)
   {
     cloud_out += *(pointcloud_grid_->GetCell(neighbor_ind));
+  }
+}
+
+pcl::PointCloud<pcl::PointXYZI>::Ptr PointCloudManager::GetRolledInOccupancyCloud()
+{
+  rolled_in_occupancy_cloud_->clear();
+  for (const auto& ind : new_neighbor_indices_)
+  {
+    *rolled_in_occupancy_cloud_ += *(occupancy_cloud_grid_->GetCell(ind));
+  }
+  return rolled_in_occupancy_cloud_;
+}
+
+void PointCloudManager::StoreOccupancyCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr& occupancy_cloud)
+{
+  for (const auto& point : occupancy_cloud->points)
+  {
+    Eigen::Vector3i sub = occupancy_cloud_grid_->Pos2Sub(Eigen::Vector3d(point.x, point.y, point.z));
+    if (!occupancy_cloud_grid_->InRange(sub))
+    {
+      continue;
+    }
+    int ind = occupancy_cloud_grid_->Sub2Ind(sub);
+    occupancy_cloud_grid_->GetCell(ind)->points.push_back(point);
   }
 }
 
@@ -141,7 +188,7 @@ void PointCloudManager::GetMarker(visualization_msgs::Marker& marker)
 void PointCloudManager::GetVisualizationPointCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr vis_cloud)
 {
   vis_cloud->clear();
-  for (const auto& ind : neighbor_indices_)
+  for (const auto& ind : new_neighbor_indices_)
   {
     Eigen::Vector3d position = pointcloud_grid_->Ind2Pos(ind);
     pcl::PointXYZI point;
@@ -177,7 +224,6 @@ void PointCloudManager::GetCloudPointIndex(int index, int& cloud_index, int& clo
     for (int i = 0; i < neighbor_indices_.size(); i++)
     {
       int ind = neighbor_indices_[i];
-      // std::cout << "cloud " << ind << " size: " << clouds_[ind]->points.size() << std::endl;
       std::cout << "cloud " << ind << " size: " << pointcloud_grid_->GetCell(ind)->points.size() << std::endl;
     }
   }

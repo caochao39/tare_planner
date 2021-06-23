@@ -35,12 +35,10 @@ public:
   typedef pcl::PointCloud<pcl::PointXYZRGBNormal> PCLCloudType;
   typedef typename pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr PCLCloudTypePtr;
 
-  std::vector<PCLCloudTypePtr> clouds_;
-
   explicit PointCloudManager(int row_num = 20, int col_num = 20, int max_cell_point_num = 100000, double cell_size = 24,
                              int neighbor_cell_num = 5);
   ~PointCloudManager() = default;
-  void UpdateRobotPosition(const geometry_msgs::Point& robot_position);
+  bool UpdateRobotPosition(const geometry_msgs::Point& robot_position);
   template <class InputPCLPointType>
   void UpdatePointCloud(const pcl::PointCloud<InputPCLPointType>& cloud_in)
   {
@@ -68,6 +66,8 @@ public:
   }
 
   void GetPointCloud(PCLCloudType& cloud_out);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr GetRolledInOccupancyCloud();
+  void StoreOccupancyCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr& occupancy_cloud);
   void GetMarker(visualization_msgs::Marker& marker);
   void GetVisualizationPointCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr vis_cloud);
   Eigen::Vector3d GetNeighborCellsOrigin()
@@ -91,6 +91,8 @@ public:
 
 private:
   std::unique_ptr<grid_ns::Grid<PCLCloudTypePtr>> pointcloud_grid_;
+  std::unique_ptr<grid_ns::Grid<pcl::PointCloud<pcl::PointXYZI>::Ptr>> occupancy_cloud_grid_;
+
   const int kRowNum;
   const int kColNum;
   const int kMaxCellPointNum;
@@ -108,8 +110,11 @@ private:
   bool initialized_;
 
   pcl::VoxelGrid<PCLPointType> cloud_dwz_filter_;
+  pcl::PointCloud<pcl::PointXYZI>::Ptr rolled_in_occupancy_cloud_;
 
   std::vector<int> neighbor_indices_;
+  std::vector<int> prev_neighbor_indices_;
+  std::vector<int> new_neighbor_indices_;
 
   void UpdateOrigin();
 };

@@ -24,7 +24,7 @@ namespace rollable_grid_ns
 class RollableGrid
 {
 public:
-  explicit RollableGrid(const Eigen::Vector3i size);
+  explicit RollableGrid(const Eigen::Vector3i& size);
   ~RollableGrid() = default;
   bool InRange(Eigen::Vector3i sub) const
   {
@@ -66,8 +66,9 @@ public:
     return array_ind_to_ind_[array_ind];
   }
 
-  void Roll(Eigen::Vector3i roll_dir);
+  void Roll(const Eigen::Vector3i& roll_dir);
   void GetUpdatedIndices(std::vector<int>& updated_indices) const;
+  void GetRolledOutIndices(const Eigen::Vector3i& roll_dir, std::vector<int>& rolled_out_indices);
   void GetUpdatedArrayIndices(std::vector<int>& updated_array_indices) const;
 
 private:
@@ -78,13 +79,15 @@ private:
   std::vector<int> array_ind_to_ind_;
   bool which_grid_;
 
-  int GetFromIdx(int cur_idx, int roll_step, int max_idx) const
+  inline int GetFromIdx(int cur_idx, int roll_step, int max_idx) const
   {
     return cur_idx <= roll_step - 1 ? max_idx - roll_step + cur_idx : cur_idx - roll_step;
   }
   void RollHelper(const std::unique_ptr<grid_ns::Grid<int>>& grid_in,
                   const std::unique_ptr<grid_ns::Grid<int>>& grid_out, Eigen::Vector3i roll_dir);
 
+  void GetRolledInIndices(const Eigen::Vector3i& roll_dir);
+  void GetRolledOutIndices(const Eigen::Vector3i& roll_dir);
   void GetIndices(std::vector<int>& indices, Eigen::Vector3i start_idx, Eigen::Vector3i end_idx) const;
 };
 }  // namespace rollable_grid_ns

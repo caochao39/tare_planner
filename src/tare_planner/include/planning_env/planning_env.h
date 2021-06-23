@@ -95,10 +95,25 @@ public:
   }
   void UpdateRobotPosition(geometry_msgs::Point robot_position)
   {
-    pointcloud_manager_->UpdateRobotPosition(robot_position);
+    bool pointcloud_manager_rolling = pointcloud_manager_->UpdateRobotPosition(robot_position);
     Eigen::Vector3d pointcloud_manager_neighbor_cells_origin = pointcloud_manager_->GetNeighborCellsOrigin();
     rolling_occupancy_grid_->InitializeOrigin(pointcloud_manager_neighbor_cells_origin);
-    rolling_occupancy_grid_->UpdateRobotPosition(Eigen::Vector3d(robot_position.x, robot_position.y, robot_position.z));
+    bool occupancy_grid_rolling = rolling_occupancy_grid_->UpdateRobotPosition(
+        Eigen::Vector3d(robot_position.x, robot_position.y, robot_position.z));
+    if (pointcloud_manager_rolling)
+    {
+      // Update rolling occupancy grid
+      rolled_in_occupancy_cloud_->cloud_ = pointcloud_manager_->GetRolledInOccupancyCloud();
+      rolled_in_occupancy_cloud_->Publish();
+      rolling_occupancy_grid_->UpdateOccupancyStatus(rolled_in_occupancy_cloud_->cloud_);
+    }
+    if (occupancy_grid_rolling)
+    {
+      // Store and retrieve occupancy cloud
+      rolled_out_occupancy_cloud_->cloud_ = rolling_occupancy_grid_->GetRolledOutOccupancyCloud();
+      rolled_out_occupancy_cloud_->Publish();
+      pointcloud_manager_->StoreOccupancyCloud(rolled_out_occupancy_cloud_->cloud_);
+    }
 
     robot_position_.x() = robot_position.x;
     robot_position_.y() = robot_position.y;
@@ -302,6 +317,10 @@ private:
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolling_occupancy_grid_cloud_;
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolling_frontier_cloud_;
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolling_filtered_frontier_cloud_;
+
+  // For debug
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolled_in_occupancy_cloud_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolled_out_occupancy_cloud_;
 
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> squeezed_planner_cloud_;
   pcl::KdTreeFLANN<PlannerCloudPointType>::Ptr squeezed_planner_cloud_kdtree_;

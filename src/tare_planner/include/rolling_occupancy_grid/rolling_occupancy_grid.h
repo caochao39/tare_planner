@@ -42,6 +42,10 @@ public:
   template <class PointType>
   void UpdateOccupancy(typename pcl::PointCloud<PointType>::Ptr& cloud)
   {
+    if (!initialized_)
+    {
+      return;
+    }
     updated_grid_indices_.clear();
     for (const auto& point : cloud->points)
     {
@@ -55,12 +59,17 @@ public:
       }
     }
   }
+  void UpdateOccupancyStatus(const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud);
   void RayTrace(const Eigen::Vector3d& origin, const Eigen::Vector3d& range);
   void RayTrace(const Eigen::Vector3d& origin);
   void RayTraceHelper(const Eigen::Vector3i& start_sub, const Eigen::Vector3i& end_sub,
                       std::vector<Eigen::Vector3i>& cells);
 
   void GetFrontier(pcl::PointCloud<pcl::PointXYZI>::Ptr& frontier_cloud, const Eigen::Vector3d& origin);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr GetRolledOutOccupancyCloud()
+  {
+    return occupancy_cloud_;
+  }
   void GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& vis_cloud);
 
 private:
@@ -76,6 +85,7 @@ private:
   std::unique_ptr<rollable_grid_ns::RollableGrid> rolling_grid_;
   std::unique_ptr<grid_ns::Grid<CellState>> occupancy_array_;
   std::vector<int> updated_grid_indices_;
+  pcl::PointCloud<pcl::PointXYZI>::Ptr occupancy_cloud_;
 
   // void InitializeOrigin();
 };

@@ -41,6 +41,8 @@ RollingOccupancyGrid::RollingOccupancyGrid(ros::NodeHandle& nh) : initialized_(f
   occupancy_array_ = std::make_unique<grid_ns::Grid<CellState>>(grid_size_, UNKNOWN, origin_, resolution_);
 
   robot_position_ = Eigen::Vector3d(0, 0, 0);
+
+  occupancy_cloud_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
 }
 
 void RollingOccupancyGrid::InitializeOrigin(const Eigen::Vector3d& origin)
@@ -50,6 +52,7 @@ void RollingOccupancyGrid::InitializeOrigin(const Eigen::Vector3d& origin)
     initialized_ = true;
     origin_ = origin;
     origin_.z() = robot_position_.z() - range_.z() / 2;
+    occupancy_array_->SetOrigin(origin_);
   }
   // for (int i = 0; i < dimension_; i++)
   // {
@@ -60,11 +63,11 @@ void RollingOccupancyGrid::InitializeOrigin(const Eigen::Vector3d& origin)
 
 bool RollingOccupancyGrid::UpdateRobotPosition(const Eigen::Vector3d& robot_position)
 {
-  robot_position_ = robot_position;
   if (!initialized_)
   {
     return false;
   }
+  robot_position_ = robot_position;
   Eigen::Vector3i robot_grid_sub;
   Eigen::Vector3d diff = robot_position_ - origin_;
   Eigen::Vector3i sub = Eigen::Vector3i::Zero();
@@ -90,37 +93,83 @@ bool RollingOccupancyGrid::UpdateRobotPosition(const Eigen::Vector3d& robot_posi
     rollover_step(i) =
         std::abs(sub_diff(i)) > 0 ? rollover_step_size_(i) * ((sub_diff(i) > 0) ? 1 : -1) * std::abs(sub_diff(i)) : 0;
   }
+
+  std::vector<int> rolled_out_grid_indices;
+  rolling_grid_->GetRolledOutIndices(rollover_step, rolled_out_grid_indices);
+
+  // Get rolled out occupancy cloud
+  occupancy_cloud_->clear();
+  for (const auto& ind : rolled_out_grid_indices)
+  {
+    int array_ind = rolling_grid_->GetArrayInd(ind);
+    if (occupancy_array_->GetCellValue(array_ind) == CellState::FREE)
+    {
+      Eigen::Vector3d position = occupancy_array_->Ind2Pos(ind);
+      pcl::PointXYZI point;
+      point.x = position.x();
+      point.y = position.y();
+      point.z = position.z();
+      point.intensity = 0;
+      occupancy_cloud_->points.push_back(point);
+    }
+    else if (occupancy_array_->GetCellValue(array_ind) == CellState::OCCUPIED)
+    {
+      Eigen::Vector3d position = occupancy_array_->Ind2Pos(ind);
+      pcl::PointXYZI point;
+      point.x = position.x();
+      point.y = position.y();
+      point.z = position.z();
+      point.intensity = 1;
+      occupancy_cloud_->points.push_back(point);
+    }
+  }
+
   misc_utils_ns::Timer rolling_grid_timer("rolling grid");
   rolling_grid_timer.Start();
   rolling_grid_->Roll(rollover_step);
   rolling_grid_timer.Stop(true);
 
+  // Update origin
   for (int i = 0; i < dimension_; i++)
   {
     origin_(i) -= rollover_step(i) * resolution_(i);
   }
-
   occupancy_array_->SetOrigin(origin_);
 
-  // Update rolled over memory
-  misc_utils_ns::Timer getting_update_indices_timer("updating indices");
-  getting_update_indices_timer.Start();
-  std::vector<int> updated_grid_array_indices;
-  rolling_grid_->GetUpdatedArrayIndices(updated_grid_array_indices);
-  getting_update_indices_timer.Stop(true);
+  std::vector<int> updated_grid_indices;
+  rolling_grid_->GetUpdatedArrayIndices(updated_grid_indices);
 
-  std::cout << "updated array list size: " << updated_grid_array_indices.size() << std::endl;
-
-  // Todo: Store the occupancy status to pointcloud
-  misc_utils_ns::Timer reset_value_timer("resetting grid value");
-  reset_value_timer.Start();
-  for (const auto& ind : updated_grid_array_indices)
+  for (const auto& ind : updated_grid_indices)
   {
     occupancy_array_->SetCellValue(ind, CellState::UNKNOWN);
   }
-  reset_value_timer.Stop(true);
 
   return true;
+}
+
+void RollingOccupancyGrid::UpdateOccupancyStatus(const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud)
+{
+  if (!initialized_)
+  {
+    return;
+  }
+  for (const auto& point : cloud->points)
+  {
+    Eigen::Vector3i sub = occupancy_array_->Pos2Sub(Eigen::Vector3d(point.x, point.y, point.z));
+    if (!occupancy_array_->InRange(sub))
+    {
+      continue;
+    }
+    int array_ind = rolling_grid_->GetArrayInd(sub);
+    if (point.intensity < 0.1)
+    {
+      occupancy_array_->SetCellValue(array_ind, CellState::FREE);
+    }
+    else if (point.intensity > 0.9)
+    {
+      occupancy_array_->SetCellValue(array_ind, CellState::OCCUPIED);
+    }
+  }
 }
 
 void RollingOccupancyGrid::RayTrace(const Eigen::Vector3d& origin, const Eigen::Vector3d& range)
@@ -178,6 +227,10 @@ void RollingOccupancyGrid::RayTrace(const Eigen::Vector3d& origin, const Eigen::
 
 void RollingOccupancyGrid::RayTrace(const Eigen::Vector3d& origin)
 {
+  if (!initialized_)
+  {
+    return;
+  }
   RayTrace(origin, range_);
 }
 
@@ -249,6 +302,10 @@ void RollingOccupancyGrid::RayTraceHelper(const Eigen::Vector3i& start_sub, cons
 void RollingOccupancyGrid::GetFrontier(pcl::PointCloud<pcl::PointXYZI>::Ptr& frontier_cloud,
                                        const Eigen::Vector3d& origin)
 {
+  if (!initialized_)
+  {
+    return;
+  }
   frontier_cloud->points.clear();
   Eigen::Vector3i sub_max = occupancy_array_->GetSize() - Eigen::Vector3i::Ones();
   Eigen::Vector3i sub_min = Eigen::Vector3i(0, 0, 0);
@@ -379,6 +436,15 @@ void RollingOccupancyGrid::GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>
       }
       vis_cloud->points.push_back(point);
     }
+
+    // int array_ind = rolling_grid_->GetArrayInd(i);
+    // Eigen::Vector3d position = occupancy_array_->Ind2Pos(i);
+    // pcl::PointXYZI point;
+    // point.x = position.x();
+    // point.y = position.y();
+    // point.z = position.z();
+    // point.intensity = array_ind;
+    // vis_cloud->points.push_back(point);
   }
 }
 
