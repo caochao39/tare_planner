@@ -62,8 +62,10 @@ struct planning_env_ns::PlanningEnvParameters
 
   int kPointCloudRowNum;
   int kPointCloudColNum;
+  int kPointCloudLevelNum;
   int kMaxCellPointNum;
   double kPointCloudCellSize;
+  double kPointCloudCellHeight;
   int kPointCloudManagerNeighborCellNum;
   double kCoverCloudZSqueezeRatio;
 

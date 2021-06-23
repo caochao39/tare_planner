@@ -25,7 +25,6 @@ kRushHomeDist : 10
 kAtHomeDistThreshold : 0.5
 kTerrainCollisionThreshold : 0.5
 kLookAheadDistance : 8
-kSkipOdometryDistance : 1.5
 
 # PlanningEnv
 kUseFrontier : true 
@@ -55,8 +54,10 @@ kCoverageZMax : 25
 kCoverageZMin : 8.0
 kPointCloudRowNum : 50
 kPointCloudColNum : 50
+kPointCloudLevelNum : 30
 kMaxCellPointNum : 100000
 kPointCloudCellSize : 18
+kPointCloudCellHeight : 1.2
 kPointCloudManagerNeighborCellNum : 5
 kCoverCloudZSqueezeRatio : 2.0
 
@@ -96,12 +97,12 @@ kCoverageDilationRadius : 1.0
 kGridWorldXNum : 121
 kGridWorldYNum : 121
 kGridWorldZNum : 121
-kGridWorldCellSize : 9.6
+kGridWorldCellSize : 9.6 # TODO: add comment: local planning horizon size / 5
 kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
-kMinAddPointNumSmall : 60 
-kMinAddPointNumBig : 80 
-kMinAddFrontierPointNum : 80
+kMinAddPointNumSmall : 40 
+kMinAddPointNumBig : 60 
+kMinAddFrontierPointNum : 80 # TODO: add comment:
 kCellExploringToCoveredThr : 1
 kCellCoveredToExploringThr: 10
 kCellExploringToAlmostCoveredThr: 10 

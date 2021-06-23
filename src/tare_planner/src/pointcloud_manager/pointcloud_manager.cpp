@@ -13,12 +13,14 @@
 
 namespace pointcloud_manager_ns
 {
-PointCloudManager::PointCloudManager(int row_num, int col_num, int max_cell_point_num, double cell_size,
-                                     int neighbor_cell_num)
+PointCloudManager::PointCloudManager(int row_num, int col_num, int level_num, int max_cell_point_num, double cell_size,
+                                     double cell_height, int neighbor_cell_num)
   : kRowNum(row_num)
   , kColNum(col_num)
+  , kLevelNum(level_num)
   , kMaxCellPointNum(max_cell_point_num)
   , kCellSize(cell_size)
+  , kCellHeight(cell_height)
   , kNeighborCellNum(neighbor_cell_num)
   , kCloudDwzFilterLeafSize(0.2)
   , initialized_(false)
@@ -29,26 +31,27 @@ PointCloudManager::PointCloudManager(int row_num, int col_num, int max_cell_poin
 
   origin_.x = robot_position_.x - (kCellSize * kRowNum) / 2;
   origin_.y = robot_position_.y - (kCellSize * kColNum) / 2;
-  origin_.z = 0.0;
+  origin_.z = robot_position_.z - (kCellHeight * kLevelNum) / 2;
 
   cur_row_idx_ = kRowNum / 2;
   cur_col_idx_ = kColNum / 2;
+  cur_level_idx_ = kLevelNum / 2;
 
-  Eigen::Vector3i pointcloud_grid_size(kRowNum, kColNum, 1);
+  Eigen::Vector3i pointcloud_grid_size(kRowNum, kColNum, kLevelNum);
   Eigen::Vector3d pointcloud_grid_origin(origin_.x, origin_.y, origin_.z);
-  Eigen::Vector3d pointcloud_grid_resolution(kCellSize, kCellSize, 100);  // TODO: make this 3D
+  Eigen::Vector3d pointcloud_grid_resolution(kCellSize, kCellSize, kCellHeight);
   PCLCloudTypePtr cloud_ptr_tmp;
   pointcloud_grid_ = std::make_unique<grid_ns::Grid<PCLCloudTypePtr>>(
-      pointcloud_grid_size, cloud_ptr_tmp, pointcloud_grid_origin, pointcloud_grid_resolution, 2);
+      pointcloud_grid_size, cloud_ptr_tmp, pointcloud_grid_origin, pointcloud_grid_resolution, 3);
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr occupancy_cloud_ptr_tmp;
   occupancy_cloud_grid_ = std::make_unique<grid_ns::Grid<pcl::PointCloud<pcl::PointXYZI>::Ptr>>(
-      pointcloud_grid_size, occupancy_cloud_ptr_tmp, pointcloud_grid_origin, pointcloud_grid_resolution, 2);
+      pointcloud_grid_size, occupancy_cloud_ptr_tmp, pointcloud_grid_origin, pointcloud_grid_resolution, 3);
 
   for (int i = 0; i < pointcloud_grid_->GetCellNumber(); i++)
   {
     pointcloud_grid_->GetCell(i) = PCLCloudTypePtr(new PCLCloudType);
-    pointcloud_grid_->GetCell(i)->points.reserve(kMaxCellPointNum);
+    // pointcloud_grid_->GetCell(i)->points.reserve(kMaxCellPointNum);
   }
 
   for (int i = 0; i < occupancy_cloud_grid_->GetCellNumber(); i++)
@@ -64,7 +67,7 @@ void PointCloudManager::UpdateOrigin()
 {
   origin_.x = robot_position_.x - (kCellSize * kRowNum) / 2;
   origin_.y = robot_position_.y - (kCellSize * kColNum) / 2;
-  origin_.z = 0.0;
+  origin_.z = robot_position_.z - (kCellHeight * kLevelNum) / 2;
   pointcloud_grid_->SetOrigin(Eigen::Vector3d(origin_.x, origin_.y, origin_.z));
   occupancy_cloud_grid_->SetOrigin(Eigen::Vector3d(origin_.x, origin_.y, origin_.z));
 }
@@ -86,19 +89,23 @@ bool PointCloudManager::UpdateRobotPosition(const geometry_msgs::Point& robot_po
   neighbor_indices_.clear();
   int row_idx;
   int col_idx;
+  int level_idx;
   int N = kNeighborCellNum / 2;
   for (int i = -N; i <= N; i++)
   {
     for (int j = -N; j <= N; j++)
     {
-      Eigen::Vector3i neighbor_sub;
-      neighbor_sub.x() = robot_cell_sub.x() + i;
-      neighbor_sub.y() = robot_cell_sub.y() + j;
-      neighbor_sub.z() = 0;
-      if (pointcloud_grid_->InRange(neighbor_sub))
+      for (int k = -N; k <= N; k++)
       {
-        int ind = pointcloud_grid_->Sub2Ind(neighbor_sub);
-        neighbor_indices_.push_back(ind);
+        Eigen::Vector3i neighbor_sub;
+        neighbor_sub.x() = robot_cell_sub.x() + i;
+        neighbor_sub.y() = robot_cell_sub.y() + j;
+        neighbor_sub.z() = robot_cell_sub.z() + k;
+        if (pointcloud_grid_->InRange(neighbor_sub))
+        {
+          int ind = pointcloud_grid_->Sub2Ind(neighbor_sub);
+          neighbor_indices_.push_back(ind);
+        }
       }
     }
   }
@@ -112,9 +119,9 @@ bool PointCloudManager::UpdateRobotPosition(const geometry_msgs::Point& robot_po
     rolling = true;
   }
 
-  Eigen::Vector3i neighbor_cell_min_sub = robot_cell_sub - Eigen::Vector3i(N, N, 0);
+  Eigen::Vector3i neighbor_cell_min_sub = robot_cell_sub - Eigen::Vector3i(N, N, N);
   neighbor_cells_origin_ =
-      pointcloud_grid_->Sub2Pos(neighbor_cell_min_sub) - Eigen::Vector3d(kCellSize / 2, kCellSize / 2, 0);
+      pointcloud_grid_->Sub2Pos(neighbor_cell_min_sub) - Eigen::Vector3d(kCellSize / 2, kCellSize / 2, kCellHeight / 2);
 
   return rolling;
 }
@@ -158,23 +165,26 @@ void PointCloudManager::GetMarker(visualization_msgs::Marker& marker)
   marker.colors.clear();
   marker.scale.x = kCellSize;
   marker.scale.y = kCellSize;
-  marker.scale.z = 0.05;
+  marker.scale.z = kCellHeight;
 
   for (int i = 0; i < kRowNum; i++)
   {
     for (int j = 0; j < kColNum; j++)
     {
-      geometry_msgs::Point cell_center;
-      cell_center.x = i * kCellSize + kCellSize / 2 + origin_.x;
-      cell_center.y = j * kCellSize + kCellSize / 2 + origin_.y;
-      cell_center.z = 0.0;
-      marker.points.push_back(cell_center);
-      std_msgs::ColorRGBA color;
-      color.r = 1.0;
-      color.g = 0.0;
-      color.b = 0.0;
-      color.a = 1.0;
-      marker.colors.push_back(color);
+      for (int k = 0; k < kLevelNum; k++)
+      {
+        geometry_msgs::Point cell_center;
+        cell_center.x = i * kCellSize + kCellSize / 2 + origin_.x;
+        cell_center.y = j * kCellSize + kCellSize / 2 + origin_.y;
+        cell_center.z = k * kCellHeight + kCellHeight / 2 + origin_.z;
+        marker.points.push_back(cell_center);
+        std_msgs::ColorRGBA color;
+        color.r = 1.0;
+        color.g = 0.0;
+        color.b = 0.0;
+        color.a = 1.0;
+        marker.colors.push_back(color);
+      }
     }
   }
   for (const auto& ind : neighbor_indices_)

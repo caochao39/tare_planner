@@ -35,8 +35,8 @@ public:
   typedef pcl::PointCloud<pcl::PointXYZRGBNormal> PCLCloudType;
   typedef typename pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr PCLCloudTypePtr;
 
-  explicit PointCloudManager(int row_num = 20, int col_num = 20, int max_cell_point_num = 100000, double cell_size = 24,
-                             int neighbor_cell_num = 5);
+  explicit PointCloudManager(int row_num = 20, int col_num = 20, int level_num = 10, int max_cell_point_num = 100000,
+                             double cell_size = 24, double cell_height = 3, int neighbor_cell_num = 5);
   ~PointCloudManager() = default;
   bool UpdateRobotPosition(const geometry_msgs::Point& robot_position);
   template <class InputPCLPointType>
@@ -95,8 +95,10 @@ private:
 
   const int kRowNum;
   const int kColNum;
+  const int kLevelNum;
   const int kMaxCellPointNum;
   const double kCellSize;
+  const double kCellHeight;
   const int kNeighborCellNum;
   double kCloudDwzFilterLeafSize;
 
@@ -106,6 +108,7 @@ private:
 
   int cur_row_idx_;
   int cur_col_idx_;
+  int cur_level_idx_;
 
   bool initialized_;
 

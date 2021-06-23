@@ -6,9 +6,8 @@ Panels:
       Expanded:
         - /Global1
         - /Local1
-        - /Local1/Vehicle1
-      Splitter Ratio: 0.6176470518112183
-    Tree Height: 727
+      Splitter Ratio: 0.8294117450714111
+    Tree Height: 911
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -27,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: OverallObjectSurfaces
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -80,7 +79,7 @@ Visualization Manager:
           Marker Topic: /sensor_coverage_planner/tare_visualizer/exploring_subspaces
           Name: ExploringSubspaces
           Namespaces:
-            "": true
+            {}
           Queue Size: 100
           Value: true
         - Alpha: 1
@@ -145,7 +144,7 @@ Visualization Manager:
           Marker Topic: /sensor_coverage_planner/tare_visualizer/local_planning_horizon
           Name: LocalPlanningHorizon
           Namespaces:
-            "": true
+            {}
           Queue Size: 100
           Value: true
         - Alpha: 0.5
@@ -160,7 +159,7 @@ Visualization Manager:
           Color: 237; 212; 0
           Color Transformer: FlatColor
           Decay Time: 0
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 100
@@ -177,7 +176,7 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: true
+          Value: false
         - Alpha: 1
           Autocompute Intensity Bounds: false
           Autocompute Value Bounds:
@@ -291,7 +290,7 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
-        - Alpha: 0.8999999761581421
+        - Alpha: 0.4000000059604645
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
             Max Value: 10
@@ -314,7 +313,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.5
+          Size (m): 0.30000001192092896
           Style: Boxes
           Topic: /sensor_coverage_planner/filtered_frontier_cloud
           Unreliable: false
@@ -335,7 +334,7 @@ Visualization Manager:
           Enabled: true
           Length: 4
           Name: Vehicle
-          Radius: 0.5
+          Radius: 0.4000000059604645
           Reference Frame: sensor
           Value: true
         - Alpha: 1
@@ -393,196 +392,6 @@ Visualization Manager:
           Value: false
       Enabled: true
       Name: Local
-    - Alpha: 0.20000000298023224
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 29; 118; 255
-      Color Transformer: Intensity
-      Decay Time: 0
-      Enabled: false
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 1
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: RollingOccupancyGrid
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.5
-      Style: Boxes
-      Topic: /sensor_coverage_planner/rolling_occupancy_grid_cloud
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: false
-    - Alpha: 0.6000000238418579
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: Intensity
-      Decay Time: 0
-      Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 1329
-      Min Color: 0; 0; 0
-      Min Intensity: 1129
-      Name: PointcloudManagerCloud
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 20
-      Style: Boxes
-      Topic: /sensor_coverage_planner/pointcloud_manager_cloud
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: true
-    - Alpha: 1
-      Class: rviz/PointStamped
-      Color: 204; 41; 204
-      Enabled: true
-      History Length: 1
-      Name: PointStamped
-      Radius: 10
-      Topic: /sensor_coverage_planner/pointcloud_manager_neighbor_cells_origin
-      Unreliable: false
-      Value: true
-    - Alpha: 0.800000011920929
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 239; 41; 41
-      Color Transformer: FlatColor
-      Decay Time: 0
-      Enabled: false
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 0
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: RollingFrontierCloud
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.5
-      Style: Flat Squares
-      Topic: /sensor_coverage_planner/rolling_frontier_cloud
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: false
-    - Alpha: 0.4000000059604645
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 17; 230; 245
-      Color Transformer: FlatColor
-      Decay Time: 0
-      Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 0
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: RollingFilteredFrontierCloud
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.6000000238418579
-      Style: Flat Squares
-      Topic: /sensor_coverage_planner/rolling_filtered_frontier_cloud
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: true
-    - Alpha: 0.5
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 244; 31; 142
-      Color Transformer: FlatColor
-      Decay Time: 0
-      Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: -999999
-      Min Color: 0; 0; 0
-      Min Intensity: 999999
-      Name: RolledInCloud
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 1
-      Style: Flat Squares
-      Topic: /sensor_coverage_planner/rolled_in_occupancy_cloud
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: true
-    - Alpha: 0.5
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 237; 212; 0
-      Color Transformer: FlatColor
-      Decay Time: 0
-      Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 1
-      Min Color: 0; 0; 0
-      Min Intensity: 1
-      Name: RolledOutCloud
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.6000000238418579
-      Style: Flat Squares
-      Topic: /sensor_coverage_planner/rolled_out_occupancy_cloud
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -611,33 +420,33 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 151.480712890625
+      Distance: 169.4073486328125
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -8.847577095031738
-        Y: -0.5088624954223633
-        Z: 0.7042723298072815
+        X: -9.871967315673828
+        Y: 46.698097229003906
+        Z: 0.704297661781311
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.484796404838562
+      Pitch: 1.5697963237762451
       Target Frame: map
       Value: XYOrbit (rviz)
-      Yaw: 3.1553854942321777
+      Yaw: 3.140395164489746
     Saved: ~
 Window Geometry:
   Displays:
-    collapsed: false
-  Height: 1025
-  Hide Left Dock: false
-  Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd000000040000000000000156000003a7fc0200000008fb0000001200530065006c0065006300740069006f006e010000003d0000008d0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c00610079007301000000d000000314000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000003ccfc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000016000003cc000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000a000000003efc0100000002fb0000000800540069006d0065000000000000000a00000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000005e1000003a700000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+    collapsed: true
+  Height: 1023
+  Hide Left Dock: true
+  Hide Right Dock: false
+  QMainWindow State: 000000ff00000000fd000000040000000000000156000003ccfc0200000008fb0000001200530065006c0065006300740069006f006e0000000016000001320000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730000000016000003cc000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000003ccfc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000016000003cc000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000a000000003efc0100000002fb0000000800540069006d0065000000000000000a00000004f300fffffffb0000000800540069006d006501000000000000045000000000000000000000059d000003cc00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -646,6 +455,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 1853
-  X: 1987
+  Width: 1437
+  X: 51
   Y: 27

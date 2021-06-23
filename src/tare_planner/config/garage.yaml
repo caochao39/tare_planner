@@ -48,14 +48,16 @@ kStackedCloudDwzLeafSize : 0.3
 kPlannerCloudDwzLeafSize : 0.5
 kCollisionCloudDwzLeafSize : 0.2
 kCollisionCheckRadius : 0.6
-kCollisionCheckPointNumThr : 2
+kCollisionCheckPointNumThr : 1
 kKeyposeCloudStackNum : 5
 kCoverageZMax : 25 
 kCoverageZMin : 8.0
 kPointCloudRowNum : 50
 kPointCloudColNum : 50
+kPointCloudLevelNum : 30
 kMaxCellPointNum : 100000
 kPointCloudCellSize : 18
+kPointCloudCellHeight : 1.2
 kPointCloudManagerNeighborCellNum : 5
 kCoverCloudZSqueezeRatio : 2.0
 
@@ -83,10 +85,10 @@ kCollisionPointThr : 1
 kLineOfSightStopAtNearestObstacle : true 
 kViewPointHeightFromTerrain : 0.75
 kViewPointHeightFromTerrainChangeThreshold : 0.6
-kCheckDynamicObstacleCollision : true 
+kCheckDynamicObstacleCollision : false 
 kCollisionFrameCountMax : 3
 
-kSensorRange : 12.0
+kSensorRange : 15.0
 kNeighborRange : 3.0
 kCoverageOcclusionThr : 0.3
 kCoverageDilationRadius : 1.0
@@ -95,7 +97,7 @@ kCoverageDilationRadius : 1.0
 kGridWorldXNum : 121
 kGridWorldYNum : 121
 kGridWorldZNum : 121
-kGridWorldCellSize : 8.0
+kGridWorldCellSize : 9.6 # TODO: add comment: local planning horizon size / 5
 kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
 kMinAddPointNumSmall : 40 

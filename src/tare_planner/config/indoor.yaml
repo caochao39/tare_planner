@@ -48,14 +48,16 @@ kStackedCloudDwzLeafSize : 0.3
 kPlannerCloudDwzLeafSize : 0.5
 kCollisionCloudDwzLeafSize : 0.2
 kCollisionCheckRadius : 0.6
-kCollisionCheckPointNumThr : 2
+kCollisionCheckPointNumThr : 1
 kKeyposeCloudStackNum : 5
 kCoverageZMax : 25 
 kCoverageZMin : 8.0
 kPointCloudRowNum : 50
 kPointCloudColNum : 50
+kPointCloudLevelNum : 30
 kMaxCellPointNum : 100000
 kPointCloudCellSize : 18
+kPointCloudCellHeight : 1.2
 kPointCloudManagerNeighborCellNum : 5
 kCoverCloudZSqueezeRatio : 2.0
 
@@ -88,19 +90,19 @@ kCollisionFrameCountMax : 3
 
 kSensorRange : 7.5
 kNeighborRange : 3.0
-kCoverageOcclusionThr : 0.2
+kCoverageOcclusionThr : 0.3
 kCoverageDilationRadius : 0.5
 
 # Grid World
 kGridWorldXNum : 121
 kGridWorldYNum : 121
 kGridWorldZNum : 121
-kGridWorldCellSize : 6.0
+kGridWorldCellSize : 6.0 # TODO: add comment: local planning horizon size / 5
 kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
 kMinAddPointNumSmall : 40 
 kMinAddPointNumBig : 60
-kMinAddFrontierPointNum : 30
+kMinAddFrontierPointNum : 20
 kCellExploringToCoveredThr : 1
 kCellCoveredToExploringThr: 10
 kCellExploringToAlmostCoveredThr: 10 

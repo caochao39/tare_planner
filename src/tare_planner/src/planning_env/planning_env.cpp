@@ -28,8 +28,10 @@ void PlanningEnvParameters::ReadParameters(ros::NodeHandle& nh)
 
   kPointCloudRowNum = misc_utils_ns::getParam<int>(nh, "kPointCloudRowNum", 20);
   kPointCloudColNum = misc_utils_ns::getParam<int>(nh, "kPointCloudColNum", 20);
+  kPointCloudLevelNum = misc_utils_ns::getParam<int>(nh, "kPointCloudLevelNum", 10);
   kMaxCellPointNum = misc_utils_ns::getParam<int>(nh, "kMaxCellPointNum", 100000);
   kPointCloudCellSize = misc_utils_ns::getParam<double>(nh, "kPointCloudCellSize", 24.0);
+  kPointCloudCellHeight = misc_utils_ns::getParam<double>(nh, "kPointCloudCellHeight", 3.0);
   kPointCloudManagerNeighborCellNum = misc_utils_ns::getParam<int>(nh, "kPointCloudManagerNeighborCellNum", 5);
   kCoverCloudZSqueezeRatio = misc_utils_ns::getParam<double>(nh, "kCoverCloudZSqueezeRatio", 2.0);
 
@@ -79,8 +81,9 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
   planner_cloud_ =
       std::make_unique<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>>(nh, "planner_cloud", world_frame_id);
   pointcloud_manager_ = std::make_unique<pointcloud_manager_ns::PointCloudManager>(
-      parameters_.kPointCloudRowNum, parameters_.kPointCloudColNum, parameters_.kMaxCellPointNum,
-      parameters_.kPointCloudCellSize, parameters_.kPointCloudManagerNeighborCellNum);
+      parameters_.kPointCloudRowNum, parameters_.kPointCloudColNum, parameters_.kPointCloudLevelNum,
+      parameters_.kMaxCellPointNum, parameters_.kPointCloudCellSize, parameters_.kPointCloudCellHeight,
+      parameters_.kPointCloudManagerNeighborCellNum);
   pointcloud_manager_->SetCloudDwzFilterLeafSize() = parameters_.kPlannerCloudDwzLeafSize;
 
   rolling_occupancy_grid_ = std::make_unique<rolling_occupancy_grid_ns::RollingOccupancyGrid>(nh_private);
