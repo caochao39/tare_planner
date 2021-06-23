@@ -1278,7 +1278,7 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
 
     pd_.visualizer_->GetGlobalSubspaceMarker(pd_.grid_world_, global_cell_tsp_order);
     Eigen::Vector3d viewpoint_origin = pd_.viewpoint_manager_->GetOrigin();
-    pd_.visualizer_->GetLocalPlanningHorizonMarker(viewpoint_origin.x(), viewpoint_origin.y(), viewpoint_origin.z());
+    pd_.visualizer_->GetLocalPlanningHorizonMarker(viewpoint_origin.x(), viewpoint_origin.y(), pd_.robot_position_.z);
     pd_.visualizer_->PublishMarkers();
 
     PublishLocalPlanningVisualization(local_path);

@@ -176,7 +176,6 @@ void PlanningEnv::UpdateFrontiers()
     // occupancy_grid_->SetEliminateFrontierOrigin(prev_robot_position_);
     // occupancy_grid_->GetFrontierInRange(frontier_cloud_->cloud_, robot_position_);
     prev_robot_position_ = robot_position_;
-
     rolling_occupancy_grid_->GetFrontier(frontier_cloud_->cloud_, robot_position_);
     // rolling_frontier_cloud_->Publish();
 

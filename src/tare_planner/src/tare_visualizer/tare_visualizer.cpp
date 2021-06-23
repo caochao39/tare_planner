@@ -79,7 +79,7 @@ void TAREVisualizer::GetLocalPlanningHorizonMarker(double x, double y, double z)
 {
   local_planning_horizon_origin_.x = x;
   local_planning_horizon_origin_.y = y;
-  local_planning_horizon_origin_.z = z;
+  local_planning_horizon_origin_.z = z - kLocalPlanningHorizonSizeZ / 2;
 
   geometry_msgs::Point upper_right;
   upper_right.x = local_planning_horizon_origin_.x + kLocalPlanningHorizonSizeX;
