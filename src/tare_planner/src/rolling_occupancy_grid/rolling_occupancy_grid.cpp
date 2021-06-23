@@ -33,9 +33,6 @@ RollingOccupancyGrid::RollingOccupancyGrid(ros::NodeHandle& nh) : initialized_(f
     rollover_step_size_(i) = static_cast<int>(rollover_range_(i) / resolution_(i));
     origin_(i) = -range_(i) / 2;
   }
-  std::cout << "grid size: " << grid_size_.transpose() << std::endl;
-  std::cout << "rollover step size: " << rollover_step_size_.transpose() << std::endl;
-  std::cout << "origin: " << origin_.transpose() << std::endl;
 
   rolling_grid_ = std::make_unique<rollable_grid_ns::RollableGrid>(grid_size_);
   occupancy_array_ = std::make_unique<grid_ns::Grid<CellState>>(grid_size_, UNKNOWN, origin_, resolution_);
@@ -54,11 +51,6 @@ void RollingOccupancyGrid::InitializeOrigin(const Eigen::Vector3d& origin)
     origin_.z() = robot_position_.z() - range_.z() / 2;
     occupancy_array_->SetOrigin(origin_);
   }
-  // for (int i = 0; i < dimension_; i++)
-  // {
-  //   origin_(i) = robot_position_(i) - range_(i) / 2;
-  // }
-  // occupancy_array_->SetOrigin(origin_);
 }
 
 bool RollingOccupancyGrid::UpdateRobotPosition(const Eigen::Vector3d& robot_position)
@@ -124,10 +116,7 @@ bool RollingOccupancyGrid::UpdateRobotPosition(const Eigen::Vector3d& robot_posi
     }
   }
 
-  misc_utils_ns::Timer rolling_grid_timer("rolling grid");
-  rolling_grid_timer.Start();
   rolling_grid_->Roll(rollover_step);
-  rolling_grid_timer.Stop(true);
 
   // Update origin
   for (int i = 0; i < dimension_; i++)
@@ -310,7 +299,6 @@ void RollingOccupancyGrid::GetFrontier(pcl::PointCloud<pcl::PointXYZI>::Ptr& fro
   Eigen::Vector3i sub_max = occupancy_array_->GetSize() - Eigen::Vector3i::Ones();
   Eigen::Vector3i sub_min = Eigen::Vector3i(0, 0, 0);
   Eigen::Vector3i origin_sub = occupancy_array_->Pos2Sub(origin);
-  // Eigen::Vector3i eliminate_frontier_origin_sub = occupancy_array_->Pos2Sub(eliminate_frontier_origin_);
 
   if (!occupancy_array_->InRange(origin_sub))
   {
@@ -386,20 +374,13 @@ void RollingOccupancyGrid::GetFrontier(pcl::PointCloud<pcl::PointXYZI>::Ptr& fro
           }
           if (xy_free && !z_free)
           {
-            // if (eliminate_frontier_ && CanRayTrace(eliminate_frontier_origin_sub, cur_sub))
-            // {
-            //   grid_array_->SetCellValue(cur_sub, NOT_FRONTIER);
-            // }
-            // else
-            {
-              Eigen::Vector3d position = occupancy_array_->Sub2Pos(cur_sub);
-              pcl::PointXYZI point;
-              point.x = position.x();
-              point.y = position.y();
-              point.z = position.z();
-              point.intensity = 0;
-              frontier_cloud->points.push_back(point);
-            }
+            Eigen::Vector3d position = occupancy_array_->Sub2Pos(cur_sub);
+            pcl::PointXYZI point;
+            point.x = position.x();
+            point.y = position.y();
+            point.z = position.z();
+            point.intensity = 0;
+            frontier_cloud->points.push_back(point);
           }
         }
       }
@@ -436,15 +417,6 @@ void RollingOccupancyGrid::GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>
       }
       vis_cloud->points.push_back(point);
     }
-
-    // int array_ind = rolling_grid_->GetArrayInd(i);
-    // Eigen::Vector3d position = occupancy_array_->Ind2Pos(i);
-    // pcl::PointXYZI point;
-    // point.x = position.x();
-    // point.y = position.y();
-    // point.z = position.z();
-    // point.intensity = array_ind;
-    // vis_cloud->points.push_back(point);
   }
 }
 

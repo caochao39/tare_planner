@@ -40,8 +40,6 @@ void RollableGrid::Roll(const Eigen::Vector3i& roll_dir)
   {
     return;
   }
-  misc_utils_ns::Timer roll_helper_timer("-roll helper");
-  roll_helper_timer.Start();
   if (which_grid_)
   {
     RollHelper(grid1_, grid0_, roll_dir);
@@ -52,12 +50,8 @@ void RollableGrid::Roll(const Eigen::Vector3i& roll_dir)
   }
   GetRolledInIndices(roll_dir);
 
-  roll_helper_timer.Stop(true);
-
   which_grid_ = !which_grid_;
 
-  misc_utils_ns::Timer update_mapping_timer("-update mapping");
-  update_mapping_timer.Start();
   // Update array_ind to ind mapping
   int cell_num = size_.x() * size_.y() * size_.z();
   for (int ind = 0; ind < cell_num; ind++)
@@ -73,8 +67,6 @@ void RollableGrid::Roll(const Eigen::Vector3i& roll_dir)
     }
     array_ind_to_ind_[array_ind] = ind;
   }
-
-  update_mapping_timer.Stop(true);
 }
 
 void RollableGrid::RollHelper(const std::unique_ptr<grid_ns::Grid<int>>& grid_in,
@@ -93,8 +85,6 @@ void RollableGrid::RollHelper(const std::unique_ptr<grid_ns::Grid<int>>& grid_in
   dir.y() = roll_dir.y() >= 0 ? roll_dir.y() : size_.y() + roll_dir.y();
   dir.z() = roll_dir.z() >= 0 ? roll_dir.z() : size_.z() + roll_dir.z();
 
-  misc_utils_ns::Timer update_index_timer("--update grid indices");
-  update_index_timer.Start();
   int cell_num = size_.x() * size_.y() * size_.z();
   for (int ind = 0; ind < cell_num; ind++)
   {
@@ -104,8 +94,6 @@ void RollableGrid::RollHelper(const std::unique_ptr<grid_ns::Grid<int>>& grid_in
     int from_z = GetFromIdx(sub.z(), dir.z(), size_.z());
     grid_out->GetCell(ind) = grid_in->GetCellValue(from_x, from_y, from_z);
   }
-
-  update_index_timer.Stop(true);
 }
 
 void RollableGrid::GetRolledInIndices(const Eigen::Vector3i& roll_dir)
