@@ -136,14 +136,14 @@ public:
     {
       if (parameters_.kUseFrontier)
       {
-        occupancy_grid_->UpdateOccupancy<PCLPointType>(cloud);
-        occupancy_grid_->RayTrace(robot_position_);
-        occupied_cloud_->cloud_->clear();
-        free_cloud_->cloud_->clear();
-        unknown_cloud_->cloud_->clear();
-        occupancy_grid_->GetVisualizationCloudInRange(robot_position_, parameters_.kExtractFrontierRange,
-                                                      occupied_cloud_->cloud_, free_cloud_->cloud_,
-                                                      unknown_cloud_->cloud_);
+        // occupancy_grid_->UpdateOccupancy<PCLPointType>(cloud);
+        // occupancy_grid_->RayTrace(robot_position_);
+        // occupied_cloud_->cloud_->clear();
+        // free_cloud_->cloud_->clear();
+        // unknown_cloud_->cloud_->clear();
+        // occupancy_grid_->GetVisualizationCloudInRange(robot_position_, parameters_.kExtractFrontierRange,
+        //                                               occupied_cloud_->cloud_, free_cloud_->cloud_,
+        //                                               unknown_cloud_->cloud_);
 
         rolling_occupancy_grid_->UpdateOccupancy<PCLPointType>(cloud);
         rolling_occupancy_grid_->RayTrace(robot_position_);
@@ -333,7 +333,7 @@ private:
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> free_cloud_;
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> unknown_cloud_;
 
-  std::unique_ptr<occupancy_grid_ns::OccupancyGrid> occupancy_grid_;
+  // std::unique_ptr<occupancy_grid_ns::OccupancyGrid> occupancy_grid_;
 
   pcl::search::KdTree<pcl::PointXYZI>::Ptr kdtree_frontier_cloud_;
   pcl::search::KdTree<pcl::PointXYZI>::Ptr kdtree_rolling_frontier_cloud_;

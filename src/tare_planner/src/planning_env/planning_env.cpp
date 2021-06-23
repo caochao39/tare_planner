@@ -117,17 +117,17 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
   rolled_out_occupancy_cloud_ =
       std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "rolled_out_occupancy_cloud", world_frame_id);
 
-  occupancy_grid_ = std::make_unique<occupancy_grid_ns::OccupancyGrid>(
-      parameters_.kOccupancyGridOrigin, parameters_.kOccupancyGridSize, parameters_.kOccupancyGridResolution);
+  // occupancy_grid_ = std::make_unique<occupancy_grid_ns::OccupancyGrid>(
+  //     parameters_.kOccupancyGridOrigin, parameters_.kOccupancyGridSize, parameters_.kOccupancyGridResolution);
 
   kdtree_frontier_cloud_ = pcl::search::KdTree<pcl::PointXYZI>::Ptr(new pcl::search::KdTree<pcl::PointXYZI>);
   kdtree_rolling_frontier_cloud_ = pcl::search::KdTree<pcl::PointXYZI>::Ptr(new pcl::search::KdTree<pcl::PointXYZI>);
 
-  // TODO: Temporary
-  if (parameters_.kUseFrontier)
-  {
-    occupancy_grid_->SetExtractFrontierRange(parameters_.kExtractFrontierRange);
-  }
+  // // TODO: Temporary
+  // if (parameters_.kUseFrontier)
+  // {
+  //   occupancy_grid_->SetExtractFrontierRange(parameters_.kExtractFrontierRange);
+  // }
 
   // Todo: parameterize
   vertical_surface_extractor_.SetRadiusThreshold(0.2);
@@ -164,29 +164,29 @@ void PlanningEnv::UpdateFrontiers()
 {
   if (parameters_.kUseFrontier)
   {
-    if (parameters_.kElminateFrontierWithLastKeypose && robot_position_update_)
-    {
-      occupancy_grid_->SetEliminateFrontier(true);
-    }
-    else
-    {
-      occupancy_grid_->SetEliminateFrontier(false);
-    }
+    // if (parameters_.kElminateFrontierWithLastKeypose && robot_position_update_)
+    // {
+    //   occupancy_grid_->SetEliminateFrontier(true);
+    // }
+    // else
+    // {
+    //   occupancy_grid_->SetEliminateFrontier(false);
+    // }
 
-    occupancy_grid_->SetEliminateFrontierOrigin(prev_robot_position_);
-    occupancy_grid_->GetFrontierInRange(frontier_cloud_->cloud_, robot_position_);
+    // occupancy_grid_->SetEliminateFrontierOrigin(prev_robot_position_);
+    // occupancy_grid_->GetFrontierInRange(frontier_cloud_->cloud_, robot_position_);
     prev_robot_position_ = robot_position_;
 
-    rolling_occupancy_grid_->GetFrontier(rolling_frontier_cloud_->cloud_, robot_position_);
-    rolling_frontier_cloud_->Publish();
+    rolling_occupancy_grid_->GetFrontier(frontier_cloud_->cloud_, robot_position_);
+    // rolling_frontier_cloud_->Publish();
 
     if (!frontier_cloud_->cloud_->points.empty())
     {
       vertical_frontier_extractor_.ExtractVerticalSurface<pcl::PointXYZI, pcl::PointXYZI>(
           frontier_cloud_->cloud_, filtered_frontier_cloud_->cloud_);
 
-      vertical_frontier_extractor_.ExtractVerticalSurface<pcl::PointXYZI, pcl::PointXYZI>(
-          rolling_frontier_cloud_->cloud_, rolling_filtered_frontier_cloud_->cloud_);
+      // vertical_frontier_extractor_.ExtractVerticalSurface<pcl::PointXYZI, pcl::PointXYZI>(
+      //     rolling_frontier_cloud_->cloud_, rolling_filtered_frontier_cloud_->cloud_);
     }
 
     // Cluster frontiers
@@ -226,41 +226,41 @@ void PlanningEnv::UpdateFrontiers()
       filtered_frontier_cloud_->Publish();
     }
 
-    if (!rolling_filtered_frontier_cloud_->cloud_->points.empty())
-    {
-      kdtree_rolling_frontier_cloud_->setInputCloud(rolling_filtered_frontier_cloud_->cloud_);
-      std::vector<pcl::PointIndices> cluster_indices;
-      pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
-      ec.setClusterTolerance(parameters_.kFrontierClusterTolerance);
-      ec.setMinClusterSize(1);
-      ec.setMaxClusterSize(10000);
-      ec.setSearchMethod(kdtree_rolling_frontier_cloud_);
-      ec.setInputCloud(rolling_filtered_frontier_cloud_->cloud_);
-      ec.extract(cluster_indices);
+    // if (!rolling_filtered_frontier_cloud_->cloud_->points.empty())
+    // {
+    //   kdtree_rolling_frontier_cloud_->setInputCloud(rolling_filtered_frontier_cloud_->cloud_);
+    //   std::vector<pcl::PointIndices> cluster_indices;
+    //   pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
+    //   ec.setClusterTolerance(parameters_.kFrontierClusterTolerance);
+    //   ec.setMinClusterSize(1);
+    //   ec.setMaxClusterSize(10000);
+    //   ec.setSearchMethod(kdtree_rolling_frontier_cloud_);
+    //   ec.setInputCloud(rolling_filtered_frontier_cloud_->cloud_);
+    //   ec.extract(cluster_indices);
 
-      pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
-      int cluster_count = 0;
-      for (int i = 0; i < cluster_indices.size(); i++)
-      {
-        if (cluster_indices[i].indices.size() < parameters_.kFrontierClusterMinSize)
-        {
-          continue;
-        }
-        for (int j = 0; j < cluster_indices[i].indices.size(); j++)
-        {
-          int point_ind = cluster_indices[i].indices[j];
-          rolling_filtered_frontier_cloud_->cloud_->points[point_ind].intensity = cluster_count;
-          inliers->indices.push_back(point_ind);
-        }
-        cluster_count++;
-      }
-      pcl::ExtractIndices<pcl::PointXYZI> extract;
-      extract.setInputCloud(rolling_filtered_frontier_cloud_->cloud_);
-      extract.setIndices(inliers);
-      extract.setNegative(false);
-      extract.filter(*(rolling_filtered_frontier_cloud_->cloud_));
-      rolling_filtered_frontier_cloud_->Publish();
-    }
+    //   pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+    //   int cluster_count = 0;
+    //   for (int i = 0; i < cluster_indices.size(); i++)
+    //   {
+    //     if (cluster_indices[i].indices.size() < parameters_.kFrontierClusterMinSize)
+    //     {
+    //       continue;
+    //     }
+    //     for (int j = 0; j < cluster_indices[i].indices.size(); j++)
+    //     {
+    //       int point_ind = cluster_indices[i].indices[j];
+    //       rolling_filtered_frontier_cloud_->cloud_->points[point_ind].intensity = cluster_count;
+    //       inliers->indices.push_back(point_ind);
+    //     }
+    //     cluster_count++;
+    //   }
+    //   pcl::ExtractIndices<pcl::PointXYZI> extract;
+    //   extract.setInputCloud(rolling_filtered_frontier_cloud_->cloud_);
+    //   extract.setIndices(inliers);
+    //   extract.setNegative(false);
+    //   extract.filter(*(rolling_filtered_frontier_cloud_->cloud_));
+    //   rolling_filtered_frontier_cloud_->Publish();
+    // }
   }
 }
 

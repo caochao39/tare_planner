@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /Global1
         - /Local1
-        - /Local1/FrontierSurfacesToCover1
+        - /Local1/Vehicle1
       Splitter Ratio: 0.6176470518112183
     Tree Height: 727
   - Class: rviz/Selection
@@ -80,7 +80,7 @@ Visualization Manager:
           Marker Topic: /sensor_coverage_planner/tare_visualizer/exploring_subspaces
           Name: ExploringSubspaces
           Namespaces:
-            {}
+            "": true
           Queue Size: 100
           Value: true
         - Alpha: 1
@@ -333,9 +333,9 @@ Visualization Manager:
           Value: true
         - Class: rviz/Axes
           Enabled: true
-          Length: 20
+          Length: 4
           Name: Vehicle
-          Radius: 4
+          Radius: 0.5
           Reference Frame: sensor
           Value: true
         - Alpha: 1
@@ -438,9 +438,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 1127
+      Max Intensity: 1329
       Min Color: 0; 0; 0
-      Min Intensity: 1123
+      Min Intensity: 1129
       Name: PointcloudManagerCloud
       Position Transformer: XYZ
       Queue Size: 10
@@ -611,25 +611,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 78.28910827636719
+      Distance: 151.480712890625
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 6.225154876708984
-        Y: -9.320638656616211
+        X: -8.847577095031738
+        Y: -0.5088624954223633
         Z: 0.7042723298072815
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.569796085357666
+      Pitch: 1.484796404838562
       Target Frame: map
       Value: XYOrbit (rviz)
-      Yaw: 3.080385208129883
+      Yaw: 3.1553854942321777
     Saved: ~
 Window Geometry:
   Displays:
