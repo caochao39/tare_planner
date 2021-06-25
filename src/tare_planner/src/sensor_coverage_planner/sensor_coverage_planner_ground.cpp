@@ -449,7 +449,7 @@ int SensorCoveragePlanner3D::UpdateViewPoints()
   pd_.viewpoint_manager_->UpdateViewPointVisited(pd_.grid_world_);
 
   // For visualization
-  // pd_.collision_cloud_->Publish();
+  pd_.collision_cloud_->Publish();
   // pd_.collision_grid_cloud_->Publish();
   pd_.viewpoint_manager_->GetCollisionViewPointVisCloud(pd_.viewpoint_in_collision_cloud_->cloud_);
   pd_.viewpoint_in_collision_cloud_->Publish();

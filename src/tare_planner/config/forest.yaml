@@ -70,13 +70,13 @@ viewpoint_manager/rollover_step_size_y : 8
 viewpoint_manager/rollover_step_size_z : 8 
 viewpoint_manager/resol_x : 1.2
 viewpoint_manager/resol_y : 1.2
-viewpoint_manager/resol_z : 1.2
+viewpoint_manager/resol_z : 0.0
 kCollisionCheckTerrainThr : 0.25 # TODO: For checking connectivity, should change name
 kViewPointZMax : 25 
 kViewPointZMin : 0 
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
-kCollisionRadius : 0.8 # TODO: change to 0.6
+kCollisionRadius : 0.6 # TODO: change to 0.6
 kCollisionGridZScale : 1.0 
 kCollisionGridResolutionX : 0.2
 kCollisionGridResolutionY : 0.2

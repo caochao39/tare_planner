@@ -70,7 +70,7 @@ viewpoint_manager/rollover_step_size_y : 10
 viewpoint_manager/rollover_step_size_z : 10 
 viewpoint_manager/resol_x : 0.6
 viewpoint_manager/resol_y : 0.6
-viewpoint_manager/resol_z : 0.6
+viewpoint_manager/resol_z : 0.0
 kCollisionCheckTerrainThr : 0.25
 kViewPointZMax : 25 
 kViewPointZMin : 0 
