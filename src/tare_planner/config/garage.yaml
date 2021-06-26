@@ -88,7 +88,7 @@ kViewPointHeightFromTerrainChangeThreshold : 0.6
 kCheckDynamicObstacleCollision : false 
 kCollisionFrameCountMax : 3
 
-kSensorRange : 15.0
+kSensorRange : 12.0
 kNeighborRange : 3.0
 kCoverageOcclusionThr : 0.3
 kCoverageDilationRadius : 1.0
@@ -102,7 +102,7 @@ kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
 kMinAddPointNumSmall : 40 
 kMinAddPointNumBig : 60
-kMinAddFrontierPointNum : 20
+kMinAddFrontierPointNum : 15
 kCellExploringToCoveredThr : 1
 kCellCoveredToExploringThr: 10
 kCellExploringToAlmostCoveredThr: 10 

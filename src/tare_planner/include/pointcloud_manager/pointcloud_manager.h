@@ -66,7 +66,9 @@ public:
   }
 
   void GetPointCloud(PCLCloudType& cloud_out);
+  void ClearNeighborCellOccupancyCloud();
   pcl::PointCloud<pcl::PointXYZI>::Ptr GetRolledInOccupancyCloud();
+  void GetOccupancyCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& occupancy_cloud);
   void StoreOccupancyCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr& occupancy_cloud);
   void GetMarker(visualization_msgs::Marker& marker);
   void GetVisualizationPointCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr vis_cloud);

@@ -106,15 +106,19 @@ public:
     {
       // Update rolling occupancy grid
       rolled_in_occupancy_cloud_->cloud_ = pointcloud_manager_->GetRolledInOccupancyCloud();
-      rolled_in_occupancy_cloud_->Publish();
+      pointcloud_manager_->ClearNeighborCellOccupancyCloud();
+      // rolled_in_occupancy_cloud_->Publish();
       rolling_occupancy_grid_->UpdateOccupancyStatus(rolled_in_occupancy_cloud_->cloud_);
     }
     if (occupancy_grid_rolling)
     {
       // Store and retrieve occupancy cloud
       rolled_out_occupancy_cloud_->cloud_ = rolling_occupancy_grid_->GetRolledOutOccupancyCloud();
-      rolled_out_occupancy_cloud_->Publish();
+      // rolled_out_occupancy_cloud_->Publish();
       pointcloud_manager_->StoreOccupancyCloud(rolled_out_occupancy_cloud_->cloud_);
+
+      pointcloud_manager_->GetOccupancyCloud(pointcloud_manager_occupancy_cloud_->cloud_);
+      // pointcloud_manager_occupancy_cloud_->Publish();
     }
 
     robot_position_.x() = robot_position.x;
@@ -150,7 +154,7 @@ public:
         rolling_occupancy_grid_->UpdateOccupancy<PCLPointType>(cloud);
         rolling_occupancy_grid_->RayTrace(robot_position_);
         rolling_occupancy_grid_->GetVisualizationCloud(rolling_occupancy_grid_cloud_->cloud_);
-        rolling_occupancy_grid_cloud_->Publish();
+        // rolling_occupancy_grid_cloud_->Publish();
 
         // occupied_cloud_->Publish();
         // free_cloud_->Publish();
@@ -323,6 +327,7 @@ private:
   // For debug
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolled_in_occupancy_cloud_;
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolled_out_occupancy_cloud_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> pointcloud_manager_occupancy_cloud_;
 
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> squeezed_planner_cloud_;
   pcl::KdTreeFLANN<PlannerCloudPointType>::Ptr squeezed_planner_cloud_kdtree_;

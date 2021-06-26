@@ -48,7 +48,6 @@ void RollingOccupancyGrid::InitializeOrigin(const Eigen::Vector3d& origin)
   {
     initialized_ = true;
     origin_ = origin;
-    origin_.z() = robot_position_.z() - range_.z() / 2;
     occupancy_array_->SetOrigin(origin_);
   }
 }

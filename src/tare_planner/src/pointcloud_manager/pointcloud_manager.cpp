@@ -135,6 +135,14 @@ void PointCloudManager::GetPointCloud(PCLCloudType& cloud_out)
   }
 }
 
+void PointCloudManager::ClearNeighborCellOccupancyCloud()
+{
+  for (const auto& neighbor_ind : neighbor_indices_)
+  {
+    occupancy_cloud_grid_->GetCell(neighbor_ind)->clear();
+  }
+}
+
 pcl::PointCloud<pcl::PointXYZI>::Ptr PointCloudManager::GetRolledInOccupancyCloud()
 {
   rolled_in_occupancy_cloud_->clear();
@@ -143,6 +151,16 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr PointCloudManager::GetRolledInOccupancyClou
     *rolled_in_occupancy_cloud_ += *(occupancy_cloud_grid_->GetCell(ind));
   }
   return rolled_in_occupancy_cloud_;
+}
+
+void PointCloudManager::GetOccupancyCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& occupancy_cloud)
+{
+  occupancy_cloud->clear();
+  int cell_num = occupancy_cloud_grid_->GetCellNumber();
+  for (int i = 0; i < cell_num; i++)
+  {
+    *occupancy_cloud += *(occupancy_cloud_grid_->GetCell(i));
+  }
 }
 
 void PointCloudManager::StoreOccupancyCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr& occupancy_cloud)

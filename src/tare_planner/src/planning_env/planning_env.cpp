@@ -120,6 +120,9 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
   rolled_out_occupancy_cloud_ =
       std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "rolled_out_occupancy_cloud", world_frame_id);
 
+  pointcloud_manager_occupancy_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(
+      nh, "pointcloud_manager_occupancy_cloud_", world_frame_id);
+
   // occupancy_grid_ = std::make_unique<occupancy_grid_ns::OccupancyGrid>(
   //     parameters_.kOccupancyGridOrigin, parameters_.kOccupancyGridSize, parameters_.kOccupancyGridResolution);
 
