@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global1
         - /Local1
+        - /PointCloud21
       Splitter Ratio: 0.5393474102020264
     Tree Height: 1300
   - Class: rviz/Selection
@@ -437,9 +438,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 63930
+      Max Intensity: 49026
       Min Color: 0; 0; 0
-      Min Intensity: 53926
+      Min Intensity: 39022
       Name: PointcloudManagerCloud
       Position Transformer: XYZ
       Queue Size: 10
@@ -552,6 +553,36 @@ Visualization Manager:
       Topic: /sensor_coverage_planner/pointcloud_manager_neighbor_cells_origin
       Unreliable: false
       Value: true
+    - Alpha: 0.6000000238418579
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 138; 226; 52
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.30000001192092896
+      Style: Flat Squares
+      Topic: /sensor_coverage_planner/diff_cloud
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -580,25 +611,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 197.22036743164062
+      Distance: 82.82665252685547
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 3.4154245853424072
-        Y: 21.91147804260254
+        X: 5.2109856605529785
+        Y: 56.327178955078125
         Z: 0.7042621374130249
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.295201063156128
+      Pitch: 1.2297966480255127
       Target Frame: map
       Value: XYOrbit (rviz)
-      Yaw: 3.2312560081481934
+      Yaw: 3.244452476501465
     Saved: ~
 Window Geometry:
   Displays:

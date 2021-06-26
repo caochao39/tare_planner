@@ -65,10 +65,22 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
   {
     keypose_cloud_stack_[i].reset(new pcl::PointCloud<PlannerCloudPointType>());
   }
+
+  vertical_surface_cloud_stack_.resize(parameters_.kKeyposeCloudStackNum);
+  for (int i = 0; i < vertical_surface_cloud_stack_.size(); i++)
+  {
+    vertical_surface_cloud_stack_[i].reset(new pcl::PointCloud<PlannerCloudPointType>());
+  }
+  keypose_cloud_ =
+      std::make_unique<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>>(nh, "keypose_cloud", world_frame_id);
   stacked_cloud_ =
       std::make_unique<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>>(nh, "stacked_cloud", world_frame_id);
-  stacked_cloud_kdtree_ = pcl::KdTreeFLANN<PlannerCloudPointType>::Ptr(new pcl::KdTreeFLANN<PlannerCloudPointType>());
-  coverage_cloud_ =
+  stacked_vertical_surface_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>>(
+      nh, "stacked_vertical_surface_cloud", world_frame_id);
+
+  stacked_vertical_surface_cloud_kdtree_ =
+      pcl::KdTreeFLANN<PlannerCloudPointType>::Ptr(new pcl::KdTreeFLANN<PlannerCloudPointType>());
+  vertical_surface_cloud_ =
       std::make_unique<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>>(nh, "coverage_cloud", world_frame_id);
 
   diff_cloud_ =
@@ -159,7 +171,7 @@ void PlanningEnv::UpdateCollisionCloud()
   for (int i = 0; i < parameters_.kKeyposeCloudStackNum; i++)
   {
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp(new pcl::PointCloud<pcl::PointXYZI>());
-    pcl::copyPointCloud<PlannerCloudPointType, pcl::PointXYZI>(*keypose_cloud_stack_[i], *cloud_tmp);
+    pcl::copyPointCloud<PlannerCloudPointType, pcl::PointXYZI>(*vertical_surface_cloud_stack_[i], *cloud_tmp);
     *(collision_cloud_) += *cloud_tmp;
   }
   collision_cloud_downsizer_.Downsize(collision_cloud_, parameters_.kCollisionCloudDwzLeafSize,
@@ -294,8 +306,8 @@ bool PlanningEnv::InCollision(double x, double y, double z) const
   check_point.z = z;
   std::vector<int> neighbor_indices;
   std::vector<float> neighbor_sqdist;
-  stacked_cloud_kdtree_->radiusSearch(check_point, parameters_.kCollisionCheckRadius, neighbor_indices,
-                                      neighbor_sqdist);
+  stacked_vertical_surface_cloud_kdtree_->radiusSearch(check_point, parameters_.kCollisionCheckRadius, neighbor_indices,
+                                                       neighbor_sqdist);
   if (neighbor_indices.size() > parameters_.kCollisionCheckPointNumThr)
   {
     return true;
