@@ -47,8 +47,8 @@ kElminateFrontierWithLastKeypose : false
 kStackedCloudDwzLeafSize : 0.3
 kPlannerCloudDwzLeafSize : 0.5
 kCollisionCloudDwzLeafSize : 0.2
-kCollisionCheckRadius : 0.6
-kCollisionCheckPointNumThr : 1
+kKeyposeGraphCollisionCheckRadius : 0.4
+kKeyposeGraphCollisionCheckPointNumThr : 1
 kKeyposeCloudStackNum : 5
 kCoverageZMax : 25 
 kCoverageZMin : 8.0
@@ -76,7 +76,7 @@ kViewPointZMax : 25
 kViewPointZMin : 0 
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
-kCollisionRadius : 0.6
+kCollisionRadius : 0.5
 kCollisionGridZScale : 1.0 
 kCollisionGridResolutionX : 0.2
 kCollisionGridResolutionY : 0.2

@@ -44,11 +44,11 @@ kExtractFrontierRangeY : 30
 kExtractFrontierRangeZ : 2
 kElminateFrontierWithLastKeypose : false 
 
-kStackedCloudDwzLeafSize : 0.3
+kStackedCloudDwzLeafSize : 0.5
 kPlannerCloudDwzLeafSize : 0.5
 kCollisionCloudDwzLeafSize : 0.2
-kCollisionCheckRadius : 0.6
-kCollisionCheckPointNumThr : 1
+kKeyposeGraphCollisionCheckRadius : 0.4
+kKeyposeGraphCollisionCheckPointNumThr : 1
 kKeyposeCloudStackNum : 5
 kCoverageZMax : 25 
 kCoverageZMin : 8.0
@@ -76,7 +76,7 @@ kViewPointZMax : 25
 kViewPointZMin : 0 
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
-kCollisionRadius : 0.6 # TODO: change to 0.6
+kCollisionRadius : 0.7
 kCollisionGridZScale : 1.0 
 kCollisionGridResolutionX : 0.2
 kCollisionGridResolutionY : 0.2
@@ -127,9 +127,9 @@ kLocalPlanningHorizonHeight : 3.0
 rolling_occupancy_grid/range_x : 90
 rolling_occupancy_grid/range_y : 90 
 rolling_occupancy_grid/range_z : 6 
-rolling_occupancy_grid/resolution_x : 0.3
-rolling_occupancy_grid/resolution_y : 0.3
-rolling_occupancy_grid/resolution_z : 0.3
+rolling_occupancy_grid/resolution_x : 0.4
+rolling_occupancy_grid/resolution_y : 0.4
+rolling_occupancy_grid/resolution_z : 0.4
 rolling_occupancy_grid/rollover_range_x : 18 
 rolling_occupancy_grid/rollover_range_y : 18 
 rolling_occupancy_grid/rollover_range_z : 1.2

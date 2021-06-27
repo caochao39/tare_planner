@@ -19,8 +19,9 @@ void PlanningEnvParameters::ReadParameters(ros::NodeHandle& nh)
   kStackedCloudDwzLeafSize = misc_utils_ns::getParam<double>(nh, "kStackedCloudDwzLeafSize", 0.2);
   kPlannerCloudDwzLeafSize = misc_utils_ns::getParam<double>(nh, "kPlannerCloudDwzLeafSize", 0.2);
   kCollisionCloudDwzLeafSize = misc_utils_ns::getParam<double>(nh, "kCollisionCloudDwzLeafSize", 0.2);
-  kCollisionCheckRadius = misc_utils_ns::getParam<double>(nh, "kCollisionCheckRadius", 0.4);
-  kCollisionCheckPointNumThr = misc_utils_ns::getParam<int>(nh, "kCollisionCheckPointNumThr", 1);
+  kKeyposeGraphCollisionCheckRadius = misc_utils_ns::getParam<double>(nh, "kKeyposeGraphCollisionCheckRadius", 0.4);
+  kKeyposeGraphCollisionCheckPointNumThr =
+      misc_utils_ns::getParam<int>(nh, "kKeyposeGraphCollisionCheckPointNumThr", 1);
 
   kKeyposeCloudStackNum = misc_utils_ns::getParam<int>(nh, "kKeyposeCloudStackNum", 5);
   kCoverageZMax = misc_utils_ns::getParam<double>(nh, "kCoverageZMax", 10.0);
@@ -306,9 +307,9 @@ bool PlanningEnv::InCollision(double x, double y, double z) const
   check_point.z = z;
   std::vector<int> neighbor_indices;
   std::vector<float> neighbor_sqdist;
-  stacked_vertical_surface_cloud_kdtree_->radiusSearch(check_point, parameters_.kCollisionCheckRadius, neighbor_indices,
-                                                       neighbor_sqdist);
-  if (neighbor_indices.size() > parameters_.kCollisionCheckPointNumThr)
+  stacked_vertical_surface_cloud_kdtree_->radiusSearch(check_point, parameters_.kKeyposeGraphCollisionCheckRadius,
+                                                       neighbor_indices, neighbor_sqdist);
+  if (neighbor_indices.size() > parameters_.kKeyposeGraphCollisionCheckPointNumThr)
   {
     return true;
   }

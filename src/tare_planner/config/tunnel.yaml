@@ -29,7 +29,7 @@ kLookAheadDistance : 8
 # PlanningEnv
 kUseFrontier : true
 kFrontierClusterTolerance : 1.0
-kFrontierClusterMinSize : 20
+kFrontierClusterMinSize : 10
 kOccupancyGridOriginX: -25
 kOccupancyGridOriginY: -240 
 kOccupancyGridOriginZ: -1 
@@ -47,8 +47,8 @@ kElminateFrontierWithLastKeypose : false
 kStackedCloudDwzLeafSize : 0.3
 kPlannerCloudDwzLeafSize : 0.5
 kCollisionCloudDwzLeafSize : 0.2
-kCollisionCheckRadius : 0.6
-kCollisionCheckPointNumThr : 1
+kKeyposeGraphCollisionCheckRadius : 0.4
+kKeyposeGraphCollisionCheckPointNumThr : 1
 kKeyposeCloudStackNum : 5
 kCoverageZMax : 25 
 kCoverageZMin : 8.0
@@ -76,7 +76,7 @@ kViewPointZMax : 25
 kViewPointZMin : 0 
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
-kCollisionRadius : 0.6
+kCollisionRadius : 0.5
 kCollisionGridZScale : 1.0 
 kCollisionGridResolutionX : 0.2
 kCollisionGridResolutionY : 0.2
@@ -102,7 +102,7 @@ kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
 kMinAddPointNumSmall : 40 
 kMinAddPointNumBig : 60
-kMinAddFrontierPointNum : 20
+kMinAddFrontierPointNum : 10
 kCellExploringToCoveredThr : 1
 kCellCoveredToExploringThr: 10
 kCellExploringToAlmostCoveredThr: 10 

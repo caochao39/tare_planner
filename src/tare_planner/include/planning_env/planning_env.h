@@ -52,8 +52,8 @@ struct planning_env_ns::PlanningEnvParameters
   double kStackedCloudDwzLeafSize;
   double kPlannerCloudDwzLeafSize;
   double kCollisionCloudDwzLeafSize;
-  double kCollisionCheckRadius;
-  int kCollisionCheckPointNumThr;
+  double kKeyposeGraphCollisionCheckRadius;
+  int kKeyposeGraphCollisionCheckPointNumThr;
 
   int kKeyposeCloudStackNum;
 
