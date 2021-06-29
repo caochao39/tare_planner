@@ -37,6 +37,11 @@ public:
   explicit RollingOccupancyGrid(ros::NodeHandle& nh);
   ~RollingOccupancyGrid() = default;
 
+  Eigen::Vector3d GetResolution()
+  {
+    return resolution_;
+  }
+
   void InitializeOrigin(const Eigen::Vector3d& origin);
   bool UpdateRobotPosition(const Eigen::Vector3d& robot_position);
   template <class PointType>

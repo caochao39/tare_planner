@@ -39,18 +39,6 @@ void PlanningEnvParameters::ReadParameters(ros::NodeHandle& nh)
   kUseFrontier = misc_utils_ns::getParam<bool>(nh, "kUseFrontier", false);
   kFrontierClusterTolerance = misc_utils_ns::getParam<double>(nh, "kFrontierClusterTolerance", 1.0);
   kFrontierClusterMinSize = misc_utils_ns::getParam<int>(nh, "kFrontierClusterMinSize", 30);
-  kOccupancyGridOrigin.x() = misc_utils_ns::getParam<double>(nh, "kOccupancyGridOriginX", -100);
-  kOccupancyGridOrigin.y() = misc_utils_ns::getParam<double>(nh, "kOccupancyGridOriginY", -100);
-  kOccupancyGridOrigin.z() = misc_utils_ns::getParam<double>(nh, "kOccupancyGridOriginZ", -10);
-  kOccupancyGridSize.x() = misc_utils_ns::getParam<double>(nh, "kOccupancyGridSizeX", 300);
-  kOccupancyGridSize.y() = misc_utils_ns::getParam<double>(nh, "kOccupancyGridSizeY", 300);
-  kOccupancyGridSize.z() = misc_utils_ns::getParam<double>(nh, "kOccupancyGridSizeZ", 30);
-  kOccupancyGridResolution.x() = misc_utils_ns::getParam<double>(nh, "kOccupancyGridResolutionX", 0.3);
-  kOccupancyGridResolution.y() = misc_utils_ns::getParam<double>(nh, "kOccupancyGridResolutionY", 0.3);
-  kOccupancyGridResolution.z() = misc_utils_ns::getParam<double>(nh, "kOccupancyGridResolutionZ", 0.3);
-  kExtractFrontierRange.x() = misc_utils_ns::getParam<double>(nh, "kExtractFrontierRangeX", 40);
-  kExtractFrontierRange.y() = misc_utils_ns::getParam<double>(nh, "kExtractFrontierRangeY", 40);
-  kExtractFrontierRange.z() = misc_utils_ns::getParam<double>(nh, "kExtractFrontierRangeZ", 3);
   kElminateFrontierWithLastKeypose = misc_utils_ns::getParam<bool>(nh, "kElminateFrontierWithLastKeypose", false);
 }
 
@@ -136,17 +124,8 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
   pointcloud_manager_occupancy_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(
       nh, "pointcloud_manager_occupancy_cloud_", world_frame_id);
 
-  // occupancy_grid_ = std::make_unique<occupancy_grid_ns::OccupancyGrid>(
-  //     parameters_.kOccupancyGridOrigin, parameters_.kOccupancyGridSize, parameters_.kOccupancyGridResolution);
-
   kdtree_frontier_cloud_ = pcl::search::KdTree<pcl::PointXYZI>::Ptr(new pcl::search::KdTree<pcl::PointXYZI>);
   kdtree_rolling_frontier_cloud_ = pcl::search::KdTree<pcl::PointXYZI>::Ptr(new pcl::search::KdTree<pcl::PointXYZI>);
-
-  // // TODO: Temporary
-  // if (parameters_.kUseFrontier)
-  // {
-  //   occupancy_grid_->SetExtractFrontierRange(parameters_.kExtractFrontierRange);
-  // }
 
   // Todo: parameterize
   vertical_surface_extractor_.SetRadiusThreshold(0.2);
@@ -154,10 +133,11 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
   vertical_surface_extractor_.SetZDiffMin(parameters_.kStackedCloudDwzLeafSize);
   vertical_frontier_extractor_.SetNeighborThreshold(2);
 
+  Eigen::Vector3d rolling_occupancy_grid_resolution = rolling_occupancy_grid_->GetResolution();
   double vertical_frontier_neighbor_search_radius =
-      std::max(parameters_.kOccupancyGridResolution.x(), parameters_.kOccupancyGridResolution.y());
+      std::max(rolling_occupancy_grid_resolution.x(), rolling_occupancy_grid_resolution.y());
   vertical_frontier_neighbor_search_radius =
-      std::max(vertical_frontier_neighbor_search_radius, parameters_.kOccupancyGridResolution.z());
+      std::max(vertical_frontier_neighbor_search_radius, rolling_occupancy_grid_resolution.z());
   vertical_frontier_extractor_.SetRadiusThreshold(vertical_frontier_neighbor_search_radius);
   double z_diff_max = vertical_frontier_neighbor_search_radius * 5;
   double z_diff_min = vertical_frontier_neighbor_search_radius;

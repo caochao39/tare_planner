@@ -30,18 +30,6 @@ kLookAheadDistance : 8
 kUseFrontier : true 
 kFrontierClusterTolerance : 1.0
 kFrontierClusterMinSize : 30
-kOccupancyGridOriginX: -70
-kOccupancyGridOriginY: -80
-kOccupancyGridOriginZ: -1 
-kOccupancyGridSizeX : 500
-kOccupancyGridSizeY : 500
-kOccupancyGridSizeZ : 10
-kOccupancyGridResolutionX : 0.3
-kOccupancyGridResolutionY : 0.3
-kOccupancyGridResolutionZ : 0.3
-kExtractFrontierRangeX : 30
-kExtractFrontierRangeY : 30
-kExtractFrontierRangeZ : 2
 kElminateFrontierWithLastKeypose : false 
 
 kStackedCloudDwzLeafSize : 0.5

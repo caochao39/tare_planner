@@ -72,10 +72,6 @@ struct planning_env_ns::PlanningEnvParameters
   bool kUseFrontier;
   double kFrontierClusterTolerance;
   int kFrontierClusterMinSize;
-  Eigen::Vector3d kOccupancyGridOrigin;
-  Eigen::Vector3d kOccupancyGridSize;
-  Eigen::Vector3d kOccupancyGridResolution;
-  Eigen::Vector3d kExtractFrontierRange;
   bool kElminateFrontierWithLastKeypose;
 
   void ReadParameters(ros::NodeHandle& nh);
@@ -141,23 +137,10 @@ public:
     {
       if (parameters_.kUseFrontier)
       {
-        // occupancy_grid_->UpdateOccupancy<PCLPointType>(cloud);
-        // occupancy_grid_->RayTrace(robot_position_);
-        // occupied_cloud_->cloud_->clear();
-        // free_cloud_->cloud_->clear();
-        // unknown_cloud_->cloud_->clear();
-        // occupancy_grid_->GetVisualizationCloudInRange(robot_position_, parameters_.kExtractFrontierRange,
-        //                                               occupied_cloud_->cloud_, free_cloud_->cloud_,
-        //                                               unknown_cloud_->cloud_);
-
         rolling_occupancy_grid_->UpdateOccupancy<PCLPointType>(cloud);
         rolling_occupancy_grid_->RayTrace(robot_position_);
         rolling_occupancy_grid_->GetVisualizationCloud(rolling_occupancy_grid_cloud_->cloud_);
         // rolling_occupancy_grid_cloud_->Publish();
-
-        // occupied_cloud_->Publish();
-        // free_cloud_->Publish();
-        // unknown_cloud_->Publish();
       }
     }
   }
