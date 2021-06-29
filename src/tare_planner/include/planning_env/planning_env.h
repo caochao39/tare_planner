@@ -30,7 +30,6 @@
 // Components
 #include <pointcloud_manager/pointcloud_manager.h>
 #include <lidar_model/lidar_model.h>
-#include <occupancy_grid/occupancy_grid.h>
 #include "rolling_occupancy_grid/rolling_occupancy_grid.h"
 
 namespace viewpoint_manager_ns
