@@ -28,7 +28,7 @@
 #include <pcl/PointIndices.h>
 
 #include <grid/grid.h>
-#include <rollable_grid/rollable_grid.h>
+#include <rolling_grid/rolling_grid.h>
 #include <viewpoint/viewpoint.h>
 #include <utils/misc_utils.h>
 #include <grid_world/grid_world.h>
@@ -347,7 +347,7 @@ private:
 
   bool initialized_;
   ViewPointManagerParameter vp_;
-  std::unique_ptr<rollable_grid_ns::RollableGrid> grid_;
+  std::unique_ptr<rolling_grid_ns::RollingGrid> grid_;
   std::vector<viewpoint_ns::ViewPoint> viewpoints_;
   std::vector<std::vector<int>> connected_neighbor_indices_;
   std::vector<std::vector<double>> connected_neighbor_dist_;

@@ -18,7 +18,7 @@
 #include <pcl/point_types.h>
 
 #include "grid/grid.h"
-#include "rollable_grid/rollable_grid.h"
+#include "rolling_grid/rolling_grid.h"
 #include "utils/misc_utils.h"
 
 namespace rolling_occupancy_grid_ns
@@ -87,7 +87,7 @@ private:
   Eigen::Vector3d resolution_;
   Eigen::Vector3d origin_;
   Eigen::Vector3d robot_position_;
-  std::unique_ptr<rollable_grid_ns::RollableGrid> rolling_grid_;
+  std::unique_ptr<rolling_grid_ns::RollingGrid> rolling_grid_;
   std::unique_ptr<grid_ns::Grid<CellState>> occupancy_array_;
   std::vector<int> updated_grid_indices_;
   pcl::PointCloud<pcl::PointXYZI>::Ptr occupancy_cloud_;

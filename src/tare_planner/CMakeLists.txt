@@ -70,13 +70,13 @@ add_library(viewpoint src/viewpoint/viewpoint.cpp)
 add_dependencies(viewpoint ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(viewpoint ${catkin_LIBRARIES} lidar_model)
 
-add_library(rollable_grid src/rollable_grid/rollable_grid.cpp)
-add_dependencies(rollable_grid ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(rollable_grid ${catkin_LIBRARIES} misc_utils pointcloud_utils)
+add_library(rolling_grid src/rolling_grid/rolling_grid.cpp)
+add_dependencies(rolling_grid ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(rolling_grid ${catkin_LIBRARIES} misc_utils pointcloud_utils)
 
 add_library(viewpoint_manager src/viewpoint_manager/viewpoint_manager.cpp)
 add_dependencies(viewpoint_manager ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(viewpoint_manager ${catkin_LIBRARIES} rollable_grid viewpoint grid_world)
+target_link_libraries(viewpoint_manager ${catkin_LIBRARIES} rolling_grid viewpoint grid_world)
 
 add_library(local_coverage_planner src/local_coverage_planner/local_coverage_planner.cpp)
 add_dependencies(local_coverage_planner ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

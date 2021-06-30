@@ -1,7 +1,7 @@
 /**
- * @file rollable_grid.h
+ * @file rolling_grid.h
  * @author Chao Cao (ccao1@andrew.cmu.edu)
- * @brief Class that implements a rollable 3D grid
+ * @brief Class that implements a rolling 3D grid
  * @version 0.1
  * @date 2020-06-10
  *
@@ -19,13 +19,13 @@
 #include <grid/grid.h>
 #include <utils/misc_utils.h>
 
-namespace rollable_grid_ns
+namespace rolling_grid_ns
 {
-class RollableGrid
+class RollingGrid
 {
 public:
-  explicit RollableGrid(const Eigen::Vector3i& size);
-  ~RollableGrid() = default;
+  explicit RollingGrid(const Eigen::Vector3i& size);
+  ~RollingGrid() = default;
   bool InRange(Eigen::Vector3i sub) const
   {
     return grid0_->InRange(sub);
@@ -90,4 +90,4 @@ private:
   void GetRolledOutIndices(const Eigen::Vector3i& roll_dir);
   void GetIndices(std::vector<int>& indices, Eigen::Vector3i start_idx, Eigen::Vector3i end_idx) const;
 };
-}  // namespace rollable_grid_ns
+}  // namespace rolling_grid_ns

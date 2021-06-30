@@ -1,7 +1,7 @@
 /**
- * @file rollable_grid.cpp
+ * @file rolling_grid.cpp
  * @author Chao Cao (ccao1@andrew.cmu.edu)
- * @brief Class that implements a rollable 3D grid
+ * @brief Class that implements a rolling 3D grid
  * @version 0.1
  * @date 2020-06-10
  *
@@ -9,11 +9,11 @@
  *
  */
 
-#include <rollable_grid/rollable_grid.h>
+#include <rolling_grid/rolling_grid.h>
 
-namespace rollable_grid_ns
+namespace rolling_grid_ns
 {
-RollableGrid::RollableGrid(const Eigen::Vector3i& size) : size_(size), which_grid_(true)
+RollingGrid::RollingGrid(const Eigen::Vector3i& size) : size_(size), which_grid_(true)
 {
   array_ind_to_ind_.resize(size_.x() * size_.y() * size_.z());
   grid0_ = std::make_unique<grid_ns::Grid<int>>(size_, 0);
@@ -34,7 +34,7 @@ RollableGrid::RollableGrid(const Eigen::Vector3i& size) : size_(size), which_gri
   }
 }
 
-void RollableGrid::Roll(const Eigen::Vector3i& roll_dir)
+void RollingGrid::Roll(const Eigen::Vector3i& roll_dir)
 {
   if (roll_dir.x() == 0 && roll_dir.y() == 0 && roll_dir.z() == 0)
   {
@@ -69,8 +69,8 @@ void RollableGrid::Roll(const Eigen::Vector3i& roll_dir)
   }
 }
 
-void RollableGrid::RollHelper(const std::unique_ptr<grid_ns::Grid<int>>& grid_in,
-                              const std::unique_ptr<grid_ns::Grid<int>>& grid_out, Eigen::Vector3i roll_dir)
+void RollingGrid::RollHelper(const std::unique_ptr<grid_ns::Grid<int>>& grid_in,
+                             const std::unique_ptr<grid_ns::Grid<int>>& grid_out, Eigen::Vector3i roll_dir)
 {
   Eigen::Vector3i grid_in_size = grid_in->GetSize();
   Eigen::Vector3i grid_out_size = grid_out->GetSize();
@@ -96,7 +96,7 @@ void RollableGrid::RollHelper(const std::unique_ptr<grid_ns::Grid<int>>& grid_in
   }
 }
 
-void RollableGrid::GetRolledInIndices(const Eigen::Vector3i& roll_dir)
+void RollingGrid::GetRolledInIndices(const Eigen::Vector3i& roll_dir)
 {
   Eigen::Vector3i start_idx, end_idx;
   start_idx.x() = roll_dir.x() >= 0 ? 0 : size_.x() + roll_dir.x();
@@ -165,7 +165,7 @@ void RollableGrid::GetRolledInIndices(const Eigen::Vector3i& roll_dir)
                Eigen::Vector3i(x_end, y_end, end_idx.z()));
   }
 }
-void RollableGrid::GetRolledOutIndices(const Eigen::Vector3i& roll_dir, std::vector<int>& rolled_out_indices)
+void RollingGrid::GetRolledOutIndices(const Eigen::Vector3i& roll_dir, std::vector<int>& rolled_out_indices)
 {
   Eigen::Vector3i rolled_out_start_idx, rolled_out_end_idx;
   rolled_out_start_idx.x() = roll_dir.x() >= 0 ? size_.x() - roll_dir.x() : 0;
@@ -235,7 +235,7 @@ void RollableGrid::GetRolledOutIndices(const Eigen::Vector3i& roll_dir, std::vec
   }
 }
 
-void RollableGrid::GetIndices(std::vector<int>& indices, Eigen::Vector3i start_idx, Eigen::Vector3i end_idx) const
+void RollingGrid::GetIndices(std::vector<int>& indices, Eigen::Vector3i start_idx, Eigen::Vector3i end_idx) const
 {
   start_idx.x() %= size_.x();
   start_idx.y() %= size_.y();
@@ -265,14 +265,14 @@ void RollableGrid::GetIndices(std::vector<int>& indices, Eigen::Vector3i start_i
   }
 }
 
-void RollableGrid::GetUpdatedIndices(std::vector<int>& updated_indices) const
+void RollingGrid::GetUpdatedIndices(std::vector<int>& updated_indices) const
 {
   updated_indices.clear();
   updated_indices.resize(updated_indices_.size());
   std::copy(updated_indices_.begin(), updated_indices_.end(), updated_indices.begin());
 }
 
-void RollableGrid::GetUpdatedArrayIndices(std::vector<int>& updated_array_indices) const
+void RollingGrid::GetUpdatedArrayIndices(std::vector<int>& updated_array_indices) const
 {
   updated_array_indices.clear();
   for (const auto& ind : updated_indices_)
@@ -281,4 +281,4 @@ void RollableGrid::GetUpdatedArrayIndices(std::vector<int>& updated_array_indice
     updated_array_indices.push_back(GetArrayInd(sub));
   }
 }
-}  // namespace rollable_grid_ns
+}  // namespace rolling_grid_ns

@@ -34,7 +34,7 @@ RollingOccupancyGrid::RollingOccupancyGrid(ros::NodeHandle& nh) : initialized_(f
     origin_(i) = -range_(i) / 2;
   }
 
-  rolling_grid_ = std::make_unique<rollable_grid_ns::RollableGrid>(grid_size_);
+  rolling_grid_ = std::make_unique<rolling_grid_ns::RollingGrid>(grid_size_);
   occupancy_array_ = std::make_unique<grid_ns::Grid<CellState>>(grid_size_, UNKNOWN, origin_, resolution_);
 
   robot_position_ = Eigen::Vector3d(0, 0, 0);

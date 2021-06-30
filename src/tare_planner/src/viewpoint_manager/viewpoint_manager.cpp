@@ -80,7 +80,7 @@ ViewPointManager::ViewPointManager(ros::NodeHandle& nh) : initialized_(false)
   viewpoint_candidate_cloud_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
   viewpoint_in_collision_cloud_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
 
-  grid_ = std::make_unique<rollable_grid_ns::RollableGrid>(vp_.kNum);
+  grid_ = std::make_unique<rolling_grid_ns::RollingGrid>(vp_.kNum);
   origin_ = Eigen::Vector3d::Zero();
 
   viewpoints_.resize(vp_.kViewPointNum);
