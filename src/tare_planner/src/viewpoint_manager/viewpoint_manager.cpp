@@ -30,9 +30,7 @@ bool ViewPointManagerParameter::ReadParameters(ros::NodeHandle& nh)
   kResol.y() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resol_y", 0.5);
   kResol.z() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resol_z", 0.5);
   kCollisionCheckTerrainThr = misc_utils_ns::getParam<double>(nh, "kCollisionCheckTerrainThr", 0.25);
-  kViewPointZMax = misc_utils_ns::getParam<double>(nh, "kViewPointZMax", 8.0);
-  kViewPointZMin = misc_utils_ns::getParam<double>(nh, "kViewPointZMin", 1.0);
-  kCollisionRadius = misc_utils_ns::getParam<double>(nh, "kCollisionRadius", 5.0);
+  kViewPointCollisionMargin = misc_utils_ns::getParam<double>(nh, "kViewPointCollisionMargin", 5.0);
   kCollisionGridZScale = misc_utils_ns::getParam<double>(nh, "kCollisionGridZScale", 2.0);
   kCollisionGridResolution.x() = misc_utils_ns::getParam<double>(nh, "kCollisionGridResolutionX", 0.5);
   kCollisionGridResolution.y() = misc_utils_ns::getParam<double>(nh, "kCollisionGridResolutionY", 0.5);
@@ -54,7 +52,7 @@ bool ViewPointManagerParameter::ReadParameters(ros::NodeHandle& nh)
   kCollisionGridSize = Eigen::Vector3i::Ones();
   for (int i = 0; i < dimension_; i++)
   {
-    kCollisionGridSize(i) = ceil((kNum(i) * kResol(i) + kCollisionRadius * 2) / kCollisionGridResolution(i));
+    kCollisionGridSize(i) = ceil((kNum(i) * kResol(i) + kViewPointCollisionMargin * 2) / kCollisionGridResolution(i));
   }
 
   kCoverageOcclusionThr = misc_utils_ns::getParam<double>(nh, "kCoverageOcclusionThr", 1.0);
@@ -196,7 +194,7 @@ void ViewPointManager::GetCollisionCorrespondence()
   collision_grid_origin_ = Eigen::Vector3d::Zero();
   for (int i = 0; i < vp_.dimension_; i++)
   {
-    collision_grid_origin_(i) -= vp_.kCollisionRadius;
+    collision_grid_origin_(i) -= vp_.kViewPointCollisionMargin;
   }
   std::vector<int> viewpoint_index_correspondence;
   collision_grid_ = std::make_unique<grid_ns::Grid<std::vector<int>>>(
@@ -242,7 +240,8 @@ void ViewPointManager::GetCollisionCorrespondence()
         query_point.y = query_point_position.y();
         query_point.z = query_point_position.z();
         query_point.z *= vp_.kCollisionGridZScale;
-        kdtree->radiusSearch(query_point, vp_.kCollisionRadius, nearby_viewpoint_indices, nearby_viewpoint_sqdist);
+        kdtree->radiusSearch(query_point, vp_.kViewPointCollisionMargin, nearby_viewpoint_indices,
+                             nearby_viewpoint_sqdist);
         int grid_ind = collision_grid_->Sub2Ind(x, y, z);
         for (int i = 0; i < nearby_viewpoint_indices.size(); i++)
         {
@@ -431,7 +430,7 @@ void ViewPointManager::CheckViewPointCollisionWithCollisionGrid(
     }
   }
   std::fill(collision_point_count_.begin(), collision_point_count_.end(), 0);
-  collision_grid_origin_ = origin_ - Eigen::Vector3d::Ones() * vp_.kCollisionRadius;
+  collision_grid_origin_ = origin_ - Eigen::Vector3d::Ones() * vp_.kViewPointCollisionMargin;
   collision_grid_->SetOrigin(collision_grid_origin_);
   for (const auto& point : collision_cloud->points)
   {
@@ -447,7 +446,7 @@ void ViewPointManager::CheckViewPointCollisionWithCollisionGrid(
         {
           int viewpoint_ind = collision_viewpoint_indices[i];
           MY_ASSERT(viewpoint_ind >= 0 && viewpoint_ind < vp_.kViewPointNum);
-          if (std::abs(point.z - GetViewPointHeight(viewpoint_ind)) <= vp_.kCollisionRadius)
+          if (std::abs(point.z - GetViewPointHeight(viewpoint_ind)) <= vp_.kViewPointCollisionMargin)
           {
             SetViewPointCollision(viewpoint_ind, true);
           }

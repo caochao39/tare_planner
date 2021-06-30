@@ -60,11 +60,9 @@ viewpoint_manager/resol_x : 1.2
 viewpoint_manager/resol_y : 1.2
 viewpoint_manager/resol_z : 0.0
 kCollisionCheckTerrainThr : 0.25
-kViewPointZMax : 25 
-kViewPointZMin : 0 
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
-kCollisionRadius : 0.7
+kViewPointCollisionMargin : 0.7
 kCollisionGridZScale : 1.0 
 kCollisionGridResolutionX : 0.2
 kCollisionGridResolutionY : 0.2

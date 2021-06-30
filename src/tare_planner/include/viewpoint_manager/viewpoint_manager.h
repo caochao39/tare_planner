@@ -51,13 +51,11 @@ struct ViewPointManagerParameter
 
   // Collision check
   double kCollisionCheckTerrainThr;
-  double kViewPointZMax;
-  double kViewPointZMin;
 
   // Collision grid
   Eigen::Vector3i kCollisionGridSize;
   Eigen::Vector3d kCollisionGridResolution;
-  double kCollisionRadius;
+  double kViewPointCollisionMargin;
   double kCollisionGridZScale;
   int kCollisionPointThr;
 
