@@ -56,9 +56,6 @@ struct planning_env_ns::PlanningEnvParameters
 
   int kKeyposeCloudStackNum;
 
-  double kCoverageZMax;
-  double kCoverageZMin;
-
   int kPointCloudRowNum;
   int kPointCloudColNum;
   int kPointCloudLevelNum;
@@ -233,26 +230,7 @@ public:
   {
     coverage_boundary_ = polygon;
   }
-  template <class PCLPointType>
-  void GetCoverageCloudWithinBoundary(typename pcl::PointCloud<PCLPointType>::Ptr& cloud)
-  {
-    for (const auto& point : cloud->points)
-    {
-      geometry_msgs::Point geo_point;
-      geo_point.x = point.x;
-      geo_point.y = point.y;
-      geo_point.z = point.z;
-      if (point.z >= parameters_.kCoverageZMin && point.z <= parameters_.kCoverageZMax &&
-          misc_utils_ns::PointInPolygon(geo_point, coverage_boundary_))
-      {
-        PlannerCloudPointType coverage_cloud_point;
-        coverage_cloud_point.x = point.x;
-        coverage_cloud_point.y = point.y;
-        coverage_cloud_point.z = point.z;
-        vertical_surface_cloud_->cloud_->points.push_back(coverage_cloud_point);
-      }
-    }
-  }
+
   pcl::PointCloud<pcl::PointXYZI>::Ptr GetCollisionCloud()
   {
     return collision_cloud_;

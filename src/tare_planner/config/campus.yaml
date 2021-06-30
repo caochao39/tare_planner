@@ -38,8 +38,6 @@ kCollisionCloudDwzLeafSize : 0.2
 kKeyposeGraphCollisionCheckRadius : 0.4
 kKeyposeGraphCollisionCheckPointNumThr : 1
 kKeyposeCloudStackNum : 5
-kCoverageZMax : 25 
-kCoverageZMin : 8.0
 kPointCloudRowNum : 50
 kPointCloudColNum : 50
 kPointCloudLevelNum : 30

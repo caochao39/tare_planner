@@ -24,8 +24,6 @@ void PlanningEnvParameters::ReadParameters(ros::NodeHandle& nh)
       misc_utils_ns::getParam<int>(nh, "kKeyposeGraphCollisionCheckPointNumThr", 1);
 
   kKeyposeCloudStackNum = misc_utils_ns::getParam<int>(nh, "kKeyposeCloudStackNum", 5);
-  kCoverageZMax = misc_utils_ns::getParam<double>(nh, "kCoverageZMax", 10.0);
-  kCoverageZMin = misc_utils_ns::getParam<double>(nh, "kCoverageZMin", 1.0);
 
   kPointCloudRowNum = misc_utils_ns::getParam<int>(nh, "kPointCloudRowNum", 20);
   kPointCloudColNum = misc_utils_ns::getParam<int>(nh, "kPointCloudColNum", 20);
