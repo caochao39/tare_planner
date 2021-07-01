@@ -1,4 +1,4 @@
-# Sensor Coverage Planner Ground 
+# Sensor Coverage Planner Ground
 sub_start_exploration_topic_ : /start_exploration
 sub_terrain_map_topic_ : /terrain_map
 sub_terrain_map_ext_topic_ : /terrain_map_ext
