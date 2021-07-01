@@ -419,24 +419,21 @@ int SensorCoveragePlanner3D::UpdateViewPoints()
   {
     point.intensity = 0.0;
   }
-  if (pp_.kCheckRegisteredCloudCollision || pp_.kCheckTerrainCollision)
+  if (pp_.kCheckRegisteredCloudCollision)
   {
-    if (pp_.kCheckRegisteredCloudCollision)
+    for (auto& point : pd_.registered_cloud_->cloud_->points)
     {
-      for (auto& point : pd_.registered_cloud_->cloud_->points)
-      {
-        point.intensity = 0.0;
-      }
-      *(pd_.collision_cloud_->cloud_) += *(pd_.registered_cloud_->cloud_);
+      point.intensity = 0.0;
     }
-    if (pp_.kCheckTerrainCollision)
+    *(pd_.collision_cloud_->cloud_) += *(pd_.registered_cloud_->cloud_);
+  }
+  if (pp_.kCheckTerrainCollision)
+  {
+    for (auto& point : pd_.terrain_collision_cloud_->cloud_->points)
     {
-      for (auto& point : pd_.terrain_collision_cloud_->cloud_->points)
-      {
-        point.intensity = 0.0;
-      }
-      *(pd_.collision_cloud_->cloud_) += *(pd_.terrain_collision_cloud_->cloud_);
+      point.intensity = 0.0;
     }
+    *(pd_.collision_cloud_->cloud_) += *(pd_.terrain_collision_cloud_->cloud_);
   }
 
   pd_.viewpoint_manager_->CheckViewPointCollision(pd_.collision_cloud_->cloud_);
