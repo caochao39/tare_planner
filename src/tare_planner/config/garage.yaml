@@ -84,7 +84,7 @@ kGridWorldZNum : 121
 kGridWorldCellSize : 9.6 # TODO: add comment: local planning horizon size / 5
 kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
-kMinAddPointNumSmall : 40 
+kMinAddPointNumSmall : 40
 kMinAddPointNumBig : 60
 kMinAddFrontierPointNum : 15
 kCellExploringToCoveredThr : 1
