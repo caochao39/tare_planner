@@ -12,12 +12,12 @@ pub_runtime_breakdown_topic_ : runtime_breakdown
 pub_runtime_topic_ : /runtime
 pub_waypoint_topic_ : /way_point
 
-kAutoStart : true 
-kRushHome : true 
-kUseTerrainHeight : false 
-kCheckTerrainCollision : true 
-kCheckRegisteredCloudCollision : false 
-kExtendWayPoint : true 
+kAutoStart : true
+kRushHome : true
+kUseTerrainHeight : false
+kCheckTerrainCollision : true
+kCheckRegisteredCloudCollision : false
+kExtendWayPoint : true
 kUseLineOfSightLookAheadPoint : true
 kExtendWayPointDistance : 8.0
 kKeyposeCloudDwzFilterLeafSize : 0.2
@@ -27,10 +27,10 @@ kTerrainCollisionThreshold : 0.5
 kLookAheadDistance : 8
 
 # PlanningEnv
-kUseFrontier : true 
+kUseFrontier : true
 kFrontierClusterTolerance : 1.0
 kFrontierClusterMinSize : 30
-kElminateFrontierWithLastKeypose : false 
+kElminateFrontierWithLastKeypose : false
 
 kStackedCloudDwzLeafSize : 0.5
 kPlannerCloudDwzLeafSize : 0.5
@@ -48,12 +48,12 @@ kPointCloudManagerNeighborCellNum : 5
 kCoverCloudZSqueezeRatio : 2.0
 
 # ViewPointManager
-viewpoint_manager/size_x : 40 
-viewpoint_manager/size_y : 40 
-viewpoint_manager/size_z : 1 
+viewpoint_manager/size_x : 40
+viewpoint_manager/size_y : 40
+viewpoint_manager/size_z : 1
 viewpoint_manager/rollover_step_size_x : 8
-viewpoint_manager/rollover_step_size_y : 8 
-viewpoint_manager/rollover_step_size_z : 8 
+viewpoint_manager/rollover_step_size_y : 8
+viewpoint_manager/rollover_step_size_z : 8
 viewpoint_manager/resol_x : 1.2
 viewpoint_manager/resol_y : 1.2
 viewpoint_manager/resol_z : 0.0
@@ -61,12 +61,12 @@ kCollisionCheckTerrainThr : 0.25 # TODO: For checking connectivity, should chang
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
 kViewPointCollisionMargin : 0.7
-kCollisionGridZScale : 1.0 
+kCollisionGridZScale : 1.0
 kCollisionGridResolutionX : 0.2
 kCollisionGridResolutionY : 0.2
 kCollisionGridResolutionZ : 0.0
 kCollisionPointThr : 1
-kLineOfSightStopAtNearestObstacle : true 
+kLineOfSightStopAtNearestObstacle : true
 kViewPointHeightFromTerrain : 0.75
 kViewPointHeightFromTerrainChangeThreshold : 0.6
 kCheckDynamicObstacleCollision : false
@@ -84,12 +84,12 @@ kGridWorldZNum : 121
 kGridWorldCellSize : 9.6 # TODO: add comment: local planning horizon size / 5
 kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
-kMinAddPointNumSmall : 40 
-kMinAddPointNumBig : 60 
+kMinAddPointNumSmall : 40
+kMinAddPointNumBig : 60
 kMinAddFrontierPointNum : 80 # TODO: add comment:
 kCellExploringToCoveredThr : 1
 kCellCoveredToExploringThr: 10
-kCellExploringToAlmostCoveredThr: 10 
+kCellExploringToAlmostCoveredThr: 10
 kCellAlmostCoveredToExploringThr: 20
 kCellUnknownToExploringThr: 1
 
@@ -109,12 +109,12 @@ kLocalPlanningHorizonHeight : 3.0
 
 # Rolling occupancy grid
 rolling_occupancy_grid/range_x : 90
-rolling_occupancy_grid/range_y : 90 
-rolling_occupancy_grid/range_z : 6 
+rolling_occupancy_grid/range_y : 90
+rolling_occupancy_grid/range_z : 6
 rolling_occupancy_grid/resolution_x : 0.4
 rolling_occupancy_grid/resolution_y : 0.4
 rolling_occupancy_grid/resolution_z : 0.4
-rolling_occupancy_grid/rollover_range_x : 18 
-rolling_occupancy_grid/rollover_range_y : 18 
+rolling_occupancy_grid/rollover_range_x : 18
+rolling_occupancy_grid/rollover_range_y : 18
 rolling_occupancy_grid/rollover_range_z : 1.2
 
