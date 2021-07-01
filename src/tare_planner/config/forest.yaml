@@ -16,9 +16,8 @@ kAutoStart : true
 kRushHome : true
 kUseTerrainHeight : false
 kCheckTerrainCollision : true
-kCheckRegisteredCloudCollision : false
 kExtendWayPoint : true
-kUseLineOfSightLookAheadPoint : true
+kUseLineOfSightLookAheadPoint : false 
 kExtendWayPointDistance : 8.0
 kKeyposeCloudDwzFilterLeafSize : 0.2
 kRushHomeDist : 10
@@ -60,7 +59,9 @@ viewpoint_manager/resol_z : 0.0
 kCollisionCheckTerrainThr : 0.25 # TODO: For checking connectivity, should change name
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
-kViewPointCollisionMargin : 0.7
+kViewPointCollisionMargin : 0.6
+kViewPointCollisionMarginZPlus : 0.2
+kViewPointCollisionMarginZMinus : 0.8
 kCollisionGridZScale : 1.0
 kCollisionGridResolutionX : 0.2
 kCollisionGridResolutionY : 0.2

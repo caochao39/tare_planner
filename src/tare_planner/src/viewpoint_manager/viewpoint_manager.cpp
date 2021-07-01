@@ -30,7 +30,9 @@ bool ViewPointManagerParameter::ReadParameters(ros::NodeHandle& nh)
   kResol.y() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resol_y", 0.5);
   kResol.z() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resol_z", 0.5);
   kCollisionCheckTerrainThr = misc_utils_ns::getParam<double>(nh, "kCollisionCheckTerrainThr", 0.25);
-  kViewPointCollisionMargin = misc_utils_ns::getParam<double>(nh, "kViewPointCollisionMargin", 5.0);
+  kViewPointCollisionMargin = misc_utils_ns::getParam<double>(nh, "kViewPointCollisionMargin", 0.5);
+  kViewPointCollisionMarginZPlus = misc_utils_ns::getParam<double>(nh, "kViewPointCollisionMarginZPlus", 0.5);
+  kViewPointCollisionMarginZMinus = misc_utils_ns::getParam<double>(nh, "kViewPointCollisionMarginZMinus", 0.5);
   kCollisionGridZScale = misc_utils_ns::getParam<double>(nh, "kCollisionGridZScale", 2.0);
   kCollisionGridResolution.x() = misc_utils_ns::getParam<double>(nh, "kCollisionGridResolutionX", 0.5);
   kCollisionGridResolution.y() = misc_utils_ns::getParam<double>(nh, "kCollisionGridResolutionY", 0.5);
@@ -446,12 +448,11 @@ void ViewPointManager::CheckViewPointCollisionWithCollisionGrid(
         {
           int viewpoint_ind = collision_viewpoint_indices[i];
           MY_ASSERT(viewpoint_ind >= 0 && viewpoint_ind < vp_.kViewPointNum);
-          if (std::abs(point.z - GetViewPointHeight(viewpoint_ind)) <= vp_.kViewPointCollisionMargin)
+          double z_diff = point.z - GetViewPointHeight(viewpoint_ind);
+          if ((z_diff >= 0 && z_diff <= vp_.kViewPointCollisionMarginZPlus) ||
+              (z_diff < 0 && z_diff >= -vp_.kViewPointCollisionMarginZMinus))
           {
             SetViewPointCollision(viewpoint_ind, true);
-          }
-          if (point.intensity < 0.5)
-          {
             ResetViewPointCollisionFrameCount(viewpoint_ind);
           }
         }

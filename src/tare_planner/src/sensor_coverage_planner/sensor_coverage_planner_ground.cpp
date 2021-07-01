@@ -41,7 +41,6 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   kRushHome = misc_utils_ns::getParam<bool>(nh, "kRushHome", false);
   kUseTerrainHeight = misc_utils_ns::getParam<bool>(nh, "kUseTerrainHeight", true);
   kCheckTerrainCollision = misc_utils_ns::getParam<bool>(nh, "kCheckTerrainCollision", true);
-  kCheckRegisteredCloudCollision = misc_utils_ns::getParam<bool>(nh, "kCheckRegisteredCloudCollision", true);
   kExtendWayPoint = misc_utils_ns::getParam<bool>(nh, "kExtendWayPoint", true);
   kUseLineOfSightLookAheadPoint = misc_utils_ns::getParam<bool>(nh, "kUseLineOfSightLookAheadPoint", true);
 
@@ -68,6 +67,8 @@ void PlannerData::Initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
       std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "terrain_cloud_large", kWorldFrameID);
   terrain_collision_cloud_ =
       std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "terrain_collision_cloud", kWorldFrameID);
+  terrain_ext_collision_cloud_ =
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "terrain_ext_collision_cloud", kWorldFrameID);
   viewpoint_vis_cloud_ =
       std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "viewpoint_vis_cloud", kWorldFrameID);
   grid_world_vis_cloud_ =
@@ -302,6 +303,18 @@ void SensorCoveragePlanner3D::TerrainMapExtCallback(const sensor_msgs::PointClou
   {
     pcl::fromROSMsg<pcl::PointXYZI>(*terrain_map_ext_msg, *(pd_.large_terrain_cloud_->cloud_));
   }
+  if (pp_.kCheckTerrainCollision)
+  {
+    pcl::fromROSMsg<pcl::PointXYZI>(*terrain_map_ext_msg, *(pd_.large_terrain_cloud_->cloud_));
+    pd_.terrain_ext_collision_cloud_->cloud_->clear();
+    for (auto& point : pd_.large_terrain_cloud_->cloud_->points)
+    {
+      if (point.intensity > pp_.kTerrainCollisionThreshold)
+      {
+        pd_.terrain_ext_collision_cloud_->cloud_->points.push_back(point);
+      }
+    }
+  }
 }
 
 void SensorCoveragePlanner3D::CoverageBoundaryCallback(const geometry_msgs::PolygonStampedConstPtr& polygon_msg)
@@ -414,28 +427,11 @@ int SensorCoveragePlanner3D::UpdateViewPoints()
   {
     pd_.viewpoint_manager_->SetViewPointHeightWithTerrain(pd_.large_terrain_cloud_->cloud_);
   }
-  // Intensity 0: current frame, 1: previous frames
-  for (auto& point : pd_.collision_cloud_->cloud_->points)
-  {
-    point.intensity = 0.0;
-  }
-  if (pp_.kCheckRegisteredCloudCollision)
-  {
-    for (auto& point : pd_.registered_cloud_->cloud_->points)
-    {
-      point.intensity = 0.0;
-    }
-    *(pd_.collision_cloud_->cloud_) += *(pd_.registered_cloud_->cloud_);
-  }
   if (pp_.kCheckTerrainCollision)
   {
-    for (auto& point : pd_.terrain_collision_cloud_->cloud_->points)
-    {
-      point.intensity = 0.0;
-    }
     *(pd_.collision_cloud_->cloud_) += *(pd_.terrain_collision_cloud_->cloud_);
+    *(pd_.collision_cloud_->cloud_) += *(pd_.terrain_ext_collision_cloud_->cloud_);
   }
-
   pd_.viewpoint_manager_->CheckViewPointCollision(pd_.collision_cloud_->cloud_);
   pd_.viewpoint_manager_->CheckViewPointLineOfSight();
   pd_.viewpoint_manager_->CheckViewPointConnectivity();

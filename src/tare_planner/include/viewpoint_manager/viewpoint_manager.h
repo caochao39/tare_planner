@@ -56,6 +56,8 @@ struct ViewPointManagerParameter
   Eigen::Vector3i kCollisionGridSize;
   Eigen::Vector3d kCollisionGridResolution;
   double kViewPointCollisionMargin;
+  double kViewPointCollisionMarginZPlus;
+  double kViewPointCollisionMarginZMinus;
   double kCollisionGridZScale;
   int kCollisionPointThr;
 

@@ -16,7 +16,6 @@ kAutoStart : true
 kRushHome : true
 kUseTerrainHeight : false
 kCheckTerrainCollision : true
-kCheckRegisteredCloudCollision : true
 kExtendWayPoint : true
 kUseLineOfSightLookAheadPoint : false
 kExtendWayPointDistance : 8.0
@@ -61,6 +60,8 @@ kCollisionCheckTerrainThr : 0.25
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
 kViewPointCollisionMargin : 0.5
+kViewPointCollisionMarginZPlus : 0.2
+kViewPointCollisionMarginZMinus : 0.8
 kCollisionGridZScale : 1.0
 kCollisionGridResolutionX : 0.2
 kCollisionGridResolutionY : 0.2
