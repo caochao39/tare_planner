@@ -537,12 +537,6 @@ int KeyposeGraph::AddKeyposeNode(const nav_msgs::Odometry& keypose, const planni
   if (nodes_.empty() || keypose_node_count == 0)
   {
     AddNode(current_keypose_position_, new_node_ind, current_keypose_id_, true);
-    // KeyposeNode node(current_keypose_position_, new_node_ind, current_keypose_id_, true);
-    // nodes_.push_back(node);
-    // std::vector<int> neighbors;
-    // graph_.push_back(neighbors);
-    // std::vector<double> neighbor_dist;
-    // dist_.push_back(neighbor_dist);
     return new_node_ind;
   }
   else
@@ -595,35 +589,11 @@ int KeyposeGraph::AddKeyposeNode(const nav_msgs::Odometry& keypose, const planni
           // Add edge to the last keypose node
           AddNodeAndEdge(current_keypose_position_, new_node_ind, current_keypose_id_, true, last_keypose_ind,
                          last_keypose_dist);
-          // KeyposeNode new_node(current_keypose_position_, new_node_ind, current_keypose_id_, true);
-          // nodes_.push_back(new_node);
-          // std::vector<int> neighbors;
-          // graph_.push_back(neighbors);
-          // std::vector<double> neighbor_dist;
-          // dist_.push_back(neighbor_dist);
-
-          // graph_[last_keypose_ind].push_back(new_node_ind);
-          // graph_[new_node_ind].push_back(last_keypose_ind);
-
-          // dist_[last_keypose_ind].push_back(last_keypose_dist);
-          // dist_[new_node_ind].push_back(last_keypose_dist);
         }
         else
         {
           // Add edge to the nearest node
           AddNodeAndEdge(current_keypose_position_, new_node_ind, current_keypose_id_, true, min_dist_ind, min_dist);
-          // KeyposeNode new_node(current_keypose_position_, new_node_ind, current_keypose_id_, true);
-          // nodes_.push_back(new_node);
-          // std::vector<int> neighbors;
-          // graph_.push_back(neighbors);
-          // std::vector<double> neighbor_dist;
-          // dist_.push_back(neighbor_dist);
-
-          // graph_[min_dist_ind].push_back(new_node_ind);
-          // graph_[new_node_ind].push_back(min_dist_ind);
-
-          // dist_[min_dist_ind].push_back(min_dist);
-          // dist_[new_node_ind].push_back(min_dist);
         }
         // Check other nodes
         if (!in_range_node_indices.empty())
@@ -662,11 +632,6 @@ int KeyposeGraph::AddKeyposeNode(const nav_msgs::Odometry& keypose, const planni
               if (!in_collision)
               {
                 AddEdge(new_node_ind, in_range_ind, neighbor_node_dist);
-                // graph_[in_range_ind].push_back(new_node_ind);
-                // graph_[new_node_ind].push_back(in_range_ind);
-
-                // dist_[in_range_ind].push_back(neighbor_node_dist);
-                // dist_[new_node_ind].push_back(neighbor_node_dist);
               }
             }
           }
