@@ -1166,13 +1166,19 @@ double KeyposeGraph::GetShortestPath(const geometry_msgs::Point& start_point, co
 
 geometry_msgs::Point KeyposeGraph::GetKeyposePosition(int keypose_id)
 {
+  geometry_msgs::Point point;
+  point.x = 0;
+  point.y = 0;
+  point.z = 0;
   for (const auto& node : nodes_)
   {
     if (node.keypose_id_ == keypose_id)
     {
-      return node.position_;
+      point = node.position_;
+      break;
     }
   }
+  return point;
 }
 
 void KeyposeGraph::GetKeyposePositions(std::vector<Eigen::Vector3d>& positions)
