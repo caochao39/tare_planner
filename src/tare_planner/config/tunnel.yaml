@@ -117,4 +117,3 @@ rolling_occupancy_grid/resolution_z : 0.3
 rolling_occupancy_grid/rollover_range_x : 18
 rolling_occupancy_grid/rollover_range_y : 18
 rolling_occupancy_grid/rollover_range_z : 1.2
-
