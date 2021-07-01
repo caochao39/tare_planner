@@ -107,6 +107,10 @@ private:
 public:
   KeyposeGraph();
   ~KeyposeGraph() = default;
+  void AddNode(const geometry_msgs::Point& position, int node_ind, int keypose_id, bool is_keypose);
+  void AddNodeAndEdge(const geometry_msgs::Point& position, int node_ind, int keypose_id, bool is_keypose,
+                      int connected_node_ind, double connected_node_dist);
+  void AddEdge(int from_node_ind, int to_node_ind, double dist);
   bool HasNode(const Eigen::Vector3d& position);
   bool InBound(int index)
   {
