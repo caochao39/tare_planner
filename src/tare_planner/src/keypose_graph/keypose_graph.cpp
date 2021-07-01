@@ -495,30 +495,6 @@ void KeyposeGraph::CheckConnectivity(const geometry_msgs::Point& robot_position)
   {
     kdtree_connected_nodes_->setInputCloud(connected_nodes_cloud_);
   }
-  // TODO: uncomment this
-  // For all the disconnected nodes, delete their edges
-  // for (int i = 0; i < nodes_.size(); i++)
-  // {
-  //   if (nodes_[i].is_connected_)
-  //   {
-  //     continue;
-  //   }
-  //   for (int j = 0; j < graph_[i].size(); j++)
-  //   {
-  //     int neighbor_ind = graph_[i][j];
-  //     for (int k = 0; k < graph_[neighbor_ind].size(); k++)
-  //     {
-  //       if (graph_[neighbor_ind][k] == i)
-  //       {
-  //         graph_[neighbor_ind].erase(graph_[neighbor_ind].begin() + k);
-  //         dist_[neighbor_ind].erase(dist_[neighbor_ind].begin() + k);
-  //         k--;
-  //       }
-  //     }
-  //   }
-  //   graph_[i].clear();
-  //   dist_[i].clear();
-  // }
 }
 
 int KeyposeGraph::AddKeyposeNode(const nav_msgs::Odometry& keypose, const planning_env_ns::PlanningEnv& planning_env)
