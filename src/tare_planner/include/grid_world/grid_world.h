@@ -352,7 +352,6 @@ public:
     return return_home_;
   }
   void GetCellViewPointPositions(std::vector<Eigen::Vector3d>& viewpoint_positions);
-  void AddPathsToKeyposeGraph(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph);
   void AddPathsInBetweenCells(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
                               const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph);
   bool PathValid(const nav_msgs::Path& path, int from_cell_ind, int to_cell_ind);

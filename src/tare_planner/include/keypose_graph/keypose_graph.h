@@ -131,9 +131,6 @@ public:
   int AddKeyposeNode(const nav_msgs::Odometry& keypose, const planning_env_ns::PlanningEnv& planning_env);
   bool HasEdgeBetween(int node_ind1, int node_ind2);
   int AddNonKeyposeNode(const geometry_msgs::Point& new_node_position);
-  int AddNonKeyposeNode(int prev_node_ind, const geometry_msgs::Point& new_node_position);
-  void AddToKeyposePath(const nav_msgs::Path& path);
-  void AddShortCutPath(const nav_msgs::Path& path);
   void AddPath(const nav_msgs::Path& path);
   void SetAllowVerticalEdge(bool allow_vertical_edge)
   {

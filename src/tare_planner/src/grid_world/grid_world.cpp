@@ -1058,26 +1058,6 @@ void GridWorld::GetCellViewPointPositions(std::vector<Eigen::Vector3d>& viewpoin
   }
 }
 
-void GridWorld::AddPathsToKeyposeGraph(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph)
-{
-  // Add a path directly to the keypose graph
-  // The last node should be a keypose node
-  for (int i = 0; i < subspaces_->GetCellNumber(); i++)
-  {
-    if (subspaces_->GetCell(i).GetStatus() == CellStatus::EXPLORING &&
-        !subspaces_->GetCell(i).IsPathAddedToKeyposeGraph())
-    {
-      int cell_viewpoint_count = subspaces_->GetCell(i).GetViewPointIndices().size();
-      if (std::find(neighbor_cell_indices_.begin(), neighbor_cell_indices_.end(), i) == neighbor_cell_indices_.end() ||
-          cell_viewpoint_count == 0)
-      {
-        keypose_graph->AddToKeyposePath(subspaces_->GetCell(i).GetPathToKeyposeGraph());
-        subspaces_->GetCell(i).SetPathAddedToKeyposeGraph(true);
-      }
-    }
-  }
-}
-
 void GridWorld::AddPathsInBetweenCells(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
                                        const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph)
 {
