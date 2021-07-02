@@ -303,7 +303,6 @@ void KeyposeGraph::CheckLocalCollision(const geometry_msgs::Point& robot_positio
                                        const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager)
 {
   // Get local planning horizon xy size
-  // Eigen::Vector3d local_planning_horizon_size = viewpoint_manager->GetLocalPlanningHorizonSize();
   int in_local_planning_horizon_count = 0;
   int collision_node_count = 0;
   int collision_edge_count = 0;
@@ -316,13 +315,7 @@ void KeyposeGraph::CheckLocalCollision(const geometry_msgs::Point& robot_positio
     {
       continue;
     }
-    // double x_dist = std::abs(nodes_[i].position_.x - robot_position.x);
-    // double y_dist = std::abs(nodes_[i].position_.y - robot_position.y);
-    // if (x_dist > local_planning_horizon_size.x() / 2 || y_dist > local_planning_horizon_size.y() / 2)
-    // {
-    //   continue;
-    // }
-    // else
+
     Eigen::Vector3d node_position =
         Eigen::Vector3d(nodes_[i].position_.x, nodes_[i].position_.y, nodes_[i].position_.z);
     int viewpoint_ind = viewpoint_manager->GetViewPointInd(node_position);
@@ -374,29 +367,22 @@ void KeyposeGraph::CheckLocalCollision(const geometry_msgs::Point& robot_positio
               if (viewpoint_manager->ViewPointInCollision(viewpoint_ind))
               {
                 geometry_msgs::Point viewpoint_position = viewpoint_manager->GetViewPointPosition(viewpoint_ind);
-                // if (std::abs(collision_check_position.x() - viewpoint_position.x) <
-                //         viewpoint_resolution.x() / 2 * 0.8 &&
-                //     std::abs(collision_check_position.y() - viewpoint_position.y) < viewpoint_resolution.y() / 2 *
-                //     0.8)
+                // Delete neighbors' edges
+                for (int k = 0; k < graph_[neighbor_ind].size(); k++)
                 {
-                  // Delete neighbors' edges
-                  for (int k = 0; k < graph_[neighbor_ind].size(); k++)
+                  if (graph_[neighbor_ind][k] == i)
                   {
-                    if (graph_[neighbor_ind][k] == i)
-                    {
-                      collision_edge_count++;
-                      graph_[neighbor_ind].erase(graph_[neighbor_ind].begin() + k);
-                      dist_[neighbor_ind].erase(dist_[neighbor_ind].begin() + k);
-                      k--;
-                    }
+                    collision_edge_count++;
+                    graph_[neighbor_ind].erase(graph_[neighbor_ind].begin() + k);
+                    dist_[neighbor_ind].erase(dist_[neighbor_ind].begin() + k);
+                    k--;
                   }
-                  // Delete the node's edge
-                  // std::cout << "deleting edge between: " << i << " and " << neighbor_ind << std::endl;
-                  graph_[i].erase(graph_[i].begin() + j);
-                  dist_[i].erase(dist_[i].begin() + j);
-                  j--;
-                  break;
                 }
+                // Delete the node's edge
+                graph_[i].erase(graph_[i].begin() + j);
+                dist_[i].erase(dist_[i].begin() + j);
+                j--;
+                break;
               }
             }
           }
@@ -404,10 +390,6 @@ void KeyposeGraph::CheckLocalCollision(const geometry_msgs::Point& robot_positio
       }
     }
   }
-  // std::cout << "####in horizon node num: " << in_local_planning_horizon_count << std::endl;
-  // std::cout << "####in viewpoint range num: " << in_viewpoint_range_count << std::endl;
-  // std::cout << "####collision node num: " << collision_node_count << std::endl;
-  // std::cout << "####collision edge num: " << collision_edge_count << std::endl;
 }
 
 void KeyposeGraph::UpdateNodes()
