@@ -15,17 +15,20 @@ namespace rolling_occupancy_grid_ns
 {
 RollingOccupancyGrid::RollingOccupancyGrid(ros::NodeHandle& nh) : initialized_(false), dimension_(3)
 {
-  range_.x() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/range_x", 100);
-  range_.y() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/range_y", 100);
-  range_.z() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/range_z", 10);
+  double pointcloud_cell_size = misc_utils_ns::getParam<double>(nh, "kPointCloudCellSize", 18);
+  double pointcloud_cell_height = misc_utils_ns::getParam<double>(nh, "kPointCloudCellHeight", 1.8);
+  int pointcloud_cell_neighbor_number = misc_utils_ns::getParam<int>(nh, "kPointCloudManagerNeighborCellNum", 5);
+  range_.x() = pointcloud_cell_size * pointcloud_cell_neighbor_number;
+  range_.y() = pointcloud_cell_size * pointcloud_cell_neighbor_number;
+  range_.z() = pointcloud_cell_height * pointcloud_cell_neighbor_number;
 
-  resolution_.x() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/resolution_x", 0.2);
-  resolution_.y() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/resolution_y", 0.2);
-  resolution_.z() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/resolution_z", 0.2);
+  resolution_.x() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/resolution_x", 0.3);
+  resolution_.y() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/resolution_y", 0.3);
+  resolution_.z() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/resolution_z", 0.3);
 
-  rollover_range_.x() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/rollover_range_x", 20);
-  rollover_range_.y() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/rollover_range_y", 20);
-  rollover_range_.z() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/rollover_range_z", 2);
+  rollover_range_.x() = pointcloud_cell_size;
+  rollover_range_.y() = pointcloud_cell_size;
+  rollover_range_.z() = pointcloud_cell_height;
 
   for (int i = 0; i < dimension_; i++)
   {

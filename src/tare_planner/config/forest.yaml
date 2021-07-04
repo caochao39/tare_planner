@@ -108,12 +108,6 @@ kLocalPlanningHorizonMarkerWidth : 0.3
 kLocalPlanningHorizonHeight : 3.0
 
 # Rolling occupancy grid
-rolling_occupancy_grid/range_x : 90
-rolling_occupancy_grid/range_y : 90
-rolling_occupancy_grid/range_z : 9
 rolling_occupancy_grid/resolution_x : 0.4
 rolling_occupancy_grid/resolution_y : 0.4
 rolling_occupancy_grid/resolution_z : 0.4
-rolling_occupancy_grid/rollover_range_x : 18
-rolling_occupancy_grid/rollover_range_y : 18
-rolling_occupancy_grid/rollover_range_z : 1.8
