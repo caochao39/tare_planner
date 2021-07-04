@@ -28,8 +28,11 @@ kLookAheadDistance : 8
 # PlanningEnv
 kUseFrontier : true
 kFrontierClusterTolerance : 1.0
-kFrontierClusterMinSize : 10
+kFrontierClusterMinSize : 30
 kElminateFrontierWithLastKeypose : false
+kExtractFrontierRangeX : 35
+kExtractFrontierRangeY : 35
+kExtractFrontierRangeZ : 2
 
 kStackedCloudDwzLeafSize : 0.3
 kPlannerCloudDwzLeafSize : 0.5
@@ -42,7 +45,7 @@ kPointCloudColNum : 50
 kPointCloudLevelNum : 30
 kMaxCellPointNum : 100000
 kPointCloudCellSize : 18
-kPointCloudCellHeight : 1.2
+kPointCloudCellHeight : 1.8
 kPointCloudManagerNeighborCellNum : 5
 kCoverCloudZSqueezeRatio : 2.0
 
@@ -87,7 +90,7 @@ kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
 kMinAddPointNumSmall : 40
 kMinAddPointNumBig : 60
-kMinAddFrontierPointNum : 10
+kMinAddFrontierPointNum : 30
 kCellExploringToCoveredThr : 1
 kCellCoveredToExploringThr: 10
 kCellExploringToAlmostCoveredThr: 10
@@ -111,10 +114,10 @@ kLocalPlanningHorizonHeight : 3.0
 # Rolling occupancy grid
 rolling_occupancy_grid/range_x : 90
 rolling_occupancy_grid/range_y : 90
-rolling_occupancy_grid/range_z : 6
+rolling_occupancy_grid/range_z : 9
 rolling_occupancy_grid/resolution_x : 0.3
 rolling_occupancy_grid/resolution_y : 0.3
 rolling_occupancy_grid/resolution_z : 0.3
 rolling_occupancy_grid/rollover_range_x : 18
 rolling_occupancy_grid/rollover_range_y : 18
-rolling_occupancy_grid/rollover_range_z : 1.2
+rolling_occupancy_grid/rollover_range_z : 1.8
