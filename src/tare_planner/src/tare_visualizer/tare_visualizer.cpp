@@ -51,7 +51,9 @@ bool TAREVisualizer::ReadParameters(ros::NodeHandle& nh)
   kLocalPlanningHorizonMarkerColor.a = misc_utils_ns::getParam<double>(nh, "kLocalPlanningHorizonMarkerColorA", 1.0);
 
   kLocalPlanningHorizonMarkerWidth = misc_utils_ns::getParam<double>(nh, "kLocalPlanningHorizonMarkerWidth", 0.3);
-  kGlobalSubspaceSize = misc_utils_ns::getParam<double>(nh, "kGridWorldCellSize", 7.7);
+  int viewpoint_number = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_x", 40);
+  double viewpoint_resolution = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resolution_x", 1.0);
+  kGlobalSubspaceSize = viewpoint_number * viewpoint_resolution / 5;
   kGlobalSubspaceHeight = misc_utils_ns::getParam<double>(nh, "kGridWorldCellHeight", 3.0);
 
   double viewpoint_num_x = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/number_x", 35);

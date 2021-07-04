@@ -160,7 +160,9 @@ void GridWorld::ReadParameters(ros::NodeHandle& nh)
   kRowNum = misc_utils_ns::getParam<int>(nh, "kGridWorldXNum", 121);
   kColNum = misc_utils_ns::getParam<int>(nh, "kGridWorldYNum", 121);
   kLevelNum = misc_utils_ns::getParam<int>(nh, "kGridWorldZNum", 121);
-  kCellSize = misc_utils_ns::getParam<double>(nh, "kGridWorldCellSize", 8.0);
+  int viewpoint_number = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_x", 40);
+  double viewpoint_resolution = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resolution_x", 1.0);
+  kCellSize = viewpoint_number * viewpoint_resolution / 5;
   kCellHeight = misc_utils_ns::getParam<double>(nh, "kGridWorldCellHeight", 8.0);
   KNearbyGridNum = misc_utils_ns::getParam<int>(nh, "kGridWorldNearbyGridNum", 5);
   kMinAddPointNumSmall = misc_utils_ns::getParam<int>(nh, "kMinAddPointNumSmall", 60);
