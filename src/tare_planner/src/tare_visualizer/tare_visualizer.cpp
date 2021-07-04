@@ -54,8 +54,8 @@ bool TAREVisualizer::ReadParameters(ros::NodeHandle& nh)
   kGlobalSubspaceSize = misc_utils_ns::getParam<double>(nh, "kGridWorldCellSize", 7.7);
   kGlobalSubspaceHeight = misc_utils_ns::getParam<double>(nh, "kGridWorldCellHeight", 3.0);
 
-  double viewpoint_num_x = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/size_x", 35);
-  double viewpoint_num_y = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/size_y", 35);
+  double viewpoint_num_x = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/number_x", 35);
+  double viewpoint_num_y = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/number_y", 35);
   double viewpoint_resolution_x = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resol_x", 1.1);
   double viewpoint_resolution_y = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resol_y", 1.1);
   kLocalPlanningHorizonSizeX = viewpoint_num_x * viewpoint_resolution_x;

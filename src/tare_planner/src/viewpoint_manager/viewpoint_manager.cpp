@@ -18,13 +18,11 @@ bool ViewPointManagerParameter::ReadParameters(ros::NodeHandle& nh)
 
   dimension_ = 2;
 
-  kNum.x() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/size_x", 80);
-  kNum.y() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/size_y", 80);
-  kNum.z() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/size_z", 40);
+  kNum.x() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_x", 80);
+  kNum.y() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_y", 80);
+  kNum.z() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_z", 40);
   kViewPointNum = kNum.x() * kNum.y() * kNum.z();
-  kRolloverStepsize.x() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/rollover_step_size_x", 16);
-  kRolloverStepsize.y() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/rollover_step_size_y", 16);
-  kRolloverStepsize.z() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/rollover_step_size_z", 10);
+  kRolloverStepsize = kNum / 5;
 
   kResol.x() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resol_x", 0.5);
   kResol.y() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resol_y", 0.5);

@@ -50,12 +50,9 @@ kPointCloudManagerNeighborCellNum : 5
 kCoverCloudZSqueezeRatio : 2.0
 
 # ViewPointManager
-viewpoint_manager/size_x : 50
-viewpoint_manager/size_y : 50
-viewpoint_manager/size_z : 1
-viewpoint_manager/rollover_step_size_x : 10
-viewpoint_manager/rollover_step_size_y : 10
-viewpoint_manager/rollover_step_size_z : 10
+viewpoint_manager/number_x : 50
+viewpoint_manager/number_y : 50
+viewpoint_manager/number_z : 1
 viewpoint_manager/resol_x : 0.6
 viewpoint_manager/resol_y : 0.6
 viewpoint_manager/resol_z : 0.0
