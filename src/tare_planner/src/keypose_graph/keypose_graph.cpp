@@ -971,48 +971,6 @@ void KeyposeGraph::GetKeyposePositions(std::vector<Eigen::Vector3d>& positions)
   }
 }
 
-void KeyposeGraph::GetKeyposePositionAndValidity(std::vector<Eigen::Vector3d>& positions, std::vector<bool>& validity)
-{
-  positions.clear();
-  validity.clear();
-  // for (const auto& node : nodes_)
-  // {
-  //   Eigen::Vector3d position(node.position_.x, node.position_.y, node.position_.z);
-  //   positions.push_back(position);
-  //   validity.push_back(true);
-  // }
-
-  int interp_point_num_per_edge = 5;
-  geometry_msgs::Point interp_point;
-  std::vector<std::pair<int, int>> added_edge;
-  for (int i = 0; i < graph_.size(); i++)
-  {
-    int start_ind = i;
-    for (int j = 0; j < graph_[i].size(); j++)
-    {
-      int end_ind = graph_[i][j];
-      if (std::find(added_edge.begin(), added_edge.end(), std::make_pair(start_ind, end_ind)) == added_edge.end())
-      {
-        added_edge.emplace_back(start_ind, end_ind);
-        // Interpolate in-between nodes
-        geometry_msgs::Point start_node_position = nodes_[start_ind].position_;
-        geometry_msgs::Point end_node_position = nodes_[end_ind].position_;
-        for (int point_id = 0; point_id <= interp_point_num_per_edge; point_id++)
-        {
-          interp_point.x = float(point_id) / float(interp_point_num_per_edge) * start_node_position.x +
-                           (1 - float(point_id) / float(interp_point_num_per_edge)) * end_node_position.x;
-          interp_point.y = float(point_id) / float(interp_point_num_per_edge) * start_node_position.y +
-                           (1 - float(point_id) / float(interp_point_num_per_edge)) * end_node_position.y;
-          interp_point.z = float(point_id) / float(interp_point_num_per_edge) * start_node_position.z +
-                           (1 - float(point_id) / float(interp_point_num_per_edge)) * end_node_position.z;
-          positions.push_back(Eigen::Vector3d(interp_point.x, interp_point.y, interp_point.z));
-          validity.push_back(true);
-        }
-      }
-    }
-  }
-}
-
 geometry_msgs::Point KeyposeGraph::GetNodePosition(int node_ind)
 {
   geometry_msgs::Point node_position;

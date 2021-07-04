@@ -70,7 +70,8 @@ public:
   void RayTraceHelper(const Eigen::Vector3i& start_sub, const Eigen::Vector3i& end_sub,
                       std::vector<Eigen::Vector3i>& cells);
 
-  void GetFrontier(pcl::PointCloud<pcl::PointXYZI>::Ptr& frontier_cloud, const Eigen::Vector3d& origin);
+  void GetFrontier(pcl::PointCloud<pcl::PointXYZI>::Ptr& frontier_cloud, const Eigen::Vector3d& origin,
+                   const Eigen::Vector3d& range);
   pcl::PointCloud<pcl::PointXYZI>::Ptr GetRolledOutOccupancyCloud()
   {
     return occupancy_cloud_;
@@ -91,6 +92,8 @@ private:
   std::unique_ptr<grid_ns::Grid<CellState>> occupancy_array_;
   std::vector<int> updated_grid_indices_;
   pcl::PointCloud<pcl::PointXYZI>::Ptr occupancy_cloud_;
+
+  bool InRange(const Eigen::Vector3i& sub, const Eigen::Vector3i& sub_min, const Eigen::Vector3i& sub_max);
 
   // void InitializeOrigin();
 };

@@ -38,6 +38,9 @@ void PlanningEnvParameters::ReadParameters(ros::NodeHandle& nh)
   kFrontierClusterTolerance = misc_utils_ns::getParam<double>(nh, "kFrontierClusterTolerance", 1.0);
   kFrontierClusterMinSize = misc_utils_ns::getParam<int>(nh, "kFrontierClusterMinSize", 30);
   kElminateFrontierWithLastKeypose = misc_utils_ns::getParam<bool>(nh, "kElminateFrontierWithLastKeypose", false);
+  kExtractFrontierRange.x() = misc_utils_ns::getParam<double>(nh, "kExtractFrontierRangeX", 30);
+  kExtractFrontierRange.y() = misc_utils_ns::getParam<double>(nh, "kExtractFrontierRangeY", 30);
+  kExtractFrontierRange.z() = misc_utils_ns::getParam<double>(nh, "kExtractFrontierRangeZ", 3);
 }
 
 PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::string world_frame_id)
@@ -173,7 +176,7 @@ void PlanningEnv::UpdateFrontiers()
     // occupancy_grid_->SetEliminateFrontierOrigin(prev_robot_position_);
     // occupancy_grid_->GetFrontierInRange(frontier_cloud_->cloud_, robot_position_);
     prev_robot_position_ = robot_position_;
-    rolling_occupancy_grid_->GetFrontier(frontier_cloud_->cloud_, robot_position_);
+    rolling_occupancy_grid_->GetFrontier(frontier_cloud_->cloud_, robot_position_, parameters_.kExtractFrontierRange);
     // rolling_frontier_cloud_->Publish();
 
     if (!frontier_cloud_->cloud_->points.empty())

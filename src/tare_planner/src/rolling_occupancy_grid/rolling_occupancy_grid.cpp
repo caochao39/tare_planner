@@ -248,9 +248,8 @@ void RollingOccupancyGrid::RayTraceHelper(const Eigen::Vector3i& start_sub, cons
   double dist = 0;
   Eigen::Vector3i cur_sub = start_sub;
 
-  while (true)
+  while (occupancy_array_->InRange(cur_sub))
   {
-    MY_ASSERT(occupancy_array_->InRange(cur_sub));
     cells.push_back(cur_sub);
     dist = (cur_sub - start_sub).squaredNorm();
     int array_ind = rolling_grid_->GetArrayInd(cur_sub);
@@ -288,15 +287,15 @@ void RollingOccupancyGrid::RayTraceHelper(const Eigen::Vector3i& start_sub, cons
 }
 
 void RollingOccupancyGrid::GetFrontier(pcl::PointCloud<pcl::PointXYZI>::Ptr& frontier_cloud,
-                                       const Eigen::Vector3d& origin)
+                                       const Eigen::Vector3d& origin, const Eigen::Vector3d& range)
 {
   if (!initialized_)
   {
     return;
   }
   frontier_cloud->points.clear();
-  // Eigen::Vector3i sub_max = occupancy_array_->GetSize() - Eigen::Vector3i::Ones();
-  // Eigen::Vector3i sub_min = Eigen::Vector3i(0, 0, 0);
+  Eigen::Vector3i sub_max = occupancy_array_->Pos2Sub(origin + range);
+  Eigen::Vector3i sub_min = occupancy_array_->Pos2Sub(origin - range);
   Eigen::Vector3i origin_sub = occupancy_array_->Pos2Sub(origin);
 
   if (!occupancy_array_->InRange(origin_sub))
@@ -311,6 +310,10 @@ void RollingOccupancyGrid::GetFrontier(pcl::PointCloud<pcl::PointXYZI>::Ptr& fro
   {
     Eigen::Vector3i cur_sub = occupancy_array_->Ind2Sub(ind);
     if (!occupancy_array_->InRange(cur_sub))
+    {
+      continue;
+    }
+    if (!InRange(cur_sub, sub_min, sub_max))
     {
       continue;
     }
@@ -380,86 +383,6 @@ void RollingOccupancyGrid::GetFrontier(pcl::PointCloud<pcl::PointXYZI>::Ptr& fro
       }
     }
   }
-
-  // for (int sub_x = sub_min.x(); sub_x <= sub_max.x(); sub_x++)
-  // {
-  //   for (int sub_y = sub_min.y(); sub_y <= sub_max.y(); sub_y++)
-  //   {
-  //     for (int sub_z = sub_min.z(); sub_z <= sub_max.z(); sub_z++)
-  //     {
-  //       Eigen::Vector3i cur_sub(sub_x, sub_y, sub_z);
-  //       if (!occupancy_array_->InRange(cur_sub))
-  //       {
-  //         continue;
-  //       }
-  //       int array_ind = rolling_grid_->GetArrayInd(cur_sub);
-  //       if (occupancy_array_->GetCellValue(array_ind) == UNKNOWN)
-  //       {
-  //         bool z_free = false;
-  //         bool xy_free = false;
-  //         // If the unknown cell has neighboring free cells in xy but not z direction
-  //         cur_sub(2)--;
-  //         if (occupancy_array_->InRange(cur_sub))
-  //         {
-  //           array_ind = rolling_grid_->GetArrayInd(cur_sub);
-  //           if (occupancy_array_->GetCellValue(array_ind) == FREE)
-  //           {
-  //             z_free = true;
-  //             continue;
-  //           }
-  //         }
-  //         cur_sub(2) += 2;
-  //         if (occupancy_array_->InRange(cur_sub))
-  //         {
-  //           array_ind = rolling_grid_->GetArrayInd(cur_sub);
-  //           if (occupancy_array_->GetCellValue(array_ind) == FREE)
-  //           {
-  //             z_free = true;
-  //             continue;
-  //           }
-  //         }
-  //         cur_sub(2)--;
-
-  //         for (int i = 0; i < 2; i++)
-  //         {
-  //           cur_sub(i)--;
-  //           if (occupancy_array_->InRange(cur_sub))
-  //           {
-  //             array_ind = rolling_grid_->GetArrayInd(cur_sub);
-  //             if (occupancy_array_->GetCellValue(array_ind) == FREE)
-  //             {
-  //               xy_free = true;
-  //               cur_sub(i)++;
-  //               break;
-  //             }
-  //           }
-  //           cur_sub(i) += 2;
-  //           if (occupancy_array_->InRange(cur_sub))
-  //           {
-  //             array_ind = rolling_grid_->GetArrayInd(cur_sub);
-  //             if (occupancy_array_->GetCellValue(array_ind) == FREE)
-  //             {
-  //               xy_free = true;
-  //               cur_sub(i)--;
-  //               break;
-  //             }
-  //           }
-  //           cur_sub(i)--;
-  //         }
-  //         if (xy_free && !z_free)
-  //         {
-  //           Eigen::Vector3d position = occupancy_array_->Sub2Pos(cur_sub);
-  //           pcl::PointXYZI point;
-  //           point.x = position.x();
-  //           point.y = position.y();
-  //           point.z = position.z();
-  //           point.intensity = 0;
-  //           frontier_cloud->points.push_back(point);
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
 }
 
 void RollingOccupancyGrid::GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& vis_cloud)
@@ -492,6 +415,17 @@ void RollingOccupancyGrid::GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>
       vis_cloud->points.push_back(point);
     }
   }
+}
+
+bool RollingOccupancyGrid::InRange(const Eigen::Vector3i& sub, const Eigen::Vector3i& sub_min,
+                                   const Eigen::Vector3i& sub_max)
+{
+  bool in_range = true;
+  for (int i = 0; i < 3; i++)
+  {
+    in_range &= (sub(i) >= sub_min(i) && sub(i) <= sub_max(i));
+  }
+  return in_range;
 }
 
 }  // namespace rolling_occupancy_grid_ns

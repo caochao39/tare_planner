@@ -70,6 +70,7 @@ struct planning_env_ns::PlanningEnvParameters
   double kFrontierClusterTolerance;
   int kFrontierClusterMinSize;
   bool kElminateFrontierWithLastKeypose;
+  Eigen::Vector3d kExtractFrontierRange;
 
   void ReadParameters(ros::NodeHandle& nh);
 };

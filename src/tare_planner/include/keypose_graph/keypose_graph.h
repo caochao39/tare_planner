@@ -186,7 +186,6 @@ public:
   }
   geometry_msgs::Point GetKeyposePosition(int keypose_id);
   void GetKeyposePositions(std::vector<Eigen::Vector3d>& positions);
-  void GetKeyposePositionAndValidity(std::vector<Eigen::Vector3d>& positions, std::vector<bool>& validity);
   geometry_msgs::Point GetNodePosition(int node_ind);
 };
 
