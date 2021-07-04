@@ -41,12 +41,10 @@ struct ViewPointManagerParameter
   // Layout
   bool kUseFrontier;
   int dimension_;
-  int kViewPointNum;
-  Eigen::Vector3i kNum;
+  int kViewPointNumber;
+  Eigen::Vector3i kNumber;
   Eigen::Vector3i kRolloverStepsize;
-  Eigen::Vector3d kResol;
-  Eigen::Vector3d kBoundaryMax;
-  Eigen::Vector3d kBoundaryMin;
+  Eigen::Vector3d kResolution;
   Eigen::Vector3d LocalPlanningHorizonSize;
 
   // Collision check
@@ -82,6 +80,7 @@ struct ViewPointManagerParameter
   double kHeightFromTerrain;
   double kDistanceToIntConst;
 
+  // FOV
   double kVerticalFOVRatio;
   double kDiffZMax;
   double kInFovXYDistThreshold;
@@ -114,7 +113,7 @@ public:
   }
   Eigen::Vector3d GetResolution()
   {
-    return vp_.kResol;
+    return vp_.kResolution;
   }
   inline void UpdateViewPointBoundary(const geometry_msgs::Polygon& polygon)
   {

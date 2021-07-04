@@ -18,15 +18,15 @@ bool ViewPointManagerParameter::ReadParameters(ros::NodeHandle& nh)
 
   dimension_ = 2;
 
-  kNum.x() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_x", 80);
-  kNum.y() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_y", 80);
-  kNum.z() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_z", 40);
-  kViewPointNum = kNum.x() * kNum.y() * kNum.z();
-  kRolloverStepsize = kNum / 5;
+  kNumber.x() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_x", 80);
+  kNumber.y() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_y", 80);
+  kNumber.z() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_z", 40);
+  kViewPointNumber = kNumber.x() * kNumber.y() * kNumber.z();
+  kRolloverStepsize = kNumber / 5;
 
-  kResol.x() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resol_x", 0.5);
-  kResol.y() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resol_y", 0.5);
-  kResol.z() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resol_z", 0.5);
+  kResolution.x() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resolution_x", 0.5);
+  kResolution.y() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resolution_y", 0.5);
+  kResolution.z() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resolution_z", 0.5);
   kCollisionCheckTerrainThr = misc_utils_ns::getParam<double>(nh, "kCollisionCheckTerrainThr", 0.25);
   kViewPointCollisionMargin = misc_utils_ns::getParam<double>(nh, "kViewPointCollisionMargin", 0.5);
   kViewPointCollisionMarginZPlus = misc_utils_ns::getParam<double>(nh, "kViewPointCollisionMarginZPlus", 0.5);
@@ -46,13 +46,14 @@ bool ViewPointManagerParameter::ReadParameters(ros::NodeHandle& nh)
 
   for (int i = 0; i < dimension_; i++)
   {
-    LocalPlanningHorizonSize(i) = kNum(i) * kResol(i);
+    LocalPlanningHorizonSize(i) = kNumber(i) * kResolution(i);
   }
 
   kCollisionGridSize = Eigen::Vector3i::Ones();
   for (int i = 0; i < dimension_; i++)
   {
-    kCollisionGridSize(i) = ceil((kNum(i) * kResol(i) + kViewPointCollisionMargin * 2) / kCollisionGridResolution(i));
+    kCollisionGridSize(i) =
+        ceil((kNumber(i) * kResolution(i) + kViewPointCollisionMargin * 2) / kCollisionGridResolution(i));
   }
 
   kCoverageOcclusionThr = misc_utils_ns::getParam<double>(nh, "kCoverageOcclusionThr", 1.0);
@@ -78,15 +79,15 @@ ViewPointManager::ViewPointManager(ros::NodeHandle& nh) : initialized_(false)
   viewpoint_candidate_cloud_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
   viewpoint_in_collision_cloud_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
 
-  grid_ = std::make_unique<rolling_grid_ns::RollingGrid>(vp_.kNum);
+  grid_ = std::make_unique<rolling_grid_ns::RollingGrid>(vp_.kNumber);
   origin_ = Eigen::Vector3d::Zero();
 
-  viewpoints_.resize(vp_.kViewPointNum);
-  for (int x = 0; x < vp_.kNum.x(); x++)
+  viewpoints_.resize(vp_.kViewPointNumber);
+  for (int x = 0; x < vp_.kNumber.x(); x++)
   {
-    for (int y = 0; y < vp_.kNum.y(); y++)
+    for (int y = 0; y < vp_.kNumber.y(); y++)
     {
-      for (int z = 0; z < vp_.kNum.z(); z++)
+      for (int z = 0; z < vp_.kNumber.z(); z++)
       {
         Eigen::Vector3i sub(x, y, z);
         int ind = grid_->Sub2Ind(sub);
@@ -95,7 +96,7 @@ ViewPointManager::ViewPointManager(ros::NodeHandle& nh) : initialized_(false)
     }
   }
 
-  graph_index_map_.resize(vp_.kViewPointNum);
+  graph_index_map_.resize(vp_.kViewPointNumber);
   for (auto& ind : graph_index_map_)
   {
     ind = -1;
@@ -108,14 +109,14 @@ ViewPointManager::ViewPointManager(ros::NodeHandle& nh) : initialized_(false)
   local_planning_horizon_size_ = Eigen::Vector3d::Zero();
   for (int i = 0; i < vp_.dimension_; i++)
   {
-    local_planning_horizon_size_(i) = vp_.kNum(i) * vp_.kResol(i);
+    local_planning_horizon_size_(i) = vp_.kNumber(i) * vp_.kResolution(i);
   }
 }
 
 void ViewPointManager::ComputeConnectedNeighborIndices()
 {
-  connected_neighbor_indices_.resize(vp_.kViewPointNum);
-  connected_neighbor_dist_.resize(vp_.kViewPointNum);
+  connected_neighbor_indices_.resize(vp_.kViewPointNumber);
+  connected_neighbor_dist_.resize(vp_.kViewPointNumber);
 
   std::vector<Eigen::Vector3i> idx_addon;
   for (int x = -1; x <= 1; x++)
@@ -131,11 +132,11 @@ void ViewPointManager::ComputeConnectedNeighborIndices()
     }
   }
 
-  for (int x = 0; x < vp_.kNum.x(); x++)
+  for (int x = 0; x < vp_.kNumber.x(); x++)
   {
-    for (int y = 0; y < vp_.kNum.y(); y++)
+    for (int y = 0; y < vp_.kNumber.y(); y++)
     {
-      for (int z = 0; z < vp_.kNum.z(); z++)
+      for (int z = 0; z < vp_.kNumber.z(); z++)
       {
         Eigen::Vector3i sub(x, y, z);
         int ind = grid_->Sub2Ind(sub);
@@ -145,9 +146,9 @@ void ViewPointManager::ComputeConnectedNeighborIndices()
           if (grid_->InRange(neighbor_sub))
           {
             connected_neighbor_indices_[ind].push_back(grid_->Sub2Ind(neighbor_sub));
-            double dist = sqrt(vp_.kResol.x() * vp_.kResol.x() * std::abs(idx_addon[i].x()) +
-                               vp_.kResol.y() * vp_.kResol.y() * std::abs(idx_addon[i].y()) +
-                               vp_.kResol.z() * vp_.kResol.z() * std::abs(idx_addon[i].z()));
+            double dist = sqrt(vp_.kResolution.x() * vp_.kResolution.x() * std::abs(idx_addon[i].x()) +
+                               vp_.kResolution.y() * vp_.kResolution.y() * std::abs(idx_addon[i].y()) +
+                               vp_.kResolution.z() * vp_.kResolution.z() * std::abs(idx_addon[i].z()));
             connected_neighbor_dist_[ind].push_back(dist);
           }
         }
@@ -159,20 +160,20 @@ void ViewPointManager::ComputeConnectedNeighborIndices()
 void ViewPointManager::ComputeInRangeNeighborIndices()
 {
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  for (int i = 0; i < vp_.kViewPointNum; i++)
+  for (int i = 0; i < vp_.kViewPointNumber; i++)
   {
     Eigen::Vector3i sub = grid_->Ind2Sub(i);
     pcl::PointXYZ point;
-    point.x = sub.x() * vp_.kResol.x() + vp_.kResol.x() / 2.0;
-    point.y = sub.y() * vp_.kResol.y() + vp_.kResol.y() / 2.0;
-    point.z = sub.z() * vp_.kResol.z() + vp_.kResol.z() / 2.0;
+    point.x = sub.x() * vp_.kResolution.x() + vp_.kResolution.x() / 2.0;
+    point.y = sub.y() * vp_.kResolution.y() + vp_.kResolution.y() / 2.0;
+    point.z = sub.z() * vp_.kResolution.z() + vp_.kResolution.z() / 2.0;
     cloud->points.push_back(point);
   }
 
   pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree =
       pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr(new pcl::KdTreeFLANN<pcl::PointXYZ>());
   kdtree->setInputCloud(cloud);
-  in_range_neighbor_indices_.resize(vp_.kViewPointNum);
+  in_range_neighbor_indices_.resize(vp_.kViewPointNumber);
   std::vector<int> in_range_indices;
   std::vector<float> in_range_sqdist;
   for (int i = 0; i < in_range_neighbor_indices_.size(); i++)
@@ -206,17 +207,17 @@ void ViewPointManager::GetCollisionCorrespondence()
 
   // Get viewpoint cloud
   // int count = 0;
-  for (int x = 0; x < vp_.kNum.x(); x++)
+  for (int x = 0; x < vp_.kNumber.x(); x++)
   {
-    for (int y = 0; y < vp_.kNum.y(); y++)
+    for (int y = 0; y < vp_.kNumber.y(); y++)
     {
-      for (int z = 0; z < vp_.kNum.z(); z++)
+      for (int z = 0; z < vp_.kNumber.z(); z++)
       {
         int ind = grid_->Sub2Ind(Eigen::Vector3i(x, y, z));
         pcl::PointXYZI point;
-        point.x = (x + 0.5) * vp_.kResol.x();
-        point.y = (y + 0.5) * vp_.kResol.y();
-        point.z = (z + 0.5) * vp_.kResol.z();
+        point.x = (x + 0.5) * vp_.kResolution.x();
+        point.y = (y + 0.5) * vp_.kResolution.y();
+        point.z = (z + 0.5) * vp_.kResolution.z();
         point.z *= vp_.kCollisionGridZScale;
         point.intensity = ind;
         viewpoint_cloud->points.push_back(point);
@@ -247,7 +248,7 @@ void ViewPointManager::GetCollisionCorrespondence()
         {
           int ind = nearby_viewpoint_indices[i];
           int viewpoint_ind = (int)(viewpoint_cloud->points[ind].intensity);
-          MY_ASSERT(viewpoint_ind >= 0 && viewpoint_ind < vp_.kViewPointNum);
+          MY_ASSERT(viewpoint_ind >= 0 && viewpoint_ind < vp_.kViewPointNumber);
           collision_grid_->GetCell(grid_ind).push_back(viewpoint_ind);
         }
       }
@@ -265,16 +266,16 @@ bool ViewPointManager::UpdateRobotPosition(const Eigen::Vector3d& robot_position
     initialized_ = true;
     UpdateOrigin();
 
-    for (int x = 0; x < vp_.kNum.x(); x++)
+    for (int x = 0; x < vp_.kNumber.x(); x++)
     {
-      for (int y = 0; y < vp_.kNum.y(); y++)
+      for (int y = 0; y < vp_.kNumber.y(); y++)
       {
-        for (int z = 0; z < vp_.kNum.z(); z++)
+        for (int z = 0; z < vp_.kNumber.z(); z++)
         {
           int ind = grid_->Sub2Ind(Eigen::Vector3i(x, y, z));
           geometry_msgs::Point position;
-          position.x = origin_.x() + x * vp_.kResol.x() + vp_.kResol.x() / 2.0;
-          position.y = origin_.y() + y * vp_.kResol.y() + vp_.kResol.y() / 2.0;
+          position.x = origin_.x() + x * vp_.kResolution.x() + vp_.kResolution.x() / 2.0;
+          position.y = origin_.y() + y * vp_.kResolution.y() + vp_.kResolution.y() / 2.0;
           position.z = robot_position.z();
           SetViewPointPosition(ind, position, true);
           ResetViewPoint(ind, true);
@@ -287,13 +288,13 @@ bool ViewPointManager::UpdateRobotPosition(const Eigen::Vector3d& robot_position
   Eigen::Vector3i sub = Eigen::Vector3i::Zero();
   for (int i = 0; i < vp_.dimension_; i++)
   {
-    robot_grid_sub(i) = diff(i) > 0 ? static_cast<int>(diff(i) / (vp_.kRolloverStepsize(i) * vp_.kResol(i))) : -1;
+    robot_grid_sub(i) = diff(i) > 0 ? static_cast<int>(diff(i) / (vp_.kRolloverStepsize(i) * vp_.kResolution(i))) : -1;
   }
 
   Eigen::Vector3i sub_diff = Eigen::Vector3i::Zero();
   for (int i = 0; i < vp_.dimension_; i++)
   {
-    sub_diff(i) = (vp_.kNum(i) / vp_.kRolloverStepsize(i)) / 2 - robot_grid_sub(i);
+    sub_diff(i) = (vp_.kNumber(i) / vp_.kRolloverStepsize(i)) / 2 - robot_grid_sub(i);
   }
 
   if (sub_diff.x() == 0 && sub_diff.y() == 0 && sub_diff.z() == 0)
@@ -319,10 +320,10 @@ bool ViewPointManager::UpdateRobotPosition(const Eigen::Vector3d& robot_position
   misc_utils_ns::Timer reset_timer("reset viewpoint");
   reset_timer.Start();
 
-  //   origin_ = origin_ - rollover_step.cast<double>() * vp_.kResol;
-  origin_.x() -= rollover_step.x() * vp_.kResol.x();
-  origin_.y() -= rollover_step.y() * vp_.kResol.y();
-  origin_.z() -= rollover_step.z() * vp_.kResol.z();
+  //   origin_ = origin_ - rollover_step.cast<double>() * vp_.kResolution;
+  origin_.x() -= rollover_step.x() * vp_.kResolution.x();
+  origin_.y() -= rollover_step.y() * vp_.kResolution.y();
+  origin_.z() -= rollover_step.z() * vp_.kResolution.z();
 
   grid_->GetUpdatedIndices(updated_viewpoint_indices_);
   for (const auto& ind : updated_viewpoint_indices_)
@@ -330,8 +331,8 @@ bool ViewPointManager::UpdateRobotPosition(const Eigen::Vector3d& robot_position
     MY_ASSERT(grid_->InRange(ind));
     Eigen::Vector3i sub = grid_->Ind2Sub(ind);
     geometry_msgs::Point new_position;
-    new_position.x = origin_.x() + sub.x() * vp_.kResol.x() + vp_.kResol.x() / 2.0;
-    new_position.y = origin_.y() + sub.y() * vp_.kResol.y() + vp_.kResol.y() / 2.0;
+    new_position.x = origin_.x() + sub.x() * vp_.kResolution.x() + vp_.kResolution.x() / 2.0;
+    new_position.y = origin_.y() + sub.y() * vp_.kResolution.y() + vp_.kResolution.y() / 2.0;
     new_position.z = robot_position_.z();
     SetViewPointPosition(ind, new_position);
     ResetViewPoint(ind);
@@ -344,7 +345,7 @@ void ViewPointManager::UpdateOrigin()
 {
   for (int i = 0; i < vp_.dimension_; i++)
   {
-    origin_(i) = robot_position_(i) - (vp_.kResol(i) * vp_.kNum(i)) / 2.0;
+    origin_(i) = robot_position_(i) - (vp_.kResolution(i) * vp_.kNumber(i)) / 2.0;
   }
 }
 
@@ -365,7 +366,7 @@ Eigen::Vector3i ViewPointManager::GetViewPointSub(Eigen::Vector3d position)
   Eigen::Vector3i sub = Eigen::Vector3i::Zero();
   for (int i = 0; i < vp_.dimension_; i++)
   {
-    sub(i) = diff(i) > 0 ? static_cast<int>(diff(i) / vp_.kResol(i)) : -1;
+    sub(i) = diff(i) > 0 ? static_cast<int>(diff(i) / vp_.kResolution(i)) : -1;
   }
   return sub;
 }
@@ -386,7 +387,7 @@ int ViewPointManager::GetViewPointInd(Eigen::Vector3d position)
 void ViewPointManager::GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& vis_cloud)
 {
   vis_cloud->clear();
-  for (int i = 0; i < vp_.kViewPointNum; i++)
+  for (int i = 0; i < vp_.kViewPointNumber; i++)
   {
     if (IsViewPointCandidate(i, true))
     {
@@ -445,7 +446,7 @@ void ViewPointManager::CheckViewPointCollisionWithCollisionGrid(
         for (int i = 0; i < collision_viewpoint_indices.size(); i++)
         {
           int viewpoint_ind = collision_viewpoint_indices[i];
-          MY_ASSERT(viewpoint_ind >= 0 && viewpoint_ind < vp_.kViewPointNum);
+          MY_ASSERT(viewpoint_ind >= 0 && viewpoint_ind < vp_.kViewPointNumber);
           double z_diff = point.z - GetViewPointHeight(viewpoint_ind);
           if ((z_diff >= 0 && z_diff <= vp_.kViewPointCollisionMarginZPlus) ||
               (z_diff < 0 && z_diff >= -vp_.kViewPointCollisionMarginZMinus))
@@ -463,8 +464,8 @@ bool ViewPointManager::InCollision(const Eigen::Vector3d& position)
 {
   int viewpoint_ind = GetViewPointInd(position);
   bool node_in_collision = false;
-  if (InRange(viewpoint_ind) &&
-      std::abs(GetViewPointHeight(viewpoint_ind) - position.z()) < std::max(vp_.kResol.x(), vp_.kResol.y()) * 2)
+  if (InRange(viewpoint_ind) && std::abs(GetViewPointHeight(viewpoint_ind) - position.z()) <
+                                    std::max(vp_.kResolution.x(), vp_.kResolution.y()) * 2)
   {
     if (ViewPointInCollision(viewpoint_ind))
     {
@@ -491,7 +492,7 @@ bool ViewPointManager::InCurrentFrameLineOfSight(const Eigen::Vector3d& position
 void ViewPointManager::CheckViewPointBoundaryCollision()
 {
   // Check for the polygon boundary and nogo zones
-  for (int i = 0; i < vp_.kViewPointNum; i++)
+  for (int i = 0; i < vp_.kViewPointNumber; i++)
   {
     geometry_msgs::Point viewpoint_position = GetViewPointPosition(i, true);
     if ((!viewpoint_boundary_.points.empty() &&
@@ -640,20 +641,20 @@ void ViewPointManager::CheckViewPointLineOfSight()
   SetViewPointInLineOfSight(robot_viewpoint_ind, true);
   SetViewPointInCurrentFrameLineOfSight(robot_viewpoint_ind, true);
 
-  std::vector<bool> checked(vp_.kViewPointNum, false);
+  std::vector<bool> checked(vp_.kViewPointNumber, false);
   std::vector<Eigen::Vector3i> ray_cast_cells;
-  Eigen::Vector3i max_sub(vp_.kNum.x() - 1, vp_.kNum.y() - 1, vp_.kNum.z() - 1);
+  Eigen::Vector3i max_sub(vp_.kNumber.x() - 1, vp_.kNumber.y() - 1, vp_.kNumber.z() - 1);
   Eigen::Vector3i min_sub(0, 0, 0);
 
-  int x_indices[2] = { 0, vp_.kNum.x() - 1 };
-  int y_indices[2] = { 0, vp_.kNum.y() - 1 };
-  int z_indices[2] = { 0, vp_.kNum.z() - 1 };
+  int x_indices[2] = { 0, vp_.kNumber.x() - 1 };
+  int y_indices[2] = { 0, vp_.kNumber.y() - 1 };
+  int z_indices[2] = { 0, vp_.kNumber.z() - 1 };
 
   for (int xi = 0; xi < 2; xi++)
   {
-    for (int y = 0; y < vp_.kNum.y(); y++)
+    for (int y = 0; y < vp_.kNumber.y(); y++)
     {
-      for (int z = 0; z < vp_.kNum.z(); z++)
+      for (int z = 0; z < vp_.kNumber.z(); z++)
       {
         int x = x_indices[xi];
         Eigen::Vector3i end_sub(x, y, z);
@@ -667,11 +668,11 @@ void ViewPointManager::CheckViewPointLineOfSight()
     }
   }
 
-  for (int x = 0; x < vp_.kNum.x(); x++)
+  for (int x = 0; x < vp_.kNumber.x(); x++)
   {
     for (int yi = 0; yi < 2; yi++)
     {
-      for (int z = 0; z < vp_.kNum.z(); z++)
+      for (int z = 0; z < vp_.kNumber.z(); z++)
       {
         int y = y_indices[yi];
         Eigen::Vector3i end_sub(x, y, z);
@@ -685,9 +686,9 @@ void ViewPointManager::CheckViewPointLineOfSight()
     }
   }
 
-  for (int x = 0; x < vp_.kNum.x(); x++)
+  for (int x = 0; x < vp_.kNumber.x(); x++)
   {
-    for (int y = 0; y < vp_.kNum.y(); y++)
+    for (int y = 0; y < vp_.kNumber.y(); y++)
     {
       for (int zi = 0; zi < 2; zi++)
       {
@@ -710,7 +711,7 @@ void ViewPointManager::CheckViewPointInFOV()
     return;
   Eigen::Vector3i robot_sub = GetViewPointSub(robot_position_);
   MY_ASSERT(grid_->InRange(robot_sub));
-  for (int i = 0; i < vp_.kViewPointNum; i++)
+  for (int i = 0; i < vp_.kViewPointNumber; i++)
   {
     geometry_msgs::Point viewpoint_position = GetViewPointPosition(i, true);
     if (!InRobotFOV(Eigen::Vector3d(viewpoint_position.x, viewpoint_position.y, viewpoint_position.z)))
@@ -780,7 +781,7 @@ void ViewPointManager::CheckViewPointConnectivity()
     // Find the nearest viewpoint that is not in collision
     bool found_collision_free_viewpoint = false;
     double min_dist_to_robot = DBL_MAX;
-    for (int i = 0; i < vp_.kViewPointNum; i++)
+    for (int i = 0; i < vp_.kViewPointNumber; i++)
     {
       int array_ind = grid_->GetArrayInd(i);
       if (!ViewPointInCollision(i))
@@ -807,7 +808,7 @@ void ViewPointManager::CheckViewPointConnectivity()
   {
     viewpoint.SetConnected(false);
   }
-  std::vector<bool> checked(vp_.kViewPointNum, false);
+  std::vector<bool> checked(vp_.kViewPointNumber, false);
   checked[robot_ind] = true;
   SetViewPointConnected(robot_ind, true);
   std::list<int> queue;
@@ -939,7 +940,7 @@ void ViewPointManager::SetViewPointHeightWithTerrain(const pcl::PointCloud<pcl::
   }
 
   // For viewpoints that are not set heights with terrain directly, use neighbors' heights
-  for (int i = 0; i < vp_.kViewPointNum; i++)
+  for (int i = 0; i < vp_.kViewPointNumber; i++)
   {
     if (!ViewPointHasTerrainHeight(i))
     {
@@ -1224,7 +1225,7 @@ int ViewPointManager::GetViewPointCandidate()
   viewpoint_candidate_cloud_->clear();
   viewpoint_in_collision_cloud_->clear();
   candidate_indices_.clear();
-  for (int i = 0; i < vp_.kViewPointNum; i++)
+  for (int i = 0; i < vp_.kViewPointNumber; i++)
   {
     SetViewPointCandidate(i, false);
     if (!ViewPointInCollision(i) && ViewPointInLineOfSight(i) && ViewPointConnected(i))
@@ -1481,7 +1482,7 @@ bool ViewPointManager::InLocalPlanningHorizon(const Eigen::Vector3d& position)
   int viewpoint_ind = GetViewPointInd(position);
   if (InRange(viewpoint_ind))
   {
-    double max_z_diff = std::max(vp_.kResol.x(), vp_.kResol.y()) * 2;
+    double max_z_diff = std::max(vp_.kResolution.x(), vp_.kResolution.y()) * 2;
     geometry_msgs::Point viewpoint_position = GetViewPointPosition(viewpoint_ind);
     if (std::abs(viewpoint_position.z - position.z()) < max_z_diff &&
         (IsViewPointCandidate(viewpoint_ind) || ViewPointInCollision(viewpoint_ind)))

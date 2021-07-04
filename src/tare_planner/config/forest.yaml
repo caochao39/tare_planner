@@ -53,9 +53,9 @@ kCoverCloudZSqueezeRatio : 2.0
 viewpoint_manager/number_x : 40
 viewpoint_manager/number_y : 40
 viewpoint_manager/number_z : 1
-viewpoint_manager/resol_x : 1.2
-viewpoint_manager/resol_y : 1.2
-viewpoint_manager/resol_z : 0.0
+viewpoint_manager/resolution_x : 1.2
+viewpoint_manager/resolution_y : 1.2
+viewpoint_manager/resolution_z : 0.0
 kCollisionCheckTerrainThr : 0.25 # TODO: For checking connectivity, should change name
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
