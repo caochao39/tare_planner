@@ -37,7 +37,6 @@ void PlanningEnvParameters::ReadParameters(ros::NodeHandle& nh)
   kUseFrontier = misc_utils_ns::getParam<bool>(nh, "kUseFrontier", false);
   kFrontierClusterTolerance = misc_utils_ns::getParam<double>(nh, "kFrontierClusterTolerance", 1.0);
   kFrontierClusterMinSize = misc_utils_ns::getParam<int>(nh, "kFrontierClusterMinSize", 30);
-  kElminateFrontierWithLastKeypose = misc_utils_ns::getParam<bool>(nh, "kElminateFrontierWithLastKeypose", false);
   kExtractFrontierRange.x() = misc_utils_ns::getParam<double>(nh, "kExtractFrontierRangeX", 30);
   kExtractFrontierRange.y() = misc_utils_ns::getParam<double>(nh, "kExtractFrontierRangeY", 30);
   kExtractFrontierRange.z() = misc_utils_ns::getParam<double>(nh, "kExtractFrontierRangeZ", 3);
@@ -164,28 +163,13 @@ void PlanningEnv::UpdateFrontiers()
 {
   if (parameters_.kUseFrontier)
   {
-    // if (parameters_.kElminateFrontierWithLastKeypose && robot_position_update_)
-    // {
-    //   occupancy_grid_->SetEliminateFrontier(true);
-    // }
-    // else
-    // {
-    //   occupancy_grid_->SetEliminateFrontier(false);
-    // }
-
-    // occupancy_grid_->SetEliminateFrontierOrigin(prev_robot_position_);
-    // occupancy_grid_->GetFrontierInRange(frontier_cloud_->cloud_, robot_position_);
     prev_robot_position_ = robot_position_;
     rolling_occupancy_grid_->GetFrontier(frontier_cloud_->cloud_, robot_position_, parameters_.kExtractFrontierRange);
-    // rolling_frontier_cloud_->Publish();
 
     if (!frontier_cloud_->cloud_->points.empty())
     {
       vertical_frontier_extractor_.ExtractVerticalSurface<pcl::PointXYZI, pcl::PointXYZI>(
           frontier_cloud_->cloud_, filtered_frontier_cloud_->cloud_);
-
-      // vertical_frontier_extractor_.ExtractVerticalSurface<pcl::PointXYZI, pcl::PointXYZI>(
-      //     rolling_frontier_cloud_->cloud_, rolling_filtered_frontier_cloud_->cloud_);
     }
 
     // Cluster frontiers
@@ -224,42 +208,6 @@ void PlanningEnv::UpdateFrontiers()
       extract.filter(*(filtered_frontier_cloud_->cloud_));
       filtered_frontier_cloud_->Publish();
     }
-
-    // if (!rolling_filtered_frontier_cloud_->cloud_->points.empty())
-    // {
-    //   kdtree_rolling_frontier_cloud_->setInputCloud(rolling_filtered_frontier_cloud_->cloud_);
-    //   std::vector<pcl::PointIndices> cluster_indices;
-    //   pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
-    //   ec.setClusterTolerance(parameters_.kFrontierClusterTolerance);
-    //   ec.setMinClusterSize(1);
-    //   ec.setMaxClusterSize(10000);
-    //   ec.setSearchMethod(kdtree_rolling_frontier_cloud_);
-    //   ec.setInputCloud(rolling_filtered_frontier_cloud_->cloud_);
-    //   ec.extract(cluster_indices);
-
-    //   pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
-    //   int cluster_count = 0;
-    //   for (int i = 0; i < cluster_indices.size(); i++)
-    //   {
-    //     if (cluster_indices[i].indices.size() < parameters_.kFrontierClusterMinSize)
-    //     {
-    //       continue;
-    //     }
-    //     for (int j = 0; j < cluster_indices[i].indices.size(); j++)
-    //     {
-    //       int point_ind = cluster_indices[i].indices[j];
-    //       rolling_filtered_frontier_cloud_->cloud_->points[point_ind].intensity = cluster_count;
-    //       inliers->indices.push_back(point_ind);
-    //     }
-    //     cluster_count++;
-    //   }
-    //   pcl::ExtractIndices<pcl::PointXYZI> extract;
-    //   extract.setInputCloud(rolling_filtered_frontier_cloud_->cloud_);
-    //   extract.setIndices(inliers);
-    //   extract.setNegative(false);
-    //   extract.filter(*(rolling_filtered_frontier_cloud_->cloud_));
-    //   rolling_filtered_frontier_cloud_->Publish();
-    // }
   }
 }
 

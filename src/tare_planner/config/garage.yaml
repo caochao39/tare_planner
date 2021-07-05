@@ -29,7 +29,6 @@ kLookAheadDistance : 8
 kUseFrontier : true
 kFrontierClusterTolerance : 1.0
 kFrontierClusterMinSize : 30
-kElminateFrontierWithLastKeypose : false
 kExtractFrontierRangeX : 35
 kExtractFrontierRangeY : 35
 kExtractFrontierRangeZ : 2
