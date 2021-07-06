@@ -124,6 +124,7 @@ struct PlannerData
   lidar_model_ns::LiDARModel robot_viewpoint_;
   exploration_path_ns::ExplorationPath exploration_path_;
   Eigen::Vector3d lookahead_point_;
+  Eigen::Vector3d moving_direction_;
   double robot_yaw_;
   bool moving_forward_;
   std::vector<Eigen::Vector3d> visited_positions_;

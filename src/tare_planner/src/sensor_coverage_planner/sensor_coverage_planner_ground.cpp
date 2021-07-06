@@ -129,6 +129,7 @@ void PlannerData::Initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
   grid_world_marker_->SetColorRGBA(1.0, 0.0, 0.0, 0.8);
 
   robot_yaw_ = 0.0;
+  moving_direction_ = Eigen::Vector3d(1.0, 0.0, 0.0);
   moving_forward_ = true;
 
   Eigen::Vector3d viewpoint_resolution = viewpoint_manager_->GetResolution();
@@ -967,21 +968,24 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   }
 
   // Get angle scores for forward and backward lookahead points
-  double lx = 1.0;
-  double ly = 0.0;
-  double dx = 1.0;
-  double dy = 0.0;
-  if (pd_.moving_forward_)
-  {
-    lx = 1.0;
-  }
-  else
-  {
-    lx = -1.0;
-  }
+  // double lx = 1.0;
+  // double ly = 0.0;
+  // double dx = 1.0;
+  // double dy = 0.0;
+  // if (pd_.moving_forward_)
+  // {
+  //   lx = 1.0;
+  // }
+  // else
+  // {
+  //   lx = -1.0;
+  // }
 
-  dx = cos(pd_.robot_yaw_) * lx - sin(pd_.robot_yaw_) * ly;
-  dy = sin(pd_.robot_yaw_) * lx + cos(pd_.robot_yaw_) * ly;
+  // dx = cos(pd_.robot_yaw_) * lx - sin(pd_.robot_yaw_) * ly;
+  // dy = sin(pd_.robot_yaw_) * lx + cos(pd_.robot_yaw_) * ly;
+
+  double dx = pd_.moving_direction_.x();
+  double dy = pd_.moving_direction_.y();
 
   double forward_angle_score = -2;
   double backward_angle_score = -2;
@@ -1068,6 +1072,10 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   {
     relocation_ = false;
   }
+
+  pd_.moving_direction_ = lookahead_point - robot_position;
+  pd_.moving_direction_.z() = 0.0;
+  pd_.moving_direction_.normalize();
 
   pcl::PointXYZI point;
   point.x = lookahead_point.x();
