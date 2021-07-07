@@ -1145,7 +1145,7 @@ void SensorCoveragePlanner3D::PublishRuntime()
   }
 
   std_msgs::Float32 runtime_msg;
-  runtime_msg.data = runtime;
+  runtime_msg.data = runtime / 1000.0;
   runtime_pub_.publish(runtime_msg);
 }
 
