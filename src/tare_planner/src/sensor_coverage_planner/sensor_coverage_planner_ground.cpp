@@ -565,19 +565,6 @@ void SensorCoveragePlanner3D::UpdateGlobalRepresentation()
   {
     pd_.grid_world_->SetHomePosition(pd_.initial_position_);
   }
-  // Update rolling occupancy grid
-  // misc_utils_ns::Timer rolling_occupancy_grid_timer("Updating occupancy grid");
-  // rolling_occupancy_grid_timer.Start();
-  // pd_.rolling_occupancy_grid_->InitializeOrigin(pointcloud_manager_neighbor_cells_origin);
-  // pd_.rolling_occupancy_grid_->UpdateRobotPosition(
-  //     Eigen::Vector3d(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z));
-  // pd_.rolling_occupancy_grid_->UpdateOccupancy<PlannerCloudPointType>(pd_.keypose_cloud_->cloud_);
-  // pd_.rolling_occupancy_grid_->RayTrace(
-  //     Eigen::Vector3d(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z));
-  // rolling_occupancy_grid_timer.Stop(true);
-
-  // pd_.rolling_occupancy_grid_->GetVisualizationCloud(pd_.rolling_occupancy_cloud_->cloud_);
-  // pd_.rolling_occupancy_cloud_->Publish();
 }
 
 void SensorCoveragePlanner3D::GlobalPlanning(std::vector<int>& global_cell_tsp_order,
@@ -1244,8 +1231,13 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
     exploration_path_ns::ExplorationPath global_path;
     GlobalPlanning(global_cell_tsp_order, global_path);
 
+    // Construct a roadmap from the global path and find the nearest global subspace to go
+    // nav_msgs::Path path_to_nearest_subspace;
+    // ConstructGlobalPathRoadmap(global_path, pd_.keypose_graph_, path_to_nearest_subspace);
+
     // Local TSP
     exploration_path_ns::ExplorationPath local_path;
+    // LocalPlanning(uncovered_point_num, uncovered_frontier_point_num, path_to_nearest_subspace, local_path);
     LocalPlanning(uncovered_point_num, uncovered_frontier_point_num, global_path, local_path);
 
     near_home_ = GetRobotToHomeDistance() < pp_.kRushHomeDist;
