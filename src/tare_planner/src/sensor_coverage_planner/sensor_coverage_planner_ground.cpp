@@ -713,40 +713,21 @@ exploration_path_ns::ExplorationPath SensorCoveragePlanner3D::ConcatenateGlobalL
   }
   else
   {
-    if (local_path.nodes_.front() == local_path.nodes_.back() &&
-        local_path.nodes_.front().type_ == exploration_path_ns::NodeType::ROBOT)
+    full_path = local_path;
+    if (local_path.nodes_.front().type_ == exploration_path_ns::NodeType::LOCAL_PATH_END &&
+        local_path.nodes_.back().type_ == exploration_path_ns::NodeType::LOCAL_PATH_START)
     {
-      full_path = local_path;
-    }
-    else if (local_path.nodes_.front().type_ == exploration_path_ns::NodeType::LOCAL_PATH_START &&
-             local_path.nodes_.back().type_ == exploration_path_ns::NodeType::LOCAL_PATH_END)
-    {
-      full_path = local_path;
-    }
-    else if (local_path.nodes_.front().type_ == exploration_path_ns::NodeType::LOCAL_PATH_END &&
-             local_path.nodes_.back().type_ == exploration_path_ns::NodeType::LOCAL_PATH_START)
-    {
-      full_path = local_path;
       full_path.Reverse();
     }
     else if (local_path.nodes_.front().type_ == exploration_path_ns::NodeType::LOCAL_PATH_START &&
              local_path.nodes_.back() == local_path.nodes_.front())
     {
-      full_path = local_path;
       full_path.nodes_.back().type_ = exploration_path_ns::NodeType::LOCAL_PATH_END;
     }
     else if (local_path.nodes_.front().type_ == exploration_path_ns::NodeType::LOCAL_PATH_END &&
              local_path.nodes_.back() == local_path.nodes_.front())
     {
-      full_path = local_path;
       full_path.nodes_.front().type_ = exploration_path_ns::NodeType::LOCAL_PATH_START;
-    }
-    else
-    {
-      // std::cout << "local path not properly formed, starts with " <<
-      // static_cast<int>(local_path.nodes_.front().type_)
-      //           << " ends with " << static_cast<int>(local_path.nodes_.back().type_) << std::endl;
-      full_path = local_path;
     }
   }
 
