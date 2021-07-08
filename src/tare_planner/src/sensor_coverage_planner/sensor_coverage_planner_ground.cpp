@@ -1170,7 +1170,7 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
 
     int uncovered_point_num = 0;
     int uncovered_frontier_point_num = 0;
-    if (!exploration_finished_ && pp_.kNoExplorationReturnHome)
+    if (!exploration_finished_ || !pp_.kNoExplorationReturnHome)
     {
       UpdateViewPointCoverage();
       UpdateCoveredAreas(uncovered_point_num, uncovered_frontier_point_num);
