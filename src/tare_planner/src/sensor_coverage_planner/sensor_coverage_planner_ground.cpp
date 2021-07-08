@@ -88,8 +88,6 @@ void PlannerData::Initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
       std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "keypose_graph_cloud", kWorldFrameID);
   viewpoint_in_collision_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(
       nh, "viewpoint_in_collision_cloud_", kWorldFrameID);
-  // rolling_occupancy_cloud_ =
-  //     std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "rolling_occupancy_cloud", kWorldFrameID);
   point_cloud_manager_neighbor_cloud_ =
       std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "pointcloud_manager_cloud", kWorldFrameID);
 
@@ -101,7 +99,6 @@ void PlannerData::Initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
   grid_world_ = std::make_unique<grid_world_ns::GridWorld>(nh_p);
   grid_world_->SetUseKeyposeGraph(true);
   visualizer_ = std::make_unique<tare_visualizer_ns::TAREVisualizer>(nh, nh_p);
-  // rolling_occupancy_grid_ = std::make_unique<rolling_occupancy_grid_ns::RollingOccupancyGrid>(nh_p);
 
   initial_position_.x() = 0.0;
   initial_position_.y() = 0.0;
@@ -169,7 +166,6 @@ bool SensorCoveragePlanner3D::initialize(ros::NodeHandle& nh, ros::NodeHandle& n
 
   pd_.keypose_graph_->SetAllowVerticalEdge(false);
 
-  // pd_.robot_viewpoint_.setCloudDWZResol(pp_.kKeyposeCloudDwzFilterLeafSize);
   lidar_model_ns::LiDARModel::setCloudDWZResol(pd_.planning_env_->GetPlannerCloudResolution());
 
   execution_timer_ = nh.createTimer(ros::Duration(1.0), &SensorCoveragePlanner3D::execute, this);
@@ -954,23 +950,6 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
     exit(1);
   }
 
-  // Get angle scores for forward and backward lookahead points
-  // double lx = 1.0;
-  // double ly = 0.0;
-  // double dx = 1.0;
-  // double dy = 0.0;
-  // if (pd_.moving_forward_)
-  // {
-  //   lx = 1.0;
-  // }
-  // else
-  // {
-  //   lx = -1.0;
-  // }
-
-  // dx = cos(pd_.robot_yaw_) * lx - sin(pd_.robot_yaw_) * ly;
-  // dy = sin(pd_.robot_yaw_) * lx + cos(pd_.robot_yaw_) * ly;
-
   double dx = pd_.moving_direction_.x();
   double dy = pd_.moving_direction_.y();
 
@@ -1115,10 +1094,6 @@ void SensorCoveragePlanner3D::PublishRuntime()
   local_viewpoint_sampling_runtime_ = pd_.local_coverage_planner_->GetViewPointSamplingRuntime() / 1000;
   local_path_finding_runtime_ =
       (pd_.local_coverage_planner_->GetFindPathRuntime() + pd_.local_coverage_planner_->GetTSPRuntime()) / 1000;
-  // std::cout << "local planning runtime breakdown: " << std::endl;
-  // std::cout << "find path: " << pd_.viewpoint_manager_->GetFindPathRuntime() << std::endl;
-  // std::cout << "viewpoint sampling: " << pd_.viewpoint_manager_->GetViewPointSamplingRuntime() << std::endl;
-  // std::cout << "tsp: " << pd_.viewpoint_manager_->GetTSPRuntime() << std::endl;
 
   std_msgs::Int32MultiArray runtime_breakdown_msg;
   runtime_breakdown_msg.data.clear();
@@ -1278,7 +1253,5 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
     PublishGlobalPlanningVisualization(global_path, local_path);
     PublishRuntime();
   }
-
-  // return true;
 }
 }  // namespace sensor_coverage_planner_3d_ns

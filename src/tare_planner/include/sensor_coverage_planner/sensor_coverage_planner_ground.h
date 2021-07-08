@@ -116,7 +116,6 @@ struct PlannerData
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> lookahead_point_cloud_;
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> keypose_graph_vis_cloud_;
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> viewpoint_in_collision_cloud_;
-  // std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolling_occupancy_cloud_;
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> point_cloud_manager_neighbor_cloud_;
 
   nav_msgs::Odometry keypose_;
@@ -137,7 +136,6 @@ struct PlannerData
   std::unique_ptr<local_coverage_planner_ns::LocalCoveragePlanner> local_coverage_planner_;
   std::unique_ptr<grid_world_ns::GridWorld> grid_world_;
   std::unique_ptr<tare_visualizer_ns::TAREVisualizer> visualizer_;
-  // std::unique_ptr<rolling_occupancy_grid_ns::RollingOccupancyGrid> rolling_occupancy_grid_;
 
   std::unique_ptr<misc_utils_ns::Marker> keypose_graph_node_marker_;
   std::unique_ptr<misc_utils_ns::Marker> keypose_graph_edge_marker_;
