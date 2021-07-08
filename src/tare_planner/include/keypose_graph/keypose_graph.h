@@ -184,6 +184,7 @@ public:
   {
     return kAddEdgeVerticalThreshold;
   }
+  geometry_msgs::Point GetFirstKeyposePosition();
   geometry_msgs::Point GetKeyposePosition(int keypose_id);
   void GetKeyposePositions(std::vector<Eigen::Vector3d>& positions);
   geometry_msgs::Point GetNodePosition(int node_ind);

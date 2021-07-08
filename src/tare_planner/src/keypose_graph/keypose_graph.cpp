@@ -941,6 +941,23 @@ double KeyposeGraph::GetShortestPath(const geometry_msgs::Point& start_point, co
   return shortest_dist;
 }
 
+geometry_msgs::Point KeyposeGraph::GetFirstKeyposePosition()
+{
+  geometry_msgs::Point point;
+  point.x = 0;
+  point.y = 0;
+  point.z = 0;
+  for (const auto& node : nodes_)
+  {
+    if (node.IsKeypose())
+    {
+      point = node.position_;
+      break;
+    }
+  }
+  return point;
+}
+
 geometry_msgs::Point KeyposeGraph::GetKeyposePosition(int keypose_id)
 {
   geometry_msgs::Point point;

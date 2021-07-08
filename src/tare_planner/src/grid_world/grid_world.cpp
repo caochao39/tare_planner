@@ -825,22 +825,21 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
     }
   }
 
-  // std::cout << "exploring cell indices num: " << exploring_cell_indices.size() << std::endl;
-
   /****** Return home ******/
   if (exploring_cell_indices.empty())
   {
     return_home_ = true;
 
     geometry_msgs::Point home_position;
-    int home_cell_ind = GetCellInd(0, 0, 0);
-    if (subspaces_->InRange(home_cell_ind))
-    {
-      Eigen::Vector3d home_eigen_position = subspaces_->GetCell(home_cell_ind).GetRoadmapConnectionPoint();
-      home_position.x = home_eigen_position.x();
-      home_position.y = home_eigen_position.y();
-      home_position.z = home_eigen_position.z();
-    }
+
+    // int home_cell_ind = GetCellInd(0, 0, 0);
+    // if (subspaces_->InRange(home_cell_ind))
+    // {
+    //   Eigen::Vector3d home_eigen_position = subspaces_->GetCell(home_cell_ind).GetRoadmapConnectionPoint();
+    //   home_position.x = home_eigen_position.x();
+    //   home_position.y = home_eigen_position.y();
+    //   home_position.z = home_eigen_position.z();
+    // }
 
     nav_msgs::Path return_home_path;
     if (!use_keypose_graph_ || keypose_graph == nullptr || keypose_graph->GetNodeNum() == 0)
@@ -855,7 +854,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
     }
     else
     {
-      // home_position = keypose_graph->GetKeyposePosition(0);
+      home_position = keypose_graph->GetFirstKeyposePosition();
       keypose_graph->GetShortestPath(global_path_robot_position, home_position, true, return_home_path, false);
       if (return_home_path.poses.size() >= 2)
       {
