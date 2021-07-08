@@ -37,9 +37,15 @@ void PlanningEnvParameters::ReadParameters(ros::NodeHandle& nh)
   kUseFrontier = misc_utils_ns::getParam<bool>(nh, "kUseFrontier", false);
   kFrontierClusterTolerance = misc_utils_ns::getParam<double>(nh, "kFrontierClusterTolerance", 1.0);
   kFrontierClusterMinSize = misc_utils_ns::getParam<int>(nh, "kFrontierClusterMinSize", 30);
-  kExtractFrontierRange.x() = misc_utils_ns::getParam<double>(nh, "kExtractFrontierRangeX", 30);
-  kExtractFrontierRange.y() = misc_utils_ns::getParam<double>(nh, "kExtractFrontierRangeY", 30);
-  kExtractFrontierRange.z() = misc_utils_ns::getParam<double>(nh, "kExtractFrontierRangeZ", 3);
+
+  int viewpoint_number = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_x", 40);
+  double viewpoint_resolution = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resolution_x", 1.0);
+  double local_planning_horizon_half_size = viewpoint_number * viewpoint_resolution / 2;
+  double sensor_range = misc_utils_ns::getParam<double>(nh, "kSensorRange", 15);
+
+  kExtractFrontierRange.x() = local_planning_horizon_half_size + sensor_range * 2;
+  kExtractFrontierRange.y() = local_planning_horizon_half_size + sensor_range * 2;
+  kExtractFrontierRange.z() = 2;
 }
 
 PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::string world_frame_id)

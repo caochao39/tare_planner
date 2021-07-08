@@ -29,9 +29,6 @@ kLookAheadDistance : 8
 kUseFrontier : true
 kFrontierClusterTolerance : 1.0
 kFrontierClusterMinSize : 30
-kExtractFrontierRangeX : 35
-kExtractFrontierRangeY : 35
-kExtractFrontierRangeZ : 2
 
 kStackedCloudDwzLeafSize : 0.3
 kPlannerCloudDwzLeafSize : 0.5
