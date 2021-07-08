@@ -43,6 +43,7 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   kCheckTerrainCollision = misc_utils_ns::getParam<bool>(nh, "kCheckTerrainCollision", true);
   kExtendWayPoint = misc_utils_ns::getParam<bool>(nh, "kExtendWayPoint", true);
   kUseLineOfSightLookAheadPoint = misc_utils_ns::getParam<bool>(nh, "kUseLineOfSightLookAheadPoint", true);
+  kNoExplorationReturnHome = misc_utils_ns::getParam<bool>(nh, "kNoExplorationReturnHome", true);
 
   // Double
   kKeyposeCloudDwzFilterLeafSize = misc_utils_ns::getParam<double>(nh, "kKeyposeCloudDwzFilterLeafSize", 0.2);
@@ -544,7 +545,7 @@ void SensorCoveragePlanner3D::UpdateGlobalRepresentation()
   pointcloud_manager_neighbor_cells_origin_point.point.z = pointcloud_manager_neighbor_cells_origin.z();
   pointcloud_manager_neighbor_cells_origin_pub_.publish(pointcloud_manager_neighbor_cells_origin_point);
 
-  if (exploration_finished_)
+  if (exploration_finished_ && pp_.kNoExplorationReturnHome)
   {
     pd_.planning_env_->SetUseFrontier(false);
   }
@@ -1087,7 +1088,7 @@ void SensorCoveragePlanner3D::PublishRuntime()
   runtime_breakdown_pub_.publish(runtime_breakdown_msg);
 
   float runtime = 0;
-  if (!exploration_finished_)
+  if (!exploration_finished_ && pp_.kNoExplorationReturnHome)
   {
     for (int i = 0; i < runtime_breakdown_msg.data.size() - 1; i++)
     {
@@ -1169,7 +1170,7 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
 
     int uncovered_point_num = 0;
     int uncovered_frontier_point_num = 0;
-    if (!exploration_finished_)
+    if (!exploration_finished_ && pp_.kNoExplorationReturnHome)
     {
       UpdateViewPointCoverage();
       UpdateCoveredAreas(uncovered_point_num, uncovered_frontier_point_num);
