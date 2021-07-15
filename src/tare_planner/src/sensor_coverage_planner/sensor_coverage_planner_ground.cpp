@@ -10,6 +10,7 @@
  */
 
 #include "sensor_coverage_planner/sensor_coverage_planner_ground.h"
+#include "graph/graph.h"
 
 namespace sensor_coverage_planner_3d_ns
 {
@@ -91,6 +92,8 @@ void PlannerData::Initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
       nh, "viewpoint_in_collision_cloud_", kWorldFrameID);
   point_cloud_manager_neighbor_cloud_ =
       std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "pointcloud_manager_cloud", kWorldFrameID);
+  reordered_global_subspace_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(
+      nh, "reordered_global_subspace_cloud", kWorldFrameID);
 
   planning_env_ = std::make_unique<planning_env_ns::PlanningEnv>(nh, nh_p);
   viewpoint_manager_ = std::make_shared<viewpoint_manager_ns::ViewPointManager>(nh_p);
@@ -189,6 +192,8 @@ bool SensorCoveragePlanner3D::initialize(ros::NodeHandle& nh, ros::NodeHandle& n
 
   global_path_full_publisher_ = nh.advertise<nav_msgs::Path>("global_path_full", 1);
   global_path_publisher_ = nh.advertise<nav_msgs::Path>("global_path", 1);
+  old_global_path_publisher_ = nh.advertise<nav_msgs::Path>("old_global_path", 1);
+  to_nearest_global_subspace_path_publisher_ = nh.advertise<nav_msgs::Path>("to_nearest_global_subspace_path", 1);
   local_tsp_path_publisher_ = nh.advertise<nav_msgs::Path>("local_path", 1);
   exploration_path_publisher_ = nh.advertise<nav_msgs::Path>("exploration_path", 1);
   waypoint_pub_ = nh.advertise<geometry_msgs::PointStamped>(pp_.pub_waypoint_topic_, 2);
@@ -457,9 +462,6 @@ void SensorCoveragePlanner3D::UpdateViewPointCoverage()
   pd_.viewpoint_manager_->UpdateViewPointCoverage<PlannerCloudPointType>(pd_.planning_env_->GetDiffCloud());
   pd_.viewpoint_manager_->UpdateRolledOverViewPointCoverage<PlannerCloudPointType>(
       pd_.planning_env_->GetStackedCloud());
-  // std::cout << "diff cloud size: " << pd_.planning_env_->GetDiffCloud()->points.size() << std::endl;
-  // std::cout << "collision cloud size: " << pd_.planning_env_->GetCollisionCloud()->points.size() << std::endl;
-  // std::cout << "planner cloud size: " << pd_.planning_env_->GetPlannerCloud()->points.size() << std::endl;
   // Update robot coverage
   pd_.robot_viewpoint_.ResetCoverage();
   geometry_msgs::Pose robot_pose;
@@ -493,8 +495,6 @@ void SensorCoveragePlanner3D::UpdateCoveredAreas(int& uncovered_point_num, int& 
   misc_utils_ns::Timer get_uncovered_area_timer("get uncovered area");
   get_uncovered_area_timer.Start();
   pd_.planning_env_->GetUncoveredArea(pd_.viewpoint_manager_, uncovered_point_num, uncovered_frontier_point_num);
-  // std::cout << "uncovered point number: " << uncovered_point_num << std::endl;
-  // std::cout << "uncovered frontier point number: " << uncovered_frontier_point_num << std::endl;
   get_uncovered_area_timer.Stop(false);
   pd_.planning_env_->PublishUncoveredCloud();
   pd_.planning_env_->PublishUncoveredFrontierCloud();
@@ -555,7 +555,6 @@ void SensorCoveragePlanner3D::UpdateGlobalRepresentation()
   geometry_msgs::Point closest_node_position = pd_.keypose_graph_->GetClosestNodePosition(pd_.robot_position_);
   pd_.grid_world_->SetCurKeyposeGraphNodeInd(closest_node_ind);
   pd_.grid_world_->SetCurKeyposeGraphNodePosition(closest_node_position);
-  // pd_.grid_world_->SetCurKeyposeGraphNodeInd(pd_.cur_keypose_node_ind_);
 
   pd_.grid_world_->UpdateRobotPosition(pd_.robot_position_);
   if (!pd_.grid_world_->HomeSet())
@@ -578,8 +577,286 @@ void SensorCoveragePlanner3D::GlobalPlanning(std::vector<int>& global_cell_tsp_o
 
   global_path = pd_.grid_world_->SolveGlobalTSP(pd_.viewpoint_manager_, global_cell_tsp_order, pd_.keypose_graph_);
 
+  nav_msgs::Path old_global_path = global_path.GetPath();
+  old_global_path.header.stamp = ros::Time::now();
+  old_global_path.header.frame_id = "map";
+  old_global_path_publisher_.publish(old_global_path);
+
+  // Reorder the global path to start from the nearest global subspace
+  ReorderGlobalPath(pd_.keypose_graph_, global_path, global_cell_tsp_order);
+
   global_tsp_timer.Stop(false);
   global_planning_runtime_ = global_tsp_timer.GetDuration("ms");
+}
+
+void SensorCoveragePlanner3D::ReorderGlobalPath(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
+                                                exploration_path_ns::ExplorationPath& global_path,
+                                                std::vector<int>& global_subspace_indices)
+{
+  // Find the nearest global subspace
+  nav_msgs::Path path_to_nearest_subspace;
+  int nearest_global_subspace_index =
+      GetNearestGlobalSubspace(global_path, pd_.keypose_graph_, path_to_nearest_subspace);
+
+  if (nearest_global_subspace_index == -1)
+  {
+    return;
+  }
+
+  // Reorder the global subspaces to start from the nearest subspace
+  bool reordered = ReorderGlobalSubspaceIndices(nearest_global_subspace_index, global_subspace_indices);
+
+  pd_.reordered_global_subspace_cloud_->cloud_->clear();
+  // Reconstruct the global path
+  if (reordered)
+  {
+    ReconstructGlobalPath(keypose_graph, global_subspace_indices, global_path);
+  }
+  pd_.reordered_global_subspace_cloud_->Publish();
+
+  path_to_nearest_subspace.header.frame_id = "map";
+  path_to_nearest_subspace.header.stamp = ros::Time::now();
+  to_nearest_global_subspace_path_publisher_.publish(path_to_nearest_subspace);
+}
+
+int SensorCoveragePlanner3D::GetNearestGlobalSubspace(
+    const exploration_path_ns::ExplorationPath& global_path,
+    const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
+    nav_msgs::Path& path_to_nearest_global_subspace)
+{
+  int nearest_global_subspace_index = -1;
+
+  int global_path_node_number = global_path.GetNodeNum();
+
+  tare::Graph graph(global_path_node_number);
+  for (int i = 0; i < global_path_node_number; i++)
+  {
+    Eigen::Vector3d from_node_position = global_path.nodes_[i].position_;
+    graph.SetNodePosition(i, from_node_position);
+    for (int j = i + 1; j < global_path_node_number; j++)
+    {
+      Eigen::Vector3d to_node_position = global_path.nodes_[j].position_;
+      if (keypose_graph->IsConnected(from_node_position, to_node_position))
+      {
+        graph.AddTwoWayEdge(i, j, (from_node_position - to_node_position).norm());
+      }
+    }
+  }
+  int robot_node_index = -1;
+  for (int i = 0; i < global_path.nodes_.size(); i++)
+  {
+    if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::ROBOT)
+    {
+      robot_node_index = i;
+    }
+  }
+  if (robot_node_index == -1)
+  {
+    return nearest_global_subspace_index;
+  }
+  // Get the shortest path to the nearest global subspace
+  double min_path_length = DBL_MAX;
+  for (int i = 0; i < global_path.nodes_.size(); i++)
+  {
+    if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::GLOBAL_VIEWPOINT)
+    {
+      nav_msgs::Path path_to_subspace;
+      std::vector<int> global_path_node_indices;
+      double path_length = graph.GetShortestPath(robot_node_index, i, true, path_to_subspace, global_path_node_indices);
+      if (path_length < min_path_length)
+      {
+        min_path_length = path_length;
+        nearest_global_subspace_index = global_path.nodes_[i].global_subspace_index_;
+        path_to_nearest_global_subspace = path_to_subspace;
+      }
+    }
+  }
+  return nearest_global_subspace_index;
+}
+
+bool SensorCoveragePlanner3D::ReorderGlobalSubspaceIndices(int nearest_global_subspace_index,
+                                                           std::vector<int>& global_subspace_indices)
+{
+  if (global_subspace_indices.size() < 2)
+  {
+    return false;
+  }
+  if (nearest_global_subspace_index == global_subspace_indices[1])
+  {
+    return false;
+  }
+  int array_index = -1;
+  for (int i = 0; i < global_subspace_indices.size(); i++)
+  {
+    if (global_subspace_indices[i] == nearest_global_subspace_index)
+    {
+      array_index = i;
+    }
+  }
+  if (array_index >= 0 && array_index < global_subspace_indices.size())
+  {
+    std::vector<int> reordered_global_subspace_indices;
+    reordered_global_subspace_indices.push_back(-1);
+    for (int i = array_index; i < global_subspace_indices.size(); i++)
+    {
+      reordered_global_subspace_indices.push_back(global_subspace_indices[i]);
+    }
+    for (int i = 1; i < array_index; i++)
+    {
+      reordered_global_subspace_indices.push_back(global_subspace_indices[i]);
+    }
+
+    global_subspace_indices = reordered_global_subspace_indices;
+    return true;
+  }
+  else
+  {
+    ROS_ERROR_STREAM("SensorCoveragePlanner3D::ReorderGlobalSubspaceIndices: array_index: "
+                     << array_index << " out of bound [0, " << global_subspace_indices.size() - 1);
+    return false;
+  }
+}
+
+void SensorCoveragePlanner3D::ReconstructGlobalPath(
+    const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
+    const std::vector<int>& global_subspace_indices, exploration_path_ns::ExplorationPath& global_path)
+{
+  if (global_subspace_indices.size() < 2 || global_path.nodes_.size() < 2)
+  {
+    return;
+  }
+  std::vector<geometry_msgs::Point> global_path_viewpoint_positions;
+  for (int i = 0; i < global_subspace_indices.size(); i++)
+  {
+    for (int j = 0; j < global_path.nodes_.size(); j++)
+    {
+      if (global_path.nodes_[j].global_subspace_index_ == global_subspace_indices[i] &&
+          (global_path.nodes_[j].type_ == exploration_path_ns::NodeType::ROBOT ||
+           global_path.nodes_[j].type_ == exploration_path_ns::NodeType::GLOBAL_VIEWPOINT))
+      {
+        geometry_msgs::Point node_position;
+        node_position.x = global_path.nodes_[j].position_.x();
+        node_position.y = global_path.nodes_[j].position_.y();
+        node_position.z = global_path.nodes_[j].position_.z();
+        global_path_viewpoint_positions.push_back(node_position);
+        break;
+      }
+    }
+  }
+
+  if (global_subspace_indices.size() != global_path_viewpoint_positions.size())
+  {
+    ROS_ERROR_STREAM("SensorCoveragePlanner3D::ReconstructGlobalPath: global subspace indice num: "
+                     << global_subspace_indices.size()
+                     << " not equals to viewpoint position num: " << global_path_viewpoint_positions.size());
+    return;
+  }
+  else
+  {
+    global_path.nodes_.clear();
+    geometry_msgs::Point cur_position;
+    geometry_msgs::Point next_position;
+    int cur_ind;
+    int next_ind;
+    global_path_viewpoint_positions.push_back(global_path_viewpoint_positions[0]);
+    for (int i = 0; i < global_path_viewpoint_positions.size() - 1; i++)
+    {
+      cur_ind = i;
+      next_ind = i + 1;
+      cur_position = global_path_viewpoint_positions[cur_ind];
+      next_position = global_path_viewpoint_positions[next_ind];
+
+      nav_msgs::Path keypose_path;
+      keypose_graph->GetShortestPath(cur_position, next_position, true, keypose_path, false);
+
+      exploration_path_ns::Node node(Eigen::Vector3d(cur_position.x, cur_position.y, cur_position.z));
+      if (i == 0)
+      {
+        node.type_ = exploration_path_ns::NodeType::ROBOT;
+      }
+      else
+      {
+        node.type_ = exploration_path_ns::NodeType::GLOBAL_VIEWPOINT;
+      }
+      node.global_subspace_index_ = global_subspace_indices[cur_ind];
+      global_path.Append(node);
+
+      // Fill in the path in between
+      if (keypose_path.poses.size() >= 2)
+      {
+        for (int j = 1; j < keypose_path.poses.size() - 1; j++)
+        {
+          geometry_msgs::Point node_position;
+          node_position = keypose_path.poses[j].pose.position;
+          exploration_path_ns::Node keypose_node(node_position, exploration_path_ns::NodeType::GLOBAL_VIA_POINT);
+          keypose_node.keypose_graph_node_ind_ = static_cast<int>(keypose_path.poses[i].pose.orientation.x);
+          global_path.Append(keypose_node);
+        }
+      }
+    }
+  }
+  // begin debug
+  for (int i = 0; i < global_path_viewpoint_positions.size() - 1; i++)
+  {
+    pcl::PointXYZI point;
+    point.x = global_path_viewpoint_positions[i].x;
+    point.y = global_path_viewpoint_positions[i].y;
+    point.z = global_path_viewpoint_positions[i].z;
+    point.intensity = i;
+    pd_.reordered_global_subspace_cloud_->cloud_->points.push_back(point);
+  }
+  // end debug
+}
+
+void SensorCoveragePlanner3D::GetShorestPathToNearestGlobalSubspace(
+    const exploration_path_ns::ExplorationPath& global_path,
+    const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph, std::vector<int>& global_path_node_indices,
+    nav_msgs::Path& path_to_nearest_subspace)
+{
+  int global_path_node_number = global_path.GetNodeNum();
+
+  tare::Graph graph(global_path_node_number);
+  for (int i = 0; i < global_path_node_number; i++)
+  {
+    Eigen::Vector3d from_node_position = global_path.nodes_[i].position_;
+    graph.SetNodePosition(i, from_node_position);
+    for (int j = i + 1; j < global_path_node_number; j++)
+    {
+      Eigen::Vector3d to_node_position = global_path.nodes_[j].position_;
+      if (keypose_graph->IsConnected(from_node_position, to_node_position))
+      {
+        graph.AddTwoWayEdge(i, j, (from_node_position - to_node_position).norm());
+      }
+    }
+  }
+  int robot_node_index = -1;
+  for (int i = 0; i < global_path.nodes_.size(); i++)
+  {
+    if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::ROBOT)
+    {
+      robot_node_index = i;
+    }
+  }
+  if (robot_node_index == -1)
+  {
+    return;
+  }
+  // Get the shortest path to the nearest global subspace
+  double min_path_length = DBL_MAX;
+  for (int i = 0; i < global_path.nodes_.size(); i++)
+  {
+    if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::GLOBAL_VIEWPOINT)
+    {
+      nav_msgs::Path path_to_subspace;
+      double path_length = graph.GetShortestPath(robot_node_index, i, true, path_to_subspace, global_path_node_indices);
+      if (path_length < min_path_length)
+      {
+        min_path_length = path_length;
+        path_to_nearest_subspace = path_to_subspace;
+      }
+    }
+  }
+  // Reorder the global path
 }
 
 void SensorCoveragePlanner3D::PublishGlobalPlanningVisualization(
@@ -741,27 +1018,6 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
 {
   Eigen::Vector3d robot_position(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z);
 
-  // Determine which direction to follow on the global path
-  double dist_from_start = 0.0;
-  for (int i = 1; i < global_path.nodes_.size(); i++)
-  {
-    dist_from_start += (global_path.nodes_[i - 1].position_ - global_path.nodes_[i].position_).norm();
-    if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::GLOBAL_VIEWPOINT)
-    {
-      break;
-    }
-  }
-
-  double dist_from_end = 0.0;
-  for (int i = global_path.nodes_.size() - 2; i > 0; i--)
-  {
-    dist_from_end += (global_path.nodes_[i + 1].position_ - global_path.nodes_[i].position_).norm();
-    if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::GLOBAL_VIEWPOINT)
-    {
-      break;
-    }
-  }
-
   bool local_path_too_short = true;
   for (int i = 0; i < local_path.nodes_.size(); i++)
   {
@@ -774,31 +1030,14 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   }
   if (local_path.GetNodeNum() < 1 || local_path_too_short)
   {
-    // std::cout << "local path empty or too short, using global path to get look ahead point!" << std::endl;
-    if (dist_from_start < dist_from_end)
+    double dist_from_robot = 0.0;
+    for (int i = 1; i < global_path.nodes_.size(); i++)
     {
-      double dist_from_robot = 0.0;
-      for (int i = 1; i < global_path.nodes_.size(); i++)
+      dist_from_robot += (global_path.nodes_[i - 1].position_ - global_path.nodes_[i].position_).norm();
+      if (dist_from_robot > pp_.kLookAheadDistance / 2)
       {
-        dist_from_robot += (global_path.nodes_[i - 1].position_ - global_path.nodes_[i].position_).norm();
-        if (dist_from_robot > pp_.kLookAheadDistance / 2)
-        {
-          lookahead_point = global_path.nodes_[i].position_;
-          break;
-        }
-      }
-    }
-    else
-    {
-      double dist_from_robot = 0.0;
-      for (int i = global_path.nodes_.size() - 2; i > 0; i--)
-      {
-        dist_from_robot += (global_path.nodes_[i + 1].position_ - global_path.nodes_[i].position_).norm();
-        if (dist_from_robot > pp_.kLookAheadDistance / 2)
-        {
-          lookahead_point = global_path.nodes_[i].position_;
-          break;
-        }
+        lookahead_point = global_path.nodes_[i].position_;
+        break;
       }
     }
     return false;
@@ -967,13 +1206,9 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   pd_.lookahead_point_cloud_->cloud_->clear();
   if (forward_viewpoint_count == 0 && backward_viewpoint_count == 0)
   {
-    if (dist_from_start < dist_from_end && local_path.nodes_.front().type_ != exploration_path_ns::NodeType::ROBOT)
+    if (local_path.nodes_.front().type_ != exploration_path_ns::NodeType::ROBOT)
     {
       lookahead_point = backward_lookahead_point;
-    }
-    else if (dist_from_end < dist_from_start && local_path.nodes_.back().type_ != exploration_path_ns::NodeType::ROBOT)
-    {
-      lookahead_point = forward_lookahead_point;
     }
     else
     {
@@ -1188,13 +1423,8 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
     exploration_path_ns::ExplorationPath global_path;
     GlobalPlanning(global_cell_tsp_order, global_path);
 
-    // Construct a roadmap from the global path and find the nearest global subspace to go
-    // nav_msgs::Path path_to_nearest_subspace;
-    // ConstructGlobalPathRoadmap(global_path, pd_.keypose_graph_, path_to_nearest_subspace);
-
     // Local TSP
     exploration_path_ns::ExplorationPath local_path;
-    // LocalPlanning(uncovered_point_num, uncovered_frontier_point_num, path_to_nearest_subspace, local_path);
     LocalPlanning(uncovered_point_num, uncovered_frontier_point_num, global_path, local_path);
 
     near_home_ = GetRobotToHomeDistance() < pp_.kRushHomeDist;

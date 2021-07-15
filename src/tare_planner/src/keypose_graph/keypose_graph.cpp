@@ -110,6 +110,38 @@ bool KeyposeGraph::HasEdgeBetween(int node_ind1, int node_ind2)
   }
 }
 
+bool KeyposeGraph::IsConnected(const Eigen::Vector3d& from_position, const Eigen::Vector3d& to_position)
+{
+  geometry_msgs::Point from_node_position;
+  from_node_position.x = from_position.x();
+  from_node_position.y = from_position.y();
+  from_node_position.z = from_position.z();
+  int closest_from_node_ind = -1;
+  double closest_from_node_dist = DBL_MAX;
+  GetClosestNodeIndAndDistance(from_node_position, closest_from_node_ind, closest_from_node_dist);
+
+  geometry_msgs::Point to_node_position;
+  to_node_position.x = to_position.x();
+  to_node_position.y = to_position.y();
+  to_node_position.z = to_position.z();
+  int closest_to_node_ind = -1;
+  double closest_to_node_dist = DBL_MAX;
+  GetClosestNodeIndAndDistance(to_node_position, closest_to_node_ind, closest_to_node_dist);
+
+  if (closest_from_node_ind != -1 && closest_from_node_ind == closest_to_node_ind)
+  {
+    return true;
+  }
+  else if (HasEdgeBetween(closest_from_node_ind, closest_to_node_ind))
+  {
+    return true;
+  }
+  else
+  {
+    false;
+  }
+}
+
 int KeyposeGraph::AddNonKeyposeNode(const geometry_msgs::Point& new_node_position)
 {
   int new_node_index = -1;

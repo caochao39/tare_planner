@@ -34,9 +34,8 @@ enum class NodeType
   LOCAL_PATH_END = 8,
   LOCAL_VIA_POINT = 10,
   GLOBAL_VIEWPOINT = 1,
-  GLOBAL_KEYPOSE = 3,
-  GLOBAL_VIA_POINT = 5,
-  HOME = 7
+  GLOBAL_VIA_POINT = 3,
+  HOME = 5
 };
 struct Node
 {
@@ -44,6 +43,7 @@ struct Node
   Eigen::Vector3d position_;
   int local_viewpoint_ind_;
   int keypose_graph_node_ind_;
+  int global_subspace_index_;
   bool nonstop_;
   explicit Node();
   explicit Node(Eigen::Vector3d position);

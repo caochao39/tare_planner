@@ -134,6 +134,7 @@ public:
   void CheckConnectivity(const geometry_msgs::Point& robot_position);
   int AddKeyposeNode(const nav_msgs::Odometry& keypose, const planning_env_ns::PlanningEnv& planning_env);
   bool HasEdgeBetween(int node_ind1, int node_ind2);
+  bool IsConnected(const Eigen::Vector3d& from_position, const Eigen::Vector3d& to_position);
   int AddNonKeyposeNode(const geometry_msgs::Point& new_node_position);
   void AddPath(const nav_msgs::Path& path);
   void SetAllowVerticalEdge(bool allow_vertical_edge)

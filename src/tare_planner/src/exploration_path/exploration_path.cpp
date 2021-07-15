@@ -17,6 +17,7 @@ Node::Node()
   : type_(NodeType::LOCAL_VIA_POINT)
   , local_viewpoint_ind_(-1)
   , keypose_graph_node_ind_(-1)
+  , global_subspace_index_(-1)
   , position_(Eigen::Vector3d::Zero())
   , nonstop_(false)
 {

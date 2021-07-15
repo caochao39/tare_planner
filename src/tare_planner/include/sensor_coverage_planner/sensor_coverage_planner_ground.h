@@ -118,6 +118,7 @@ struct PlannerData
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> keypose_graph_vis_cloud_;
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> viewpoint_in_collision_cloud_;
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> point_cloud_manager_neighbor_cloud_;
+  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> reordered_global_subspace_cloud_;
 
   nav_msgs::Odometry keypose_;
   geometry_msgs::Point robot_position_;
@@ -197,6 +198,8 @@ private:
   // ROS publishers
   ros::Publisher global_path_full_publisher_;
   ros::Publisher global_path_publisher_;
+  ros::Publisher old_global_path_publisher_;
+  ros::Publisher to_nearest_global_subspace_path_publisher_;
   ros::Publisher local_tsp_path_publisher_;
   ros::Publisher exploration_path_publisher_;
   ros::Publisher waypoint_pub_;
@@ -225,6 +228,19 @@ private:
   void UpdateVisitedPositions();
   void UpdateGlobalRepresentation();
   void GlobalPlanning(std::vector<int>& global_cell_tsp_order, exploration_path_ns::ExplorationPath& global_path);
+  void ReorderGlobalPath(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
+                         exploration_path_ns::ExplorationPath& global_path, std::vector<int>& global_path_node_indices);
+  int GetNearestGlobalSubspace(const exploration_path_ns::ExplorationPath& global_path,
+                               const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
+                               nav_msgs::Path& path_to_nearest_global_subspace);
+  void GetShorestPathToNearestGlobalSubspace(const exploration_path_ns::ExplorationPath& global_path,
+                                             const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
+                                             std::vector<int>& global_path_node_indices,
+                                             nav_msgs::Path& path_to_nearest_subspace);
+  bool ReorderGlobalSubspaceIndices(int nearest_global_subspace_index, std::vector<int>& global_subspace_indices);
+  void ReconstructGlobalPath(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
+                             const std::vector<int>& global_subspace_indices,
+                             exploration_path_ns::ExplorationPath& global_path);
   void PublishGlobalPlanningVisualization(const exploration_path_ns::ExplorationPath& global_path,
                                           const exploration_path_ns::ExplorationPath& local_path);
   void LocalPlanning(int uncovered_point_num, int uncovered_frontier_point_num,

@@ -620,12 +620,6 @@ void GridWorld::UpdateCellStatus(const std::shared_ptr<viewpoint_manager_ns::Vie
         above_frontier_threshold_count++;
       }
     }
-    // if (highest_score_viewpoint_ind != -1)
-    // {
-    //   geometry_msgs::Point viewpoint_position = viewpoint_manager->GetViewPointPosition(highest_score_viewpoint_ind);
-    //   subspaces_->GetCell(cell_ind).SetViewPointPosition(
-    //       Eigen::Vector3d(viewpoint_position.x, viewpoint_position.y, viewpoint_position.z));
-    // }
     // Exploring to Covered
     if (subspaces_->GetCell(cell_ind).GetStatus() == CellStatus::EXPLORING &&
         above_frontier_threshold_count < kCellExploringToCoveredThr &&
@@ -640,27 +634,17 @@ void GridWorld::UpdateCellStatus(const std::shared_ptr<viewpoint_manager_ns::Vie
               above_frontier_threshold_count >= kCellCoveredToExploringThr))
     {
       subspaces_->GetCell(cell_ind).SetStatus(CellStatus::EXPLORING);
-      // almost_covered_cell_indices_.erase(
-      //     std::remove(almost_covered_cell_indices_.begin(), almost_covered_cell_indices_.end(), cell_ind),
-      //     almost_covered_cell_indices_.end());
-      // std::cout << "1 adding " << cell_ind << std::endl;
       almost_covered_cell_indices_.push_back(cell_ind);
     }
     // Exploring to Almost covered
     else if (subspaces_->GetCell(cell_ind).GetStatus() == CellStatus::EXPLORING && selected_viewpoint_count == 0 &&
              candidate_count > 0)
-    // else if ((subspaces_->GetCell(cell_ind).GetStatus() == CellStatus::EXPLORING ||
-    //           subspaces_->GetCell(cell_ind).GetStatus() == CellStatus::UNSEEN) &&
-    //          selected_viewpoint_count == 0 && candidate_count > 0)
     {
-      // std::cout << "2 adding " << cell_ind << std::endl;
       almost_covered_cell_indices_.push_back(cell_ind);
     }
-    // Almost covered to Exploring
     else if (subspaces_->GetCell(cell_ind).GetStatus() != CellStatus::COVERED && selected_viewpoint_count > 0)
     {
       subspaces_->GetCell(cell_ind).SetStatus(CellStatus::EXPLORING);
-      // std::cout << "removing " << cell_ind << std::endl;
       almost_covered_cell_indices_.erase(
           std::remove(almost_covered_cell_indices_.begin(), almost_covered_cell_indices_.end(), cell_ind),
           almost_covered_cell_indices_.end());
@@ -679,8 +663,6 @@ void GridWorld::UpdateCellStatus(const std::shared_ptr<viewpoint_manager_ns::Vie
         double xy_dist_to_robot =
             misc_utils_ns::PointXYDist<geometry_msgs::Point, geometry_msgs::Point>(cell_position, robot_position_);
         double z_dist_to_robot = std::abs(cell_position.z - robot_position_.z);
-        // if (std::abs(robot_position_.x - cell_position.x) < kCellSize * 0.8 &&
-        //     std::abs(robot_position_.y - cell_position.y) < kCellSize * 0.8 && z_dist_to_robot < kCellHeight * 0.8)
         if (xy_dist_to_robot < kCellSize && z_dist_to_robot < kCellHeight * 0.8)
         {
           subspaces_->GetCell(cell_ind).SetStatus(CellStatus::COVERED);
@@ -694,28 +676,17 @@ void GridWorld::UpdateCellStatus(const std::shared_ptr<viewpoint_manager_ns::Vie
       subspaces_->GetCell(cell_ind).SetKeyposeID(cur_keypose_id_);
     }
   }
-  // std::cout << "before almost covered_cell_indices: " << std::endl;
   for (const auto& cell_ind : almost_covered_cell_indices_)
   {
-    // std::cout << cell_ind << " ";
     if (std::find(neighbor_cell_indices_.begin(), neighbor_cell_indices_.end(), cell_ind) ==
         neighbor_cell_indices_.end())
     {
-      // std::cout << "removing " << cell_ind << std::endl;
       subspaces_->GetCell(cell_ind).SetStatus(CellStatus::COVERED);
       almost_covered_cell_indices_.erase(
           std::remove(almost_covered_cell_indices_.begin(), almost_covered_cell_indices_.end(), cell_ind),
           almost_covered_cell_indices_.end());
     }
   }
-  // std::cout << std::endl;
-  // std::cout << "afler almost covered_cell_indices: " << std::endl;
-  // for (const auto& cell_ind : almost_covered_cell_indices_)
-  // {
-  //   std::cout << cell_ind << " ";
-  // }
-
-  // std::cout << std::endl;
 }
 
 exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
@@ -850,9 +821,11 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
       if (return_home_path.poses.size() >= 2)
       {
         global_path.FromPath(return_home_path);
-        for (int i = 0; i < global_path.nodes_.size() - 1; i++)
+        global_path.nodes_.front().type_ = exploration_path_ns::NodeType::ROBOT;
+
+        for (int i = 1; i < global_path.nodes_.size() - 1; i++)
         {
-          global_path.nodes_[i].type_ = exploration_path_ns::NodeType::GLOBAL_KEYPOSE;
+          global_path.nodes_[i].type_ = exploration_path_ns::NodeType::GLOBAL_VIA_POINT;
         }
         global_path.nodes_.back().type_ = exploration_path_ns::NodeType::HOME;
         // Make it a loop
@@ -921,6 +894,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
 
   ordered_cell_indices.clear();
 
+  // Add the first node in the end to make it a loop
   if (!node_index.empty())
   {
     node_index.push_back(node_index[0]);
@@ -935,6 +909,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
       pose.pose.position = exploring_cell_positions[cell_ind];
       exploration_path_ns::Node node(exploring_cell_positions[cell_ind],
                                      exploration_path_ns::NodeType::GLOBAL_VIEWPOINT);
+      node.global_subspace_index_ = exploring_cell_indices[cell_ind];
       global_path.Append(node);
       ordered_cell_indices.push_back(exploring_cell_indices[cell_ind]);
     }
@@ -967,7 +942,12 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
       {
         node.type_ = exploration_path_ns::NodeType::GLOBAL_VIEWPOINT;
       }
+      node.global_subspace_index_ = exploring_cell_indices[cur_ind];
       global_path.Append(node);
+
+      ordered_cell_indices.push_back(exploring_cell_indices[cur_ind]);
+
+      // Fill in the path in between
       if (keypose_path.poses.size() >= 2)
       {
         for (int j = 1; j < keypose_path.poses.size() - 1; j++)
@@ -979,44 +959,8 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
           global_path.Append(keypose_node);
         }
       }
-      ordered_cell_indices.push_back(exploring_cell_indices[cur_ind]);
     }
-    // // Append the last node
-    // exploration_path_ns::Node node(Eigen::Vector3d(next_position.x, next_position.y, next_position.z));
-    // if (next_keypose_id != -1)
-    // {
-    //   node.type_ = exploration_path_ns::NodeType::GLOBAL_VIEWPOINT;
-    //   if (keypose_to_cell_map.find(next_keypose_id) != keypose_to_cell_map.end())
-    //   {
-    //     node.global_grid_indices_ = keypose_to_cell_map[next_keypose_id];
-    //   }
-    // }
-    // else
-    // {
-    //   node.type_ = exploration_path_ns::NodeType::ROBOT;
-    // }
-    // global_path.Append(node);
-
-    // ordered_cell_indices.push_back(keypose_id_list[node_index.back()]);
-
-    // std::cout << "global exploration path node num: " << global_path.nodes_.size() << std::endl;
   }
-
-  // for (int i = 0; i < node_index.size(); i++)
-  // {
-  //   int cell_ind = node_index[i];
-  //   geometry_msgs::PoseStamped pose;
-  //   pose.pose.position = exploring_cell_positions[cell_ind];
-  //   global_tsp_path.poses.push_back(pose);
-  //   if (use_keypose_graph_)
-  //   {
-  //     ordered_cell_indices.push_back(keypose_id_list[cell_ind]);
-  //   }
-  //   else
-  //   {
-  //     ordered_cell_indices.push_back(exploring_cell_indices[cell_ind]);
-  //   }
-  // }
 
   // std::cout << "path order: ";
   // for (int i = 0; i < ordered_cell_indices.size(); i++)
