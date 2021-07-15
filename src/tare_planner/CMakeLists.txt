@@ -54,6 +54,10 @@ add_library(lidar_model src/lidar_model/lidar_model.cpp)
 add_dependencies(lidar_model ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(lidar_model ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
+add_library(graph src/graph/graph.cpp)
+add_dependencies(graph ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(graph ${catkin_LIBRARIES})
+
 add_library(misc_utils src/utils/misc_utils.cpp)
 add_dependencies(misc_utils ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(misc_utils ${catkin_LIBRARIES} ${PCL_LIBRARIES})
@@ -112,7 +116,7 @@ target_link_libraries(tare_visualizer ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 add_library(sensor_coverage_planner_ground src/sensor_coverage_planner/sensor_coverage_planner_ground.cpp)
 add_dependencies(sensor_coverage_planner_ground ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(sensor_coverage_planner_ground ${catkin_LIBRARIES} planning_env keypose_graph viewpoint_manager pointcloud_manager grid_world local_coverage_planner tare_visualizer)
+target_link_libraries(sensor_coverage_planner_ground ${catkin_LIBRARIES} graph planning_env keypose_graph viewpoint_manager pointcloud_manager grid_world local_coverage_planner tare_visualizer)
 
 add_executable(tare_planner_node src/tare_planner_node/tare_planner_node.cpp)
 add_dependencies(tare_planner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
