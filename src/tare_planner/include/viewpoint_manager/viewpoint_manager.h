@@ -48,7 +48,7 @@ struct ViewPointManagerParameter
   Eigen::Vector3d LocalPlanningHorizonSize;
 
   // Collision check
-  double kCollisionCheckTerrainThr;
+  double kConnectivityHeightDiffThr;
 
   // Collision grid
   Eigen::Vector3i kCollisionGridSize;

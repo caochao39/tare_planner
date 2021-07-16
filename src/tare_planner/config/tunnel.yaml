@@ -53,7 +53,7 @@ viewpoint_manager/number_z : 1
 viewpoint_manager/resolution_x : 0.6
 viewpoint_manager/resolution_y : 0.6
 viewpoint_manager/resolution_z : 0.0
-kCollisionCheckTerrainThr : 0.25
+kConnectivityHeightDiffThr : 0.25
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
 kViewPointCollisionMargin : 0.5
