@@ -38,7 +38,7 @@ roslaunch tare_planner explore_<environment>.launch
 * rviz: launch Rviz for visualization or not. If ```=true```, Rviz will be launched.
 
 ## Publications
-- C. Cao, H. Zhu, H. Choset, and J. Zhang. TARE: A Hierarchical Framework for Efficiently Exploring Complex 3D Environments. Robotics: Science and Systems Conference (RSS). Virtual, July 2021.
+- C. Cao, H. Zhu, H. Choset, and J. Zhang. TARE: A Hierarchical Framework for Efficiently Exploring Complex 3D Environments. Robotics: Science and Systems Conference (RSS). Virtual, July 2021. **Best Paper Award and Best System Paper Award**.
 - C. Cao, H. Zhu, H. Choset, and J. Zhang: Exploring Large and Complex Environments
 Fast and Efficiently. International Conference on Robotics and Automation (ICRA), Xi'an, China, June 2021.
 ```
