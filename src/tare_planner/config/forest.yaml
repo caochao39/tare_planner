@@ -53,7 +53,7 @@ viewpoint_manager/number_z : 1
 viewpoint_manager/resolution_x : 1.2
 viewpoint_manager/resolution_y : 1.2
 viewpoint_manager/resolution_z : 0.0
-kConnectivityHeightDiffThr : 0.25 # TODO: For checking connectivity, should change name
+kConnectivityHeightDiffThr : 0.25
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
 kViewPointCollisionMargin : 0.6
