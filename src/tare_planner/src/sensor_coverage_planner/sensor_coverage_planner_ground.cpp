@@ -577,13 +577,13 @@ void SensorCoveragePlanner3D::GlobalPlanning(std::vector<int>& global_cell_tsp_o
 
   global_path = pd_.grid_world_->SolveGlobalTSP(pd_.viewpoint_manager_, global_cell_tsp_order, pd_.keypose_graph_);
 
-  nav_msgs::Path old_global_path = global_path.GetPath();
-  old_global_path.header.stamp = ros::Time::now();
-  old_global_path.header.frame_id = "map";
-  old_global_path_publisher_.publish(old_global_path);
+  // nav_msgs::Path old_global_path = global_path.GetPath();
+  // old_global_path.header.stamp = ros::Time::now();
+  // old_global_path.header.frame_id = "map";
+  // old_global_path_publisher_.publish(old_global_path);
 
   // Reorder the global path to start from the nearest global subspace
-  ReorderGlobalPath(pd_.keypose_graph_, global_path, global_cell_tsp_order);
+  // ReorderGlobalPath(pd_.keypose_graph_, global_path, global_cell_tsp_order);
 
   global_tsp_timer.Stop(false);
   global_planning_runtime_ = global_tsp_timer.GetDuration("ms");
@@ -1018,6 +1018,27 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
 {
   Eigen::Vector3d robot_position(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z);
 
+  // Determine which direction to follow on the global path
+  double dist_from_start = 0.0;
+  for (int i = 1; i < global_path.nodes_.size(); i++)
+  {
+    dist_from_start += (global_path.nodes_[i - 1].position_ - global_path.nodes_[i].position_).norm();
+    if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::GLOBAL_VIEWPOINT)
+    {
+      break;
+    }
+  }
+
+  double dist_from_end = 0.0;
+  for (int i = global_path.nodes_.size() - 2; i > 0; i--)
+  {
+    dist_from_end += (global_path.nodes_[i + 1].position_ - global_path.nodes_[i].position_).norm();
+    if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::GLOBAL_VIEWPOINT)
+    {
+      break;
+    }
+  }
+
   bool local_path_too_short = true;
   for (int i = 0; i < local_path.nodes_.size(); i++)
   {
@@ -1030,14 +1051,30 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   }
   if (local_path.GetNodeNum() < 1 || local_path_too_short)
   {
-    double dist_from_robot = 0.0;
-    for (int i = 1; i < global_path.nodes_.size(); i++)
+    if (dist_from_start < dist_from_end)
     {
-      dist_from_robot += (global_path.nodes_[i - 1].position_ - global_path.nodes_[i].position_).norm();
-      if (dist_from_robot > pp_.kLookAheadDistance / 2)
+      double dist_from_robot = 0.0;
+      for (int i = 1; i < global_path.nodes_.size(); i++)
       {
-        lookahead_point = global_path.nodes_[i].position_;
-        break;
+        dist_from_robot += (global_path.nodes_[i - 1].position_ - global_path.nodes_[i].position_).norm();
+        if (dist_from_robot > pp_.kLookAheadDistance / 2)
+        {
+          lookahead_point = global_path.nodes_[i].position_;
+          break;
+        }
+      }
+    }
+    else
+    {
+      double dist_from_robot = 0.0;
+      for (int i = global_path.nodes_.size() - 2; i > 0; i--)
+      {
+        dist_from_robot += (global_path.nodes_[i + 1].position_ - global_path.nodes_[i].position_).norm();
+        if (dist_from_robot > pp_.kLookAheadDistance / 2)
+        {
+          lookahead_point = global_path.nodes_[i].position_;
+          break;
+        }
       }
     }
     return false;
@@ -1206,9 +1243,13 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   pd_.lookahead_point_cloud_->cloud_->clear();
   if (forward_viewpoint_count == 0 && backward_viewpoint_count == 0)
   {
-    if (local_path.nodes_.front().type_ != exploration_path_ns::NodeType::ROBOT)
+    if (dist_from_start < dist_from_end && local_path.nodes_.front().type_ != exploration_path_ns::NodeType::ROBOT)
     {
       lookahead_point = backward_lookahead_point;
+    }
+    else if (dist_from_end < dist_from_start && local_path.nodes_.back().type_ != exploration_path_ns::NodeType::ROBOT)
+    {
+      lookahead_point = forward_lookahead_point;
     }
     else
     {
