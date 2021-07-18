@@ -182,6 +182,7 @@ private:
   int keypose_count_;
 
   ros::Time start_time_;
+  ros::Time global_direction_switch_time_;
 
   ros::Timer execution_timer_;
 

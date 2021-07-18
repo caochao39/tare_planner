@@ -1019,25 +1019,23 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   Eigen::Vector3d robot_position(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z);
 
   // Determine which direction to follow on the global path
-  double score_from_start = 0.0;
   double dist_from_start = 0.0;
   for (int i = 1; i < global_path.nodes_.size(); i++)
   {
     dist_from_start += (global_path.nodes_[i - 1].position_ - global_path.nodes_[i].position_).norm();
     if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::GLOBAL_VIEWPOINT)
     {
-      score_from_start += dist_from_start;
+      break;
     }
   }
 
-  double score_from_end = 0.0;
   double dist_from_end = 0.0;
   for (int i = global_path.nodes_.size() - 2; i > 0; i--)
   {
     dist_from_end += (global_path.nodes_[i + 1].position_ - global_path.nodes_[i].position_).norm();
     if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::GLOBAL_VIEWPOINT)
     {
-      score_from_end += dist_from_end;
+      break;
     }
   }
 
@@ -1053,7 +1051,7 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   }
   if (local_path.GetNodeNum() < 1 || local_path_too_short)
   {
-    if (score_from_start < score_from_end)
+    if (dist_from_start < dist_from_end)
     {
       double dist_from_robot = 0.0;
       for (int i = 1; i < global_path.nodes_.size(); i++)
@@ -1243,20 +1241,54 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   }
 
   pd_.lookahead_point_cloud_->cloud_->clear();
+
   if (forward_viewpoint_count == 0 && backward_viewpoint_count == 0)
   {
-    if (score_from_start < score_from_end && local_path.nodes_.front().type_ != exploration_path_ns::NodeType::ROBOT)
+    relocation_ = true;
+  }
+  else
+  {
+    relocation_ = false;
+  }
+  if (relocation_)
+  {
+    ros::Duration time_diff = ros::Time::now() - global_direction_switch_time_;
+    if (time_diff.toSec() > 10)
     {
-      lookahead_point = backward_lookahead_point;
-    }
-    else if (score_from_end < score_from_start &&
-             local_path.nodes_.back().type_ != exploration_path_ns::NodeType::ROBOT)
-    {
-      lookahead_point = forward_lookahead_point;
+      // if timer up, follow the shorter distance one
+      if (dist_from_start < dist_from_end && local_path.nodes_.front().type_ != exploration_path_ns::NodeType::ROBOT)
+      {
+        lookahead_point = backward_lookahead_point;
+      }
+      else if (dist_from_end < dist_from_start &&
+               local_path.nodes_.back().type_ != exploration_path_ns::NodeType::ROBOT)
+      {
+        lookahead_point = forward_lookahead_point;
+      }
+      else
+      {
+        lookahead_point =
+            forward_angle_score > backward_angle_score ? forward_lookahead_point : backward_lookahead_point;
+      }
+
+      // start the timer if robot changes direction
+      if ((lookahead_point == backward_lookahead_point && forward_angle_score > backward_angle_score) ||
+          (lookahead_point == forward_lookahead_point && backward_angle_score > forward_angle_score))
+      {
+        global_direction_switch_time_ = ros::Time::now();
+      }
     }
     else
     {
-      lookahead_point = forward_angle_score > backward_angle_score ? forward_lookahead_point : backward_lookahead_point;
+      // else follow the momentum
+      if (forward_angle_score > backward_angle_score)
+      {
+        lookahead_point = forward_lookahead_point;
+      }
+      else
+      {
+        lookahead_point = backward_lookahead_point;
+      }
     }
   }
   else if (has_lookahead && lookahead_angle_score > 0 && dist_robot_to_lookahead > pp_.kLookAheadDistance / 2 &&
@@ -1269,7 +1301,7 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   {
     if (forward_angle_score > backward_angle_score)
     {
-      if (forward_viewpoint_count > 0 || relocation_)
+      if (forward_viewpoint_count > 0)
       {
         lookahead_point = forward_lookahead_point;
       }
@@ -1280,7 +1312,7 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
     }
     else
     {
-      if (backward_viewpoint_count > 0 || relocation_)
+      if (backward_viewpoint_count > 0)
       {
         lookahead_point = backward_lookahead_point;
       }
@@ -1289,15 +1321,6 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
         lookahead_point = forward_lookahead_point;
       }
     }
-  }
-
-  if (forward_viewpoint_count == 0 && backward_viewpoint_count == 0)
-  {
-    relocation_ = true;
-  }
-  else
-  {
-    relocation_ = false;
   }
 
   pd_.moving_direction_ = lookahead_point - robot_position;
@@ -1424,6 +1447,7 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
   {
     SendInitialWaypoint();
     start_time_ = ros::Time::now();
+    global_direction_switch_time_ = ros::Time::now();
     return;
   }
 
