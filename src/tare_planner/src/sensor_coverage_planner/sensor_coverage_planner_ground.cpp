@@ -1019,23 +1019,25 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   Eigen::Vector3d robot_position(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z);
 
   // Determine which direction to follow on the global path
+  double score_from_start = 0.0;
   double dist_from_start = 0.0;
   for (int i = 1; i < global_path.nodes_.size(); i++)
   {
     dist_from_start += (global_path.nodes_[i - 1].position_ - global_path.nodes_[i].position_).norm();
     if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::GLOBAL_VIEWPOINT)
     {
-      break;
+      score_from_start += dist_from_start;
     }
   }
 
+  double score_from_end = 0.0;
   double dist_from_end = 0.0;
   for (int i = global_path.nodes_.size() - 2; i > 0; i--)
   {
     dist_from_end += (global_path.nodes_[i + 1].position_ - global_path.nodes_[i].position_).norm();
     if (global_path.nodes_[i].type_ == exploration_path_ns::NodeType::GLOBAL_VIEWPOINT)
     {
-      break;
+      score_from_end += dist_from_end;
     }
   }
 
@@ -1051,7 +1053,7 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   }
   if (local_path.GetNodeNum() < 1 || local_path_too_short)
   {
-    if (dist_from_start < dist_from_end)
+    if (score_from_start < score_from_end)
     {
       double dist_from_robot = 0.0;
       for (int i = 1; i < global_path.nodes_.size(); i++)
@@ -1243,11 +1245,12 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   pd_.lookahead_point_cloud_->cloud_->clear();
   if (forward_viewpoint_count == 0 && backward_viewpoint_count == 0)
   {
-    if (dist_from_start < dist_from_end && local_path.nodes_.front().type_ != exploration_path_ns::NodeType::ROBOT)
+    if (score_from_start < score_from_end && local_path.nodes_.front().type_ != exploration_path_ns::NodeType::ROBOT)
     {
       lookahead_point = backward_lookahead_point;
     }
-    else if (dist_from_end < dist_from_start && local_path.nodes_.back().type_ != exploration_path_ns::NodeType::ROBOT)
+    else if (score_from_end < score_from_start &&
+             local_path.nodes_.back().type_ != exploration_path_ns::NodeType::ROBOT)
     {
       lookahead_point = forward_lookahead_point;
     }

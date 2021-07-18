@@ -829,7 +829,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
         }
         global_path.nodes_.back().type_ = exploration_path_ns::NodeType::HOME;
         // Make it a loop
-        for (int i = global_path.nodes_.size() - 2; i > 0; i--)
+        for (int i = global_path.nodes_.size() - 2; i >= 0; i--)
         {
           global_path.Append(global_path.nodes_[i]);
         }
@@ -968,6 +968,11 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
           global_path.Append(keypose_node);
         }
       }
+    }
+    // Append the robot node to the end
+    if (!global_path.nodes_.empty())
+    {
+      global_path.Append(global_path.nodes_[0]);
     }
   }
 
