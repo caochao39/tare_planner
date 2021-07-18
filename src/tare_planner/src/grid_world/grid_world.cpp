@@ -882,15 +882,6 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
     }
   }
 
-  // Add bias
-  int last_row = exploring_cell_positions.size() - 1;
-  int last_col = last_row;
-  for (int i = 0; i < exploring_cell_positions.size(); i++)
-  {
-    distance_matrix[i][last_col] *= 1.1;
-    distance_matrix[last_row][i] *= 1.1;
-  }
-
   /****** Solve the TSP ******/
   tsp_solver_ns::DataModel data_model;
   data_model.distance_matrix = distance_matrix;
