@@ -47,6 +47,7 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   kExtendWayPoint = misc_utils_ns::getParam<bool>(nh, "kExtendWayPoint", true);
   kUseLineOfSightLookAheadPoint = misc_utils_ns::getParam<bool>(nh, "kUseLineOfSightLookAheadPoint", true);
   kNoExplorationReturnHome = misc_utils_ns::getParam<bool>(nh, "kNoExplorationReturnHome", true);
+  kUseMomentum = misc_utils_ns::getParam<bool>(nh, "kUseMomentum", false);
 
   // Double
   kKeyposeCloudDwzFilterLeafSize = misc_utils_ns::getParam<double>(nh, "kKeyposeCloudDwzFilterLeafSize", 0.2);
@@ -55,6 +56,10 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   kTerrainCollisionThreshold = misc_utils_ns::getParam<double>(nh, "kTerrainCollisionThreshold", 0.5);
   kLookAheadDistance = misc_utils_ns::getParam<double>(nh, "kLookAheadDistance", 5.0);
   kExtendWayPointDistance = misc_utils_ns::getParam<double>(nh, "kExtendWayPointDistance", 8.0);
+
+  // Int
+  kDirectionChangeCounterThr = misc_utils_ns::getParam<int>(nh, "kDirectionChangeCounterThr", 4);
+  kDirectionNoChangeCounterThr = misc_utils_ns::getParam<int>(nh, "kDirectionNoChangeCounterThr", 5);
 
   return true;
 }
@@ -1266,7 +1271,7 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   }
   if (relocation_)
   {
-    if (use_momentum_)
+    if (use_momentum_ && pp_.kUseMomentum)
     {
       if (forward_angle_score > backward_angle_score)
       {
@@ -1445,7 +1450,7 @@ void SensorCoveragePlanner3D::CountDirectionChange()
     {
       direction_change_count_++;
       direction_no_change_count_ = 0;
-      if (direction_change_count_ > 4)
+      if (direction_change_count_ > pp_.kDirectionChangeCounterThr)
       {
         if (!use_momentum_)
         {
@@ -1457,7 +1462,7 @@ void SensorCoveragePlanner3D::CountDirectionChange()
     else
     {
       direction_no_change_count_++;
-      if (direction_no_change_count_ > 5)
+      if (direction_no_change_count_ > pp_.kDirectionNoChangeCounterThr)
       {
         direction_change_count_ = 0;
         use_momentum_ = false;

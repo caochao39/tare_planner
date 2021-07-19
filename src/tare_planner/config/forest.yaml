@@ -26,6 +26,10 @@ kRushHomeDist : 10
 kAtHomeDistThreshold : 0.5
 kTerrainCollisionThreshold : 0.5
 kLookAheadDistance : 8
+kUseMomentum : false
+kDirectionChangeCounterThr : 4
+kDirectionNoChangeCounterThr : 5
+
 
 # PlanningEnv
 kUseFrontier : true

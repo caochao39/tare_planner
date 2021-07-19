@@ -88,6 +88,7 @@ struct PlannerParameters
   bool kExtendWayPoint;
   bool kUseLineOfSightLookAheadPoint;
   bool kNoExplorationReturnHome;
+  bool kUseMomentum;
 
   // Double
   double kKeyposeCloudDwzFilterLeafSize;
@@ -96,6 +97,10 @@ struct PlannerParameters
   double kTerrainCollisionThreshold;
   double kLookAheadDistance;
   double kExtendWayPointDistance;
+
+  // Int
+  int kDirectionChangeCounterThr;
+  int kDirectionNoChangeCounterThr;
 
   bool ReadParameters(ros::NodeHandle& nh);
 };
