@@ -36,6 +36,8 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
       misc_utils_ns::getParam<std::string>(nh, "pub_runtime_breakdown_topic_", "runtime_breakdown");
   pub_runtime_topic_ = misc_utils_ns::getParam<std::string>(nh, "pub_runtime_topic_", "/runtime");
   pub_waypoint_topic_ = misc_utils_ns::getParam<std::string>(nh, "pub_waypoint_topic_", "/way_point");
+  pub_momentum_activation_count_topic_ =
+      misc_utils_ns::getParam<std::string>(nh, "pub_momentum_activation_count_topic_", "momentum_activation_count");
 
   // Bool
   kAutoStart = misc_utils_ns::getParam<bool>(nh, "kAutoStart", false);
@@ -130,12 +132,19 @@ void PlannerData::Initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
   grid_world_marker_->SetColorRGBA(1.0, 0.0, 0.0, 0.8);
 
   robot_yaw_ = 0.0;
+  lookahead_point_direction_ = Eigen::Vector3d(1.0, 0.0, 0.0);
   moving_direction_ = Eigen::Vector3d(1.0, 0.0, 0.0);
   moving_forward_ = true;
 
   Eigen::Vector3d viewpoint_resolution = viewpoint_manager_->GetResolution();
   double add_non_keypose_node_min_dist = std::min(viewpoint_resolution.x(), viewpoint_resolution.y()) / 2;
   keypose_graph_->SetAddNonKeyposeNodeMinDist() = add_non_keypose_node_min_dist;
+
+  robot_position_.x = 0;
+  robot_position_.y = 0;
+  robot_position_.z = 0;
+
+  last_robot_position_ = robot_position_;
 }
 
 SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
@@ -151,8 +160,12 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeH
   , test_point_update_(false)
   , viewpoint_ind_update_(false)
   , step_(false)
+  , use_momentum_(false)
   , registered_cloud_count_(0)
   , keypose_count_(0)
+  , direction_change_count_(0)
+  , direction_no_change_count_(0)
+  , momentum_activation_count_(0)
 {
   initialize(nh, nh_p);
   PrintExplorationStatus("Exploration Started", false);
@@ -200,6 +213,7 @@ bool SensorCoveragePlanner3D::initialize(ros::NodeHandle& nh, ros::NodeHandle& n
   exploration_finish_pub_ = nh.advertise<std_msgs::Bool>(pp_.pub_exploration_finish_topic_, 2);
   runtime_breakdown_pub_ = nh.advertise<std_msgs::Int32MultiArray>(pp_.pub_runtime_breakdown_topic_, 2);
   runtime_pub_ = nh.advertise<std_msgs::Float32>(pp_.pub_runtime_topic_, 2);
+  momentum_activation_count_pub_ = nh.advertise<std_msgs::Int32>(pp_.pub_momentum_activation_count_topic_, 2);
   // Debug
   pointcloud_manager_neighbor_cells_origin_pub_ =
       nh.advertise<geometry_msgs::PointStamped>("pointcloud_manager_neighbor_cells_origin", 1);
@@ -1208,8 +1222,8 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
     exit(1);
   }
 
-  double dx = pd_.moving_direction_.x();
-  double dy = pd_.moving_direction_.y();
+  double dx = pd_.lookahead_point_direction_.x();
+  double dy = pd_.lookahead_point_direction_.y();
 
   double forward_angle_score = -2;
   double backward_angle_score = -2;
@@ -1252,10 +1266,20 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   }
   if (relocation_)
   {
-    ros::Duration time_diff = ros::Time::now() - global_direction_switch_time_;
-    if (time_diff.toSec() > 10)
+    if (use_momentum_)
     {
-      // if timer up, follow the shorter distance one
+      if (forward_angle_score > backward_angle_score)
+      {
+        lookahead_point = forward_lookahead_point;
+      }
+      else
+      {
+        lookahead_point = backward_lookahead_point;
+      }
+    }
+    else
+    {
+      // follow the shorter distance one
       if (dist_from_start < dist_from_end && local_path.nodes_.front().type_ != exploration_path_ns::NodeType::ROBOT)
       {
         lookahead_point = backward_lookahead_point;
@@ -1269,25 +1293,6 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
       {
         lookahead_point =
             forward_angle_score > backward_angle_score ? forward_lookahead_point : backward_lookahead_point;
-      }
-
-      // start the timer if robot changes direction
-      if ((lookahead_point == backward_lookahead_point && forward_angle_score > backward_angle_score) ||
-          (lookahead_point == forward_lookahead_point && backward_angle_score > forward_angle_score))
-      {
-        global_direction_switch_time_ = ros::Time::now();
-      }
-    }
-    else
-    {
-      // else follow the momentum
-      if (forward_angle_score > backward_angle_score)
-      {
-        lookahead_point = forward_lookahead_point;
-      }
-      else
-      {
-        lookahead_point = backward_lookahead_point;
       }
     }
   }
@@ -1323,9 +1328,9 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
     }
   }
 
-  pd_.moving_direction_ = lookahead_point - robot_position;
-  pd_.moving_direction_.z() = 0.0;
-  pd_.moving_direction_.normalize();
+  pd_.lookahead_point_direction_ = lookahead_point - robot_position;
+  pd_.lookahead_point_direction_.z() = 0.0;
+  pd_.lookahead_point_direction_.normalize();
 
   pcl::PointXYZI point;
   point.x = lookahead_point.x();
@@ -1428,6 +1433,45 @@ void SensorCoveragePlanner3D::PrintExplorationStatus(std::string status, bool cl
   std::cout << std::endl << "\033[1;32m" << status << "\033[0m" << std::endl;
 }
 
+void SensorCoveragePlanner3D::CountDirectionChange()
+{
+  Eigen::Vector3d current_moving_direction_ =
+      Eigen::Vector3d(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z) -
+      Eigen::Vector3d(pd_.last_robot_position_.x, pd_.last_robot_position_.y, pd_.last_robot_position_.z);
+
+  if (current_moving_direction_.norm() > 0.5)
+  {
+    if (pd_.moving_direction_.dot(current_moving_direction_) < 0)
+    {
+      direction_change_count_++;
+      direction_no_change_count_ = 0;
+      if (direction_change_count_ > 4)
+      {
+        if (!use_momentum_)
+        {
+          momentum_activation_count_++;
+        }
+        use_momentum_ = true;
+      }
+    }
+    else
+    {
+      direction_no_change_count_++;
+      if (direction_no_change_count_ > 5)
+      {
+        direction_change_count_ = 0;
+        use_momentum_ = false;
+      }
+    }
+    pd_.moving_direction_ = current_moving_direction_;
+  }
+  pd_.last_robot_position_ = pd_.robot_position_;
+
+  std_msgs::Int32 momentum_activation_count_msg;
+  momentum_activation_count_msg.data = momentum_activation_count_;
+  momentum_activation_count_pub_.publish(momentum_activation_count_);
+}
+
 void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
 {
   if (!pp_.kAutoStart && !start_exploration_)
@@ -1455,6 +1499,8 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
   if (keypose_cloud_update_)
   {
     keypose_cloud_update_ = false;
+
+    CountDirectionChange();
 
     misc_utils_ns::Timer update_representation_timer("update representation");
     update_representation_timer.Start();

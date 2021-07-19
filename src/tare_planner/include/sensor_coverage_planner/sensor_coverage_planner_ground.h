@@ -78,6 +78,7 @@ struct PlannerParameters
   std::string pub_runtime_breakdown_topic_;
   std::string pub_runtime_topic_;
   std::string pub_waypoint_topic_;
+  std::string pub_momentum_activation_count_topic_;
 
   // Bool
   bool kAutoStart;
@@ -122,9 +123,11 @@ struct PlannerData
 
   nav_msgs::Odometry keypose_;
   geometry_msgs::Point robot_position_;
+  geometry_msgs::Point last_robot_position_;
   lidar_model_ns::LiDARModel robot_viewpoint_;
   exploration_path_ns::ExplorationPath exploration_path_;
   Eigen::Vector3d lookahead_point_;
+  Eigen::Vector3d lookahead_point_direction_;
   Eigen::Vector3d moving_direction_;
   double robot_yaw_;
   bool moving_forward_;
@@ -168,6 +171,7 @@ private:
   bool test_point_update_;
   bool viewpoint_ind_update_;
   bool step_;
+  bool use_momentum_;
   PlannerParameters pp_;
   PlannerData pd_;
   pointcloud_utils_ns::PointCloudDownsizer<pcl::PointXYZ> pointcloud_downsizer_;
@@ -180,6 +184,9 @@ private:
   int overall_runtime_;
   int registered_cloud_count_;
   int keypose_count_;
+  int direction_change_count_;
+  int direction_no_change_count_;
+  int momentum_activation_count_;
 
   ros::Time start_time_;
   ros::Time global_direction_switch_time_;
@@ -207,6 +214,7 @@ private:
   ros::Publisher exploration_finish_pub_;
   ros::Publisher runtime_breakdown_pub_;
   ros::Publisher runtime_pub_;
+  ros::Publisher momentum_activation_count_pub_;
   // Debug
   ros::Publisher pointcloud_manager_neighbor_cells_origin_pub_;
 
@@ -259,6 +267,7 @@ private:
                          const exploration_path_ns::ExplorationPath& global_path, Eigen::Vector3d& lookahead_point);
 
   void PrintExplorationStatus(std::string status, bool clear_last_line = true);
+  void CountDirectionChange();
 };
 
 }  // namespace sensor_coverage_planner_3d_ns
