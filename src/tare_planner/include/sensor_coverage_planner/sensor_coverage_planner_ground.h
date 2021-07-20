@@ -242,19 +242,6 @@ private:
   void UpdateVisitedPositions();
   void UpdateGlobalRepresentation();
   void GlobalPlanning(std::vector<int>& global_cell_tsp_order, exploration_path_ns::ExplorationPath& global_path);
-  void ReorderGlobalPath(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
-                         exploration_path_ns::ExplorationPath& global_path, std::vector<int>& global_path_node_indices);
-  int GetNearestGlobalSubspace(const exploration_path_ns::ExplorationPath& global_path,
-                               const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
-                               nav_msgs::Path& path_to_nearest_global_subspace);
-  void GetShorestPathToNearestGlobalSubspace(const exploration_path_ns::ExplorationPath& global_path,
-                                             const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
-                                             std::vector<int>& global_path_node_indices,
-                                             nav_msgs::Path& path_to_nearest_subspace);
-  bool ReorderGlobalSubspaceIndices(int nearest_global_subspace_index, std::vector<int>& global_subspace_indices);
-  void ReconstructGlobalPath(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
-                             const std::vector<int>& global_subspace_indices,
-                             exploration_path_ns::ExplorationPath& global_path);
   void PublishGlobalPlanningVisualization(const exploration_path_ns::ExplorationPath& global_path,
                                           const exploration_path_ns::ExplorationPath& local_path);
   void LocalPlanning(int uncovered_point_num, int uncovered_frontier_point_num,
