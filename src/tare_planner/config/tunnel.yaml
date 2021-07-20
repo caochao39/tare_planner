@@ -27,7 +27,7 @@ kAtHomeDistThreshold : 0.5
 kTerrainCollisionThreshold : 0.5
 kLookAheadDistance : 8
 kUseMomentum : true 
-kDirectionChangeCounterThr : 4
+kDirectionChangeCounterThr : 6
 kDirectionNoChangeCounterThr : 5
 
 
