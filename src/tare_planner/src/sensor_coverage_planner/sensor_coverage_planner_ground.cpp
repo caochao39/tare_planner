@@ -55,7 +55,8 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   kAtHomeDistThreshold = misc_utils_ns::getParam<double>(nh, "kAtHomeDistThreshold", 0.5);
   kTerrainCollisionThreshold = misc_utils_ns::getParam<double>(nh, "kTerrainCollisionThreshold", 0.5);
   kLookAheadDistance = misc_utils_ns::getParam<double>(nh, "kLookAheadDistance", 5.0);
-  kExtendWayPointDistance = misc_utils_ns::getParam<double>(nh, "kExtendWayPointDistance", 8.0);
+  kExtendWayPointDistanceBig = misc_utils_ns::getParam<double>(nh, "kExtendWayPointDistanceBig", 8.0);
+  kExtendWayPointDistanceSmall = misc_utils_ns::getParam<double>(nh, "kExtendWayPointDistanceSmall", 3.0);
 
   // Int
   kDirectionChangeCounterThr = misc_utils_ns::getParam<int>(nh, "kDirectionChangeCounterThr", 4);
@@ -166,7 +167,7 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeH
   , viewpoint_ind_update_(false)
   , step_(false)
   , use_momentum_(false)
-  , project_waypoint_(true)
+  , lookahead_in_line_of_sight_(true)
   , registered_cloud_count_(0)
   , keypose_count_(0)
   , direction_change_count_(0)
@@ -194,12 +195,12 @@ bool SensorCoveragePlanner3D::initialize(ros::NodeHandle& nh, ros::NodeHandle& n
   execution_timer_ = nh.createTimer(ros::Duration(1.0), &SensorCoveragePlanner3D::execute, this);
 
   exploration_start_sub_ =
-      nh.subscribe(pp_.sub_start_exploration_topic_, 1, &SensorCoveragePlanner3D::ExplorationStartCallback, this);
+      nh.subscribe(pp_.sub_start_exploration_topic_, 5, &SensorCoveragePlanner3D::ExplorationStartCallback, this);
   registered_scan_sub_ =
-      nh.subscribe(pp_.sub_registered_scan_topic_, 1, &SensorCoveragePlanner3D::RegisteredScanCallback, this);
-  terrain_map_sub_ = nh.subscribe(pp_.sub_terrain_map_topic_, 1, &SensorCoveragePlanner3D::TerrainMapCallback, this);
+      nh.subscribe(pp_.sub_registered_scan_topic_, 5, &SensorCoveragePlanner3D::RegisteredScanCallback, this);
+  terrain_map_sub_ = nh.subscribe(pp_.sub_terrain_map_topic_, 5, &SensorCoveragePlanner3D::TerrainMapCallback, this);
   terrain_map_ext_sub_ =
-      nh.subscribe(pp_.sub_terrain_map_ext_topic_, 1, &SensorCoveragePlanner3D::TerrainMapExtCallback, this);
+      nh.subscribe(pp_.sub_terrain_map_ext_topic_, 5, &SensorCoveragePlanner3D::TerrainMapExtCallback, this);
   state_estimation_sub_ =
       nh.subscribe(pp_.sub_state_estimation_topic_, 5, &SensorCoveragePlanner3D::StateEstimationCallback, this);
   coverage_boundary_sub_ =
@@ -1060,11 +1061,11 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   if ((lookahead_point == forward_lookahead_point && !forward_lookahead_point_in_los) ||
       (lookahead_point == backward_lookahead_point && !backward_lookahead_point_in_los))
   {
-    project_waypoint_ = false;
+    lookahead_in_line_of_sight_ = false;
   }
   else
   {
-    project_waypoint_ = true;
+    lookahead_in_line_of_sight_ = true;
   }
 
   pd_.lookahead_point_direction_ = lookahead_point - robot_position;
@@ -1103,7 +1104,8 @@ void SensorCoveragePlanner3D::PublishWaypoint()
     double dx = pd_.lookahead_point_.x() - pd_.robot_position_.x;
     double dy = pd_.lookahead_point_.y() - pd_.robot_position_.y;
     double r = sqrt(dx * dx + dy * dy);
-    double extend_dist = project_waypoint_ ? pp_.kExtendWayPointDistance : pp_.kExtendWayPointDistance / 4;
+    double extend_dist =
+        lookahead_in_line_of_sight_ ? pp_.kExtendWayPointDistanceBig : pp_.kExtendWayPointDistanceSmall;
     if (r < extend_dist && pp_.kExtendWayPoint)
     {
       dx = dx / r * extend_dist;
