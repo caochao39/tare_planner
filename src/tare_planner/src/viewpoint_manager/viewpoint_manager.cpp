@@ -396,8 +396,6 @@ void ViewPointManager::GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Pt
       vis_point.x = position.x;
       vis_point.y = position.y;
       vis_point.z = position.z;
-      // vis_point.intensity = graph_index_map_[i];
-      // if (viewpoints_[i].Visited())
       if (ViewPointVisited(i, true))
       {
         vis_point.intensity = -1.0;

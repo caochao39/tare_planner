@@ -166,6 +166,7 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeH
   , viewpoint_ind_update_(false)
   , step_(false)
   , use_momentum_(false)
+  , project_waypoint_(true)
   , registered_cloud_count_(0)
   , keypose_count_(0)
   , direction_change_count_(0)
@@ -881,9 +882,9 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   {
     robot_i = 0;
   }
+  bool forward_lookahead_point_in_los = true;
+  bool backward_lookahead_point_in_los = true;
   double length_from_robot = 0.0;
-  double path_angle = 0.0;
-  double angle_threshold = M_PI / 3 * 2;
   for (int i = robot_i + 1; i < local_path.GetNodeNum(); i++)
   {
     length_from_robot += (local_path.nodes_[i].position_ - local_path.nodes_[i - 1].position_).norm();
@@ -891,9 +892,6 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
     bool in_line_of_sight = true;
     if (i < local_path.GetNodeNum() - 1)
     {
-      double angle = misc_utils_ns::VectorXYAngle(local_path.nodes_[i].position_ - local_path.nodes_[i - 1].position_,
-                                                  local_path.nodes_[i + 1].position_ - local_path.nodes_[i].position_);
-      path_angle += angle;
       in_line_of_sight = pd_.viewpoint_manager_->InCurrentFrameLineOfSight(local_path.nodes_[i + 1].position_);
     }
     if ((length_from_robot > pp_.kLookAheadDistance || (pp_.kUseLineOfSightLookAheadPoint && !in_line_of_sight) ||
@@ -903,6 +901,10 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
          i == local_path.GetNodeNum() - 1))
 
     {
+      if (pp_.kUseLineOfSightLookAheadPoint && !in_line_of_sight)
+      {
+        forward_lookahead_point_in_los = false;
+      }
       forward_lookahead_point = local_path.nodes_[i].position_;
       has_forward = true;
       break;
@@ -913,7 +915,6 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
     robot_i = local_path.nodes_.size() - 1;
   }
   length_from_robot = 0.0;
-  path_angle = 0.0;
   for (int i = robot_i - 1; i >= 0; i--)
   {
     length_from_robot += (local_path.nodes_[i].position_ - local_path.nodes_[i + 1].position_).norm();
@@ -921,9 +922,6 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
     bool in_line_of_sight = true;
     if (i > 0)
     {
-      double angle = misc_utils_ns::VectorXYAngle(local_path.nodes_[i].position_ - local_path.nodes_[i + 1].position_,
-                                                  local_path.nodes_[i - 1].position_ - local_path.nodes_[i].position_);
-      path_angle += angle;
       in_line_of_sight = pd_.viewpoint_manager_->InCurrentFrameLineOfSight(local_path.nodes_[i - 1].position_);
     }
     if ((length_from_robot > pp_.kLookAheadDistance || (pp_.kUseLineOfSightLookAheadPoint && !in_line_of_sight) ||
@@ -932,6 +930,10 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
          local_path.nodes_[i].type_ == exploration_path_ns::NodeType::LOCAL_PATH_END || i == 0))
 
     {
+      if (pp_.kUseLineOfSightLookAheadPoint && !in_line_of_sight)
+      {
+        backward_lookahead_point_in_los = false;
+      }
       backward_lookahead_point = local_path.nodes_[i].position_;
       has_backward = true;
       break;
@@ -1055,6 +1057,16 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
     }
   }
 
+  if ((lookahead_point == forward_lookahead_point && !forward_lookahead_point_in_los) ||
+      (lookahead_point == backward_lookahead_point && !backward_lookahead_point_in_los))
+  {
+    project_waypoint_ = false;
+  }
+  else
+  {
+    project_waypoint_ = true;
+  }
+
   pd_.lookahead_point_direction_ = lookahead_point - robot_position;
   pd_.lookahead_point_direction_.z() = 0.0;
   pd_.lookahead_point_direction_.normalize();
@@ -1088,11 +1100,10 @@ void SensorCoveragePlanner3D::PublishWaypoint()
   }
   else
   {
-    // Project waypoint to a distance away
     double dx = pd_.lookahead_point_.x() - pd_.robot_position_.x;
     double dy = pd_.lookahead_point_.y() - pd_.robot_position_.y;
     double r = sqrt(dx * dx + dy * dy);
-    double extend_dist = pp_.kExtendWayPointDistance;
+    double extend_dist = project_waypoint_ ? pp_.kExtendWayPointDistance : pp_.kExtendWayPointDistance / 4;
     if (r < extend_dist && pp_.kExtendWayPoint)
     {
       dx = dx / r * extend_dist;
