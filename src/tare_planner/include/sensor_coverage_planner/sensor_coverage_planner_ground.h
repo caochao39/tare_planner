@@ -178,7 +178,7 @@ private:
   bool viewpoint_ind_update_;
   bool step_;
   bool use_momentum_;
-  bool lookahead_in_line_of_sight_;
+  bool lookahead_point_in_line_of_sight_;
   PlannerParameters pp_;
   PlannerData pd_;
   pointcloud_utils_ns::PointCloudDownsizer<pcl::PointXYZ> pointcloud_downsizer_;

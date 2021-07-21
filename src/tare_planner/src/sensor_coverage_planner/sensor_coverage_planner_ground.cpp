@@ -167,7 +167,7 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeH
   , viewpoint_ind_update_(false)
   , step_(false)
   , use_momentum_(false)
-  , lookahead_in_line_of_sight_(true)
+  , lookahead_point_in_line_of_sight_(true)
   , registered_cloud_count_(0)
   , keypose_count_(0)
   , direction_change_count_(0)
@@ -1061,11 +1061,11 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   if ((lookahead_point == forward_lookahead_point && !forward_lookahead_point_in_los) ||
       (lookahead_point == backward_lookahead_point && !backward_lookahead_point_in_los))
   {
-    lookahead_in_line_of_sight_ = false;
+    lookahead_point_in_line_of_sight_ = false;
   }
   else
   {
-    lookahead_in_line_of_sight_ = true;
+    lookahead_point_in_line_of_sight_ = true;
   }
 
   pd_.lookahead_point_direction_ = lookahead_point - robot_position;
@@ -1105,7 +1105,7 @@ void SensorCoveragePlanner3D::PublishWaypoint()
     double dy = pd_.lookahead_point_.y() - pd_.robot_position_.y;
     double r = sqrt(dx * dx + dy * dy);
     double extend_dist =
-        lookahead_in_line_of_sight_ ? pp_.kExtendWayPointDistanceBig : pp_.kExtendWayPointDistanceSmall;
+        lookahead_point_in_line_of_sight_ ? pp_.kExtendWayPointDistanceBig : pp_.kExtendWayPointDistanceSmall;
     if (r < extend_dist && pp_.kExtendWayPoint)
     {
       dx = dx / r * extend_dist;
