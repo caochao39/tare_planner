@@ -1207,7 +1207,7 @@ void SensorCoveragePlanner3D::CountDirectionChange()
 
   std_msgs::Int32 momentum_activation_count_msg;
   momentum_activation_count_msg.data = momentum_activation_count_;
-  momentum_activation_count_pub_.publish(momentum_activation_count_);
+  momentum_activation_count_pub_.publish(momentum_activation_count_msg);
 }
 
 void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
