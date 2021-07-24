@@ -31,6 +31,11 @@ Now, users should see autonomous exploration in action. To launch with a differe
 roslaunch vehicle_simulator system_<environment>.launch
 roslaunch tare_planner explore_<environment>.launch
 ```
+To run TARE Planner in a [Matterport3D](https://niessner.github.io/Matterport) environment, follow instructions on the development environment page to setup the Matterport3D environment. Then, use the command lines below to launch the system and TARE Planner.
+```bash
+roslaunch vehicle_simulator system_matterport.launch
+roslaunch tare_planner explore_matterport.launch
+```
 
 #### Launch with arguments
 * rosbag_record: record a rosbag or not. If ```=true```, rosbags will be recorded to ```[home]/<bag_path>/<bag_name_prefix>_<timestamp>.bag``` with both the input and output topics from the planner. Note that '\<bag_path\>' and '\<bag_name_prefix\>' are both launch arguments that can be specified by the user.
