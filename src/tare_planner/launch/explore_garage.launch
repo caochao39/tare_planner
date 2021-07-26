@@ -3,6 +3,7 @@
     <arg name="bag_path" default="Desktop"/>
     <arg name="bag_name_prefix" default="tare_garage"/>
     <arg name="rviz" default="true"/>
+    <arg name="use_boundary" default="false"/>
     <include file="$(find tare_planner)/launch/explore.launch">
         <arg name="scenario" value="garage"/>
         <arg name="rosbag_record" value="$(arg rosbag_record)"/>
@@ -10,4 +11,12 @@
         <arg name="bag_name_prefix" value="$(arg bag_name_prefix)"/>
         <arg name="rviz" value="$(arg rviz)"/>
     </include>
+
+    <group if="$(arg use_boundary)">
+        <node pkg="tare_planner" type="navigationBoundary" name="navigationBoundary" output="screen" required="true">
+            <param name="boundary_file_dir" type="string" value="$(find tare_planner)/data/boundary_garage.ply" />
+            <param name="sendBoundary" type="bool" value="true" />
+            <param name="sendBoundaryInterval" type="int" value="2" />
+        </node>
+    </group>
 </launch>
