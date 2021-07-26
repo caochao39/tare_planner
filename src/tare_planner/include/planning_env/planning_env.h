@@ -48,8 +48,7 @@ class PlanningEnv;
 struct planning_env_ns::PlanningEnvParameters
 {
   // Collision check
-  double kStackedCloudDwzLeafSize;
-  double kPlannerCloudDwzLeafSize;
+  double kSurfaceCloudDwzLeafSize;
   double kCollisionCloudDwzLeafSize;
   double kKeyposeGraphCollisionCheckRadius;
   int kKeyposeGraphCollisionCheckPointNumThr;
@@ -81,7 +80,7 @@ public:
   ~PlanningEnv() = default;
   double GetPlannerCloudResolution()
   {
-    return parameters_.kPlannerCloudDwzLeafSize;
+    return parameters_.kSurfaceCloudDwzLeafSize;
   }
   void SetUseFrontier(bool use_frontier)
   {
@@ -99,18 +98,18 @@ public:
       // Update rolling occupancy grid
       rolled_in_occupancy_cloud_->cloud_ = pointcloud_manager_->GetRolledInOccupancyCloud();
       pointcloud_manager_->ClearNeighborCellOccupancyCloud();
-      //rolled_in_occupancy_cloud_->Publish();
+      // rolled_in_occupancy_cloud_->Publish();
       rolling_occupancy_grid_->UpdateOccupancyStatus(rolled_in_occupancy_cloud_->cloud_);
     }
     if (occupancy_grid_rolling)
     {
       // Store and retrieve occupancy cloud
       rolled_out_occupancy_cloud_->cloud_ = rolling_occupancy_grid_->GetRolledOutOccupancyCloud();
-      //rolled_out_occupancy_cloud_->Publish();
+      // rolled_out_occupancy_cloud_->Publish();
       pointcloud_manager_->StoreOccupancyCloud(rolled_out_occupancy_cloud_->cloud_);
 
       pointcloud_manager_->GetOccupancyCloud(pointcloud_manager_occupancy_cloud_->cloud_);
-      //pointcloud_manager_occupancy_cloud_->Publish();
+      // pointcloud_manager_occupancy_cloud_->Publish();
     }
 
     robot_position_.x() = robot_position.x;
@@ -137,7 +136,7 @@ public:
         rolling_occupancy_grid_->UpdateOccupancy<PCLPointType>(cloud);
         rolling_occupancy_grid_->RayTrace(robot_position_);
         rolling_occupancy_grid_->GetVisualizationCloud(rolling_occupancy_grid_cloud_->cloud_);
-        //rolling_occupancy_grid_cloud_->Publish();
+        // rolling_occupancy_grid_cloud_->Publish();
       }
     }
   }
@@ -184,8 +183,8 @@ public:
         point.r = 255;
       }
       *(stacked_cloud_->cloud_) += *(keypose_cloud_->cloud_);
-      stacked_cloud_downsizer_.Downsize(stacked_cloud_->cloud_, parameters_.kStackedCloudDwzLeafSize,
-                                        parameters_.kStackedCloudDwzLeafSize, parameters_.kStackedCloudDwzLeafSize);
+      stacked_cloud_downsizer_.Downsize(stacked_cloud_->cloud_, parameters_.kSurfaceCloudDwzLeafSize,
+                                        parameters_.kSurfaceCloudDwzLeafSize, parameters_.kSurfaceCloudDwzLeafSize);
       for (const auto& point : stacked_cloud_->cloud_->points)
       {
         if (point.r < 40)  // TODO: computed from the keypose cloud resolution and stacked cloud resolution
@@ -205,8 +204,8 @@ public:
       {
         *(stacked_cloud_->cloud_) += *keypose_cloud_stack_[i];
       }
-      stacked_cloud_downsizer_.Downsize(stacked_cloud_->cloud_, parameters_.kStackedCloudDwzLeafSize,
-                                        parameters_.kStackedCloudDwzLeafSize, parameters_.kStackedCloudDwzLeafSize);
+      stacked_cloud_downsizer_.Downsize(stacked_cloud_->cloud_, parameters_.kSurfaceCloudDwzLeafSize,
+                                        parameters_.kSurfaceCloudDwzLeafSize, parameters_.kSurfaceCloudDwzLeafSize);
 
       vertical_surface_cloud_stack_[keypose_cloud_count_]->clear();
       *vertical_surface_cloud_stack_[keypose_cloud_count_] = *(vertical_surface_cloud_->cloud_);
@@ -217,8 +216,8 @@ public:
         *(stacked_vertical_surface_cloud_->cloud_) += *vertical_surface_cloud_stack_[i];
       }
 
-      stacked_cloud_downsizer_.Downsize(stacked_vertical_surface_cloud_->cloud_, parameters_.kStackedCloudDwzLeafSize,
-                                        parameters_.kStackedCloudDwzLeafSize, parameters_.kStackedCloudDwzLeafSize);
+      stacked_cloud_downsizer_.Downsize(stacked_vertical_surface_cloud_->cloud_, parameters_.kSurfaceCloudDwzLeafSize,
+                                        parameters_.kSurfaceCloudDwzLeafSize, parameters_.kSurfaceCloudDwzLeafSize);
       stacked_vertical_surface_cloud_kdtree_->setInputCloud(stacked_vertical_surface_cloud_->cloud_);
 
       UpdateCollisionCloud();

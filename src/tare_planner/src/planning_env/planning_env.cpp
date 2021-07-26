@@ -16,12 +16,13 @@ namespace planning_env_ns
 {
 void PlanningEnvParameters::ReadParameters(ros::NodeHandle& nh)
 {
-  kStackedCloudDwzLeafSize = misc_utils_ns::getParam<double>(nh, "kStackedCloudDwzLeafSize", 0.2);
-  kPlannerCloudDwzLeafSize = misc_utils_ns::getParam<double>(nh, "kPlannerCloudDwzLeafSize", 0.2);
+  kSurfaceCloudDwzLeafSize = misc_utils_ns::getParam<double>(nh, "kSurfaceCloudDwzLeafSize", 0.2);
+  kSurfaceCloudDwzLeafSize = misc_utils_ns::getParam<double>(nh, "kSurfaceCloudDwzLeafSize", 0.2);
   kCollisionCloudDwzLeafSize = misc_utils_ns::getParam<double>(nh, "kCollisionCloudDwzLeafSize", 0.2);
-  kKeyposeGraphCollisionCheckRadius = misc_utils_ns::getParam<double>(nh, "kKeyposeGraphCollisionCheckRadius", 0.4);
+  kKeyposeGraphCollisionCheckRadius =
+      misc_utils_ns::getParam<double>(nh, "keypose_graph/kAddEdgeCollisionCheckRadius", 0.4);
   kKeyposeGraphCollisionCheckPointNumThr =
-      misc_utils_ns::getParam<int>(nh, "kKeyposeGraphCollisionCheckPointNumThr", 1);
+      misc_utils_ns::getParam<int>(nh, "keypose_graph/kAddEdgeCollisionCheckPointNumThr", 1);
 
   kKeyposeCloudStackNum = misc_utils_ns::getParam<int>(nh, "kKeyposeCloudStackNum", 5);
 
@@ -91,7 +92,7 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
       parameters_.kPointCloudRowNum, parameters_.kPointCloudColNum, parameters_.kPointCloudLevelNum,
       parameters_.kMaxCellPointNum, parameters_.kPointCloudCellSize, parameters_.kPointCloudCellHeight,
       parameters_.kPointCloudManagerNeighborCellNum);
-  pointcloud_manager_->SetCloudDwzFilterLeafSize() = parameters_.kPlannerCloudDwzLeafSize;
+  pointcloud_manager_->SetCloudDwzFilterLeafSize() = parameters_.kSurfaceCloudDwzLeafSize;
 
   rolling_occupancy_grid_ = std::make_unique<rolling_occupancy_grid_ns::RollingOccupancyGrid>(nh_private);
 
@@ -136,7 +137,7 @@ PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::st
   // Todo: parameterize
   vertical_surface_extractor_.SetRadiusThreshold(0.2);
   vertical_surface_extractor_.SetZDiffMax(2.0);
-  vertical_surface_extractor_.SetZDiffMin(parameters_.kStackedCloudDwzLeafSize);
+  vertical_surface_extractor_.SetZDiffMin(parameters_.kSurfaceCloudDwzLeafSize);
   vertical_frontier_extractor_.SetNeighborThreshold(2);
 
   Eigen::Vector3d rolling_occupancy_grid_resolution = rolling_occupancy_grid_->GetResolution();
@@ -269,8 +270,8 @@ void PlanningEnv::UpdateCoveredArea(const lidar_model_ns::LiDARModel& robot_view
   std::vector<int> covered_point_indices;
   double vertical_fov_ratio = 0.3;  // bigger fov than viewpoints
   double diff_z_max = sensor_range * vertical_fov_ratio;
-  double xy_dist_threshold = 3 * (parameters_.kPlannerCloudDwzLeafSize / 2) / 0.3;
-  double z_diff_threshold = 3 * parameters_.kPlannerCloudDwzLeafSize;
+  double xy_dist_threshold = 3 * (parameters_.kSurfaceCloudDwzLeafSize / 2) / 0.3;
+  double z_diff_threshold = 3 * parameters_.kSurfaceCloudDwzLeafSize;
   for (int i = 0; i < planner_cloud_->cloud_->points.size(); i++)
   {
     PlannerCloudPointType point = planner_cloud_->cloud_->points[i];

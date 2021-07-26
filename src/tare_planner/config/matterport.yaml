@@ -20,13 +20,13 @@ kCheckTerrainCollision : true
 kExtendWayPoint : true
 kUseLineOfSightLookAheadPoint : true
 kNoExplorationReturnHome : true
-kExtendWayPointDistanceBig : 8.0
-kExtendWayPointDistanceSmall : 3.5
-kKeyposeCloudDwzFilterLeafSize : 0.2
+kExtendWayPointDistanceBig : 4.0
+kExtendWayPointDistanceSmall : 1.5
+kKeyposeCloudDwzFilterLeafSize : 0.05
 kRushHomeDist : 5
 kAtHomeDistThreshold : 0.5
-kTerrainCollisionThreshold : 0.5
-kLookAheadDistance : 8
+kTerrainCollisionThreshold : 0.3
+kLookAheadDistance : 4
 kUseMomentum : true 
 kDirectionChangeCounterThr : 6
 kDirectionNoChangeCounterThr : 5
@@ -34,12 +34,17 @@ kDirectionNoChangeCounterThr : 5
 
 # PlanningEnv
 kUseFrontier : true
-kFrontierClusterTolerance : 1.0
-kFrontierClusterMinSize : 10
+kFrontierClusterTolerance : 0.5
+kFrontierClusterMinSize : 5
 
-kSurfaceCloudDwzLeafSize : 0.3
-kCollisionCloudDwzLeafSize : 0.2
-kKeyposeGraphCollisionCheckRadius : 0.4
+# Rolling occupancy grid
+rolling_occupancy_grid/resolution_x : 0.3
+rolling_occupancy_grid/resolution_y : 0.3
+rolling_occupancy_grid/resolution_z : 0.3
+
+kSurfaceCloudDwzLeafSize : 0.4
+kCollisionCloudDwzLeafSize : 0.05
+kKeyposeGraphCollisionCheckRadius : 0.15
 kKeyposeGraphCollisionCheckPointNumThr : 1
 kKeyposeCloudStackNum : 5
 kPointCloudRowNum : 50
@@ -51,34 +56,45 @@ kPointCloudCellHeight : 1.8
 kPointCloudManagerNeighborCellNum : 5
 kCoverCloudZSqueezeRatio : 2.0
 
+# KeyposeGraph
+keypose_graph/kAddNodeMinDist : 0.3
+keypose_graph/kAddNonKeyposeNodeMinDist : 0.3
+keypose_graph/kAddEdgeConnectDistThr : 0.5
+keypose_graph/kAddEdgeToLastKeyposeDistThr : 0.5
+keypose_graph/kAddEdgeVerticalThreshold : 0.5
+keypose_graph/kAddEdgeCollisionCheckResolution : 0.1
+keypose_graph/kAddEdgeCollisionCheckRadius : 0.2
+keypose_graph/kAddEdgeCollisionCheckPointNumThr : 1
+
+
 # ViewPointManager
-viewpoint_manager/number_x : 50
-viewpoint_manager/number_y : 50
+viewpoint_manager/number_x : 40
+viewpoint_manager/number_y : 40
 viewpoint_manager/number_z : 1
-viewpoint_manager/resolution_x : 0.6
-viewpoint_manager/resolution_y : 0.6
+viewpoint_manager/resolution_x : 0.15
+viewpoint_manager/resolution_y : 0.15
 viewpoint_manager/resolution_z : 0.0
 kConnectivityHeightDiffThr : 0.25
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
-kViewPointCollisionMargin : 0.5
+kViewPointCollisionMargin : 0.08
 kViewPointCollisionMarginZPlus : 0.2
 kViewPointCollisionMarginZMinus : 0.8
 kCollisionGridZScale : 1.0
-kCollisionGridResolutionX : 0.2
-kCollisionGridResolutionY : 0.2
+kCollisionGridResolutionX : 0.02
+kCollisionGridResolutionY : 0.02
 kCollisionGridResolutionZ : 0.0
 kCollisionPointThr : 1
-kLineOfSightStopAtNearestObstacle : false
+kLineOfSightStopAtNearestObstacle : true 
 kViewPointHeightFromTerrain : 0.75
 kViewPointHeightFromTerrainChangeThreshold : 0.6
 kCheckDynamicObstacleCollision : false
 kCollisionFrameCountMax : 3
 
-kSensorRange : 7.5
-kNeighborRange : 3.0
-kCoverageOcclusionThr : 0.3
-kCoverageDilationRadius : 0.5
+kSensorRange : 3.0
+kNeighborRange : 0.8
+kCoverageOcclusionThr : 0.2
+kCoverageDilationRadius : 0.25
 
 # Grid World
 kGridWorldXNum : 121
@@ -86,9 +102,9 @@ kGridWorldYNum : 121
 kGridWorldZNum : 121
 kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
-kMinAddPointNumSmall : 40
-kMinAddPointNumBig : 60
-kMinAddFrontierPointNum : 20
+kMinAddPointNumSmall : 8
+kMinAddPointNumBig : 16
+kMinAddFrontierPointNum : 8
 kCellExploringToCoveredThr : 1
 kCellCoveredToExploringThr: 10
 kCellExploringToAlmostCoveredThr: 10
@@ -106,10 +122,5 @@ kLocalPlanningHorizonMarkerColorR : 0.0
 kLocalPlanningHorizonMarkerColorG : 1.0
 kLocalPlanningHorizonMarkerColorB : 0.0
 kLocalPlanningHorizonMarkerColorA : 1.0
-kLocalPlanningHorizonMarkerWidth : 0.3
+kLocalPlanningHorizonMarkerWidth : 0.15
 kLocalPlanningHorizonHeight : 3.0
-
-# Rolling occupancy grid
-rolling_occupancy_grid/resolution_x : 0.3
-rolling_occupancy_grid/resolution_y : 0.3
-rolling_occupancy_grid/resolution_z : 0.3

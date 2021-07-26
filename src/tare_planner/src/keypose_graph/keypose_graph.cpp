@@ -24,21 +24,36 @@ KeyposeNode::KeyposeNode(const geometry_msgs::Point& point, int node_ind, int ke
 {
 }
 
-KeyposeGraph::KeyposeGraph()
+KeyposeGraph::KeyposeGraph(ros::NodeHandle& nh)
   : allow_vertical_edge_(false)
   , current_keypose_id_(0)
   , kAddNodeMinDist(1.0)
   , kAddEdgeCollisionCheckResolution(0.4)
   , kAddEdgeCollisionCheckRadius(0.3)
-  , kAddEdgeCollisionCheckPointNumThr(1)
   , kAddEdgeConnectDistThr(3.0)
   , kAddEdgeToLastKeyposeDistThr(3.0)
   , kAddEdgeVerticalThreshold(1.0)
+  , kAddEdgeCollisionCheckPointNumThr(1)
 {
+  ReadParameters(nh);
   kdtree_connected_nodes_ = pcl::KdTreeFLANN<pcl::PointXYZI>::Ptr(new pcl::KdTreeFLANN<pcl::PointXYZI>());
   connected_nodes_cloud_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
   kdtree_nodes_ = pcl::KdTreeFLANN<pcl::PointXYZI>::Ptr(new pcl::KdTreeFLANN<pcl::PointXYZI>());
   nodes_cloud_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
+}
+
+void KeyposeGraph::ReadParameters(ros::NodeHandle& nh)
+{
+  kAddNodeMinDist = misc_utils_ns::getParam<double>(nh, "keypose_graph/kAddNodeMinDist", 0.5);
+  kAddNonKeyposeNodeMinDist = misc_utils_ns::getParam<double>(nh, "keypose_graph/kAddNonKeyposeNodeMinDist", 0.5);
+  kAddEdgeConnectDistThr = misc_utils_ns::getParam<double>(nh, "keypose_graph/kAddEdgeConnectDistThr", 0.5);
+  kAddEdgeToLastKeyposeDistThr = misc_utils_ns::getParam<double>(nh, "keypose_graph/kAddEdgeToLastKeyposeDistThr", 0.5);
+  kAddEdgeVerticalThreshold = misc_utils_ns::getParam<double>(nh, "keypose_graph/kAddEdgeVerticalThreshold", 0.5);
+  kAddEdgeCollisionCheckResolution =
+      misc_utils_ns::getParam<double>(nh, "keypose_graph/kAddEdgeCollisionCheckResolution", 0.5);
+  kAddEdgeCollisionCheckRadius = misc_utils_ns::getParam<double>(nh, "keypose_graph/kAddEdgeCollisionCheckRadius", 0.5);
+  kAddEdgeCollisionCheckPointNumThr =
+      misc_utils_ns::getParam<int>(nh, "keypose_graph/kAddEdgeCollisionCheckPointNumThr", 0.5);
 }
 
 void KeyposeGraph::AddNode(const geometry_msgs::Point& position, int node_ind, int keypose_id, bool is_keypose)

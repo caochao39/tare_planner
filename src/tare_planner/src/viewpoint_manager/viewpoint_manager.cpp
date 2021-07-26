@@ -58,7 +58,7 @@ bool ViewPointManagerParameter::ReadParameters(ros::NodeHandle& nh)
 
   kCoverageOcclusionThr = misc_utils_ns::getParam<double>(nh, "kCoverageOcclusionThr", 1.0);
   kCoverageDilationRadius = misc_utils_ns::getParam<double>(nh, "kCoverageDilationRadius", 1.0);
-  kCoveragePointCloudResolution = misc_utils_ns::getParam<double>(nh, "kPlannerCloudDwzLeafSize", 1.0);
+  kCoveragePointCloudResolution = misc_utils_ns::getParam<double>(nh, "kSurfaceCloudDwzLeafSize", 1.0);
   kSensorRange = misc_utils_ns::getParam<double>(nh, "kSensorRange", 10.0);
   kNeighborRange = misc_utils_ns::getParam<double>(nh, "kNeighborRange", 3.0);
 

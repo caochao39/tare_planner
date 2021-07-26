@@ -92,12 +92,12 @@ private:
 
   double kAddNodeMinDist;
   double kAddNonKeyposeNodeMinDist;
-  double kAddEdgeCollisionCheckResolution;
-  double kAddEdgeCollisionCheckRadius;
-  double kAddEdgeCollisionCheckPointNumThr;
   double kAddEdgeConnectDistThr;
   double kAddEdgeToLastKeyposeDistThr;
   double kAddEdgeVerticalThreshold;
+  double kAddEdgeCollisionCheckResolution;
+  double kAddEdgeCollisionCheckRadius;
+  int kAddEdgeCollisionCheckPointNumThr;
 
   static bool ComparePair(const std::pair<int, int>& a, const std::pair<int, int>& b)
   {
@@ -105,8 +105,9 @@ private:
   }
 
 public:
-  KeyposeGraph();
+  KeyposeGraph(ros::NodeHandle& nh);
   ~KeyposeGraph() = default;
+  void ReadParameters(ros::NodeHandle& nh);
   void AddNode(const geometry_msgs::Point& position, int node_ind, int keypose_id, bool is_keypose);
   void AddNodeAndEdge(const geometry_msgs::Point& position, int node_ind, int keypose_id, bool is_keypose,
                       int connected_node_ind, double connected_node_dist);
@@ -169,7 +170,7 @@ public:
   {
     return kAddEdgeCollisionCheckRadius;
   }
-  double& SetAddEdgeCollisionCheckPointNumThr()
+  int& SetAddEdgeCollisionCheckPointNumThr()
   {
     return kAddEdgeCollisionCheckPointNumThr;
   }

@@ -36,8 +36,7 @@ kUseFrontier : true
 kFrontierClusterTolerance : 1.0
 kFrontierClusterMinSize : 30
 
-kStackedCloudDwzLeafSize : 0.5
-kPlannerCloudDwzLeafSize : 0.5
+kSurfaceCloudDwzLeafSize : 0.5
 kCollisionCloudDwzLeafSize : 0.2
 kKeyposeGraphCollisionCheckRadius : 0.4
 kKeyposeGraphCollisionCheckPointNumThr : 1
