@@ -36,6 +36,11 @@ kUseFrontier : true
 kFrontierClusterTolerance : 1.0
 kFrontierClusterMinSize : 30
 
+# Rolling occupancy grid
+rolling_occupancy_grid/resolution_x : 0.3
+rolling_occupancy_grid/resolution_y : 0.3
+rolling_occupancy_grid/resolution_z : 0.3
+
 kSurfaceCloudDwzLeafSize : 0.5
 kCollisionCloudDwzLeafSize : 0.2
 kKeyposeGraphCollisionCheckRadius : 0.4
@@ -107,8 +112,3 @@ kLocalPlanningHorizonMarkerColorB : 0.0
 kLocalPlanningHorizonMarkerColorA : 1.0
 kLocalPlanningHorizonMarkerWidth : 0.3
 kLocalPlanningHorizonHeight : 3.0
-
-# Rolling occupancy grid
-rolling_occupancy_grid/resolution_x : 0.3
-rolling_occupancy_grid/resolution_y : 0.3
-rolling_occupancy_grid/resolution_z : 0.3
