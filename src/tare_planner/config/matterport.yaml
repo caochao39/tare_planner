@@ -27,7 +27,7 @@ kRushHomeDist : 5
 kAtHomeDistThreshold : 0.5
 kTerrainCollisionThreshold : 0.3
 kLookAheadDistance : 4
-kUseMomentum : true 
+kUseMomentum : false 
 kDirectionChangeCounterThr : 6
 kDirectionNoChangeCounterThr : 5
 
@@ -65,7 +65,6 @@ keypose_graph/kAddEdgeVerticalThreshold : 0.5
 keypose_graph/kAddEdgeCollisionCheckResolution : 0.1
 keypose_graph/kAddEdgeCollisionCheckRadius : 0.2
 keypose_graph/kAddEdgeCollisionCheckPointNumThr : 1
-
 
 # ViewPointManager
 viewpoint_manager/number_x : 40

@@ -27,7 +27,7 @@ kRushHomeDist : 5
 kAtHomeDistThreshold : 0.5
 kTerrainCollisionThreshold : 0.5
 kLookAheadDistance : 8
-kUseMomentum : true 
+kUseMomentum : false 
 kDirectionChangeCounterThr : 6
 kDirectionNoChangeCounterThr : 5
 
@@ -44,8 +44,6 @@ rolling_occupancy_grid/resolution_z : 0.3
 
 kSurfaceCloudDwzLeafSize : 0.3
 kCollisionCloudDwzLeafSize : 0.2
-kKeyposeGraphCollisionCheckRadius : 0.4
-kKeyposeGraphCollisionCheckPointNumThr : 1
 kKeyposeCloudStackNum : 5
 kPointCloudRowNum : 50
 kPointCloudColNum : 50
@@ -55,6 +53,16 @@ kPointCloudCellSize : 18
 kPointCloudCellHeight : 1.8
 kPointCloudManagerNeighborCellNum : 5
 kCoverCloudZSqueezeRatio : 2.0
+
+# KeyposeGraph
+keypose_graph/kAddNodeMinDist : 1.0
+keypose_graph/kAddNonKeyposeNodeMinDist : 0.5
+keypose_graph/kAddEdgeConnectDistThr : 3.0
+keypose_graph/kAddEdgeToLastKeyposeDistThr : 3.0
+keypose_graph/kAddEdgeVerticalThreshold : 1.0
+keypose_graph/kAddEdgeCollisionCheckResolution : 0.4
+keypose_graph/kAddEdgeCollisionCheckRadius : 0.4
+keypose_graph/kAddEdgeCollisionCheckPointNumThr : 1
 
 # ViewPointManager
 viewpoint_manager/number_x : 50

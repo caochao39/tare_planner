@@ -153,7 +153,7 @@ bool KeyposeGraph::IsConnected(const Eigen::Vector3d& from_position, const Eigen
   }
   else
   {
-    false;
+    return false;
   }
 }
 
