@@ -118,6 +118,9 @@ add_library(sensor_coverage_planner_ground src/sensor_coverage_planner/sensor_co
 add_dependencies(sensor_coverage_planner_ground ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(sensor_coverage_planner_ground ${catkin_LIBRARIES} graph planning_env keypose_graph viewpoint_manager pointcloud_manager grid_world local_coverage_planner tare_visualizer)
 
+add_executable(navigationBoundary src/navigation_boundary_publisher/navigationBoundary.cpp)
+target_link_libraries(navigationBoundary ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+
 add_executable(tare_planner_node src/tare_planner_node/tare_planner_node.cpp)
 add_dependencies(tare_planner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 target_link_libraries(tare_planner_node ${catkin_LIBRARIES} sensor_coverage_planner_ground)

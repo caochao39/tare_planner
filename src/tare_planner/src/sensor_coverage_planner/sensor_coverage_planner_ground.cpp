@@ -28,7 +28,7 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   sub_coverage_boundary_topic_ =
       misc_utils_ns::getParam<std::string>(nh, "sub_coverage_boundary_topic_", "/coverage_boundary");
   sub_viewpoint_boundary_topic_ =
-      misc_utils_ns::getParam<std::string>(nh, "sub_viewpoint_boundary_topic_", "/viewpoint_boundary");
+      misc_utils_ns::getParam<std::string>(nh, "sub_viewpoint_boundary_topic_", "/navigation_boundary");
   sub_nogo_boundary_topic_ = misc_utils_ns::getParam<std::string>(nh, "sub_nogo_boundary_topic_", "/nogo_boundary");
   pub_exploration_finish_topic_ =
       misc_utils_ns::getParam<std::string>(nh, "pub_exploration_finish_topic_", "exploration_finish");

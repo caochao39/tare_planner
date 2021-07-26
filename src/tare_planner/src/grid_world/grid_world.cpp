@@ -707,12 +707,12 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
   }
   else if (cur_keypose_graph_node_ind_ >= 0 && cur_keypose_graph_node_ind_ < keypose_graph->GetNodeNum())
   {
-    ROS_WARN("GridWorld::SolveGlobalTSP: using nearest keypose node for robot position");
+    // ROS_WARN("GridWorld::SolveGlobalTSP: using nearest keypose node for robot position");
     global_path_robot_position = keypose_graph->GetNodePosition(cur_keypose_graph_node_ind_);
   }
   else
   {
-    ROS_WARN("GridWorld::SolveGlobalTSP: using neighbor cell roadmap connection points for robot position");
+    // ROS_WARN("GridWorld::SolveGlobalTSP: using neighbor cell roadmap connection points for robot position");
     for (int i = 0; i < neighbor_cell_indices_.size(); i++)
     {
       int cell_ind = neighbor_cell_indices_[i];

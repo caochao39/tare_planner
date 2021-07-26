@@ -5,7 +5,7 @@ sub_terrain_map_ext_topic_ : /terrain_map_ext
 sub_state_estimation_topic_ : /state_estimation_at_scan
 sub_registered_scan_topic_ : /registered_scan
 sub_coverage_boundary_topic_ : /sensor_coverage_planner/coverage_boundary
-sub_viewpoint_boundary_topic_ : /sensor_coverage_planner/viewpoint_boundary
+sub_viewpoint_boundary_topic_ : /navigation_boundary
 sub_nogo_boundary_topic_ : /sensor_coverage_planner/nogo_boundary
 pub_exploration_finish_topic_ : exploration_finish
 pub_runtime_breakdown_topic_ : runtime_breakdown
@@ -38,9 +38,9 @@ kFrontierClusterTolerance : 0.5
 kFrontierClusterMinSize : 5
 
 # Rolling occupancy grid
-rolling_occupancy_grid/resolution_x : 0.3
-rolling_occupancy_grid/resolution_y : 0.3
-rolling_occupancy_grid/resolution_z : 0.3
+rolling_occupancy_grid/resolution_x : 0.15
+rolling_occupancy_grid/resolution_y : 0.15
+rolling_occupancy_grid/resolution_z : 0.15
 
 kSurfaceCloudDwzLeafSize : 0.4
 kCollisionCloudDwzLeafSize : 0.05
