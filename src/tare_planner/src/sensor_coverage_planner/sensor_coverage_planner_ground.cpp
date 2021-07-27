@@ -559,7 +559,7 @@ void SensorCoveragePlanner3D::UpdateGlobalRepresentation()
   Eigen::Vector3d pointcloud_manager_neighbor_cells_origin =
       pd_.planning_env_->GetPointCloudManagerNeighborCellsOrigin();
   geometry_msgs::PointStamped pointcloud_manager_neighbor_cells_origin_point;
-  pointcloud_manager_neighbor_cells_origin_point.header.frame_id = "/map";
+  pointcloud_manager_neighbor_cells_origin_point.header.frame_id = "map";
   pointcloud_manager_neighbor_cells_origin_point.header.stamp = ros::Time::now();
   pointcloud_manager_neighbor_cells_origin_point.point.x = pointcloud_manager_neighbor_cells_origin.x();
   pointcloud_manager_neighbor_cells_origin_point.point.y = pointcloud_manager_neighbor_cells_origin.y();
