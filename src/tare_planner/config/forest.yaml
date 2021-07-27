@@ -18,10 +18,10 @@ kRushHome : true
 kUseTerrainHeight : false
 kCheckTerrainCollision : true
 kExtendWayPoint : true
-kUseLineOfSightLookAheadPoint : false
+kUseLineOfSightLookAheadPoint : true 
 kNoExplorationReturnHome : true
 kExtendWayPointDistanceBig : 8.0
-kExtendWayPointDistanceSmall : 3.5
+kExtendWayPointDistanceSmall : 4.5
 kKeyposeCloudDwzFilterLeafSize : 0.2
 kRushHomeDist : 10
 kAtHomeDistThreshold : 0.5
@@ -41,7 +41,7 @@ rolling_occupancy_grid/resolution_x : 0.4
 rolling_occupancy_grid/resolution_y : 0.4
 rolling_occupancy_grid/resolution_z : 0.4
 
-kSurfaceCloudDwzLeafSize : 0.5
+kSurfaceCloudDwzLeafSize : 0.6
 kCollisionCloudDwzLeafSize : 0.2
 kKeyposeCloudStackNum : 5
 kPointCloudRowNum : 50
@@ -73,7 +73,7 @@ viewpoint_manager/resolution_z : 0.0
 kConnectivityHeightDiffThr : 0.25
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
-kViewPointCollisionMargin : 0.6
+kViewPointCollisionMargin : 0.7
 kViewPointCollisionMarginZPlus : 0.2
 kViewPointCollisionMarginZMinus : 0.8
 kCollisionGridZScale : 1.0
@@ -98,9 +98,9 @@ kGridWorldYNum : 121
 kGridWorldZNum : 121
 kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
-kMinAddPointNumSmall : 40
-kMinAddPointNumBig : 60
-kMinAddFrontierPointNum : 80 # TODO: add comment:
+kMinAddPointNumSmall : 50
+kMinAddPointNumBig : 70
+kMinAddFrontierPointNum : 90
 kCellExploringToCoveredThr : 1
 kCellCoveredToExploringThr: 10
 kCellExploringToAlmostCoveredThr: 10
