@@ -38,9 +38,9 @@ kFrontierClusterTolerance : 0.5
 kFrontierClusterMinSize : 5
 
 # Rolling occupancy grid
-rolling_occupancy_grid/resolution_x : 0.15
-rolling_occupancy_grid/resolution_y : 0.15
-rolling_occupancy_grid/resolution_z : 0.15
+rolling_occupancy_grid/resolution_x : 0.2
+rolling_occupancy_grid/resolution_y : 0.2
+rolling_occupancy_grid/resolution_z : 0.2
 
 kSurfaceCloudDwzLeafSize : 0.4
 kCollisionCloudDwzLeafSize : 0.05
@@ -76,9 +76,9 @@ viewpoint_manager/resolution_z : 0.0
 kConnectivityHeightDiffThr : 0.25
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
-kViewPointCollisionMargin : 0.08
-kViewPointCollisionMarginZPlus : 0.2
-kViewPointCollisionMarginZMinus : 0.8
+kViewPointCollisionMargin : 0.1
+kViewPointCollisionMarginZPlus : 0.5
+kViewPointCollisionMarginZMinus : 0.7
 kCollisionGridZScale : 1.0
 kCollisionGridResolutionX : 0.02
 kCollisionGridResolutionY : 0.02
@@ -91,7 +91,7 @@ kCheckDynamicObstacleCollision : false
 kCollisionFrameCountMax : 3
 
 kSensorRange : 3.0
-kNeighborRange : 0.8
+kNeighborRange : 1.5
 kCoverageOcclusionThr : 0.2
 kCoverageDilationRadius : 0.25
 
