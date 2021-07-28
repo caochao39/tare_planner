@@ -70,6 +70,10 @@ struct planning_env_ns::PlanningEnvParameters
   int kFrontierClusterMinSize;
   Eigen::Vector3d kExtractFrontierRange;
 
+  // Boundary
+  bool kUseCoverageBoundaryOnFrontier;
+  bool kUseCoverageBoundaryOnObjectSurface;
+
   void ReadParameters(ros::NodeHandle& nh);
 };
 
@@ -153,6 +157,11 @@ public:
     {
       pcl::copyPointCloud<PCLPointType, PlannerCloudPointType>(*keypose_cloud, *(keypose_cloud_->cloud_));
 
+      if (parameters_.kUseCoverageBoundaryOnObjectSurface)
+      {
+        GetCoverageCloudWithinBoundary<PlannerCloudPointType>(keypose_cloud_->cloud_);
+      }
+
       // Extract surface of interest
       misc_utils_ns::Timer get_surface_timer("get coverage and diff cloud");
       get_surface_timer.Start();
@@ -228,6 +237,32 @@ public:
   inline void UpdateCoverageBoundary(const geometry_msgs::Polygon& polygon)
   {
     coverage_boundary_ = polygon;
+  }
+
+  template <class PCLPointType>
+  void GetCoverageCloudWithinBoundary(typename pcl::PointCloud<PCLPointType>::Ptr& cloud)
+  {
+    if (cloud->points.empty())
+    {
+      return;
+    }
+    pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+    for (int i = 0; i < cloud->points.size(); i++)
+    {
+      geometry_msgs::Point geo_point;
+      geo_point.x = cloud->points[i].x;
+      geo_point.y = cloud->points[i].y;
+      geo_point.z = cloud->points[i].z;
+      if (misc_utils_ns::PointInPolygon(geo_point, coverage_boundary_))
+      {
+        inliers->indices.push_back(i);
+      }
+    }
+    pcl::ExtractIndices<PCLPointType> extract;
+    extract.setInputCloud(cloud);
+    extract.setIndices(inliers);
+    extract.setNegative(false);
+    extract.filter(*cloud);
   }
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr GetCollisionCloud()
