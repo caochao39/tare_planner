@@ -23,7 +23,7 @@ kNoExplorationReturnHome : true
 kExtendWayPointDistanceBig : 4.0
 kExtendWayPointDistanceSmall : 1.5
 kKeyposeCloudDwzFilterLeafSize : 0.05
-kRushHomeDist : 5
+kRushHomeDist : 3
 kAtHomeDistThreshold : 0.5
 kTerrainCollisionThreshold : 0.3
 kLookAheadDistance : 4
@@ -77,8 +77,8 @@ kConnectivityHeightDiffThr : 0.25
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
 kViewPointCollisionMargin : 0.1
-kViewPointCollisionMarginZPlus : 0.5
-kViewPointCollisionMarginZMinus : 0.7
+kViewPointCollisionMarginZPlus : 0.25
+kViewPointCollisionMarginZMinus : 0.25
 kCollisionGridZScale : 1.0
 kCollisionGridResolutionX : 0.02
 kCollisionGridResolutionY : 0.02
