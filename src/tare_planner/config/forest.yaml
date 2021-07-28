@@ -35,6 +35,8 @@ kDirectionNoChangeCounterThr : 5
 kUseFrontier : true
 kFrontierClusterTolerance : 1.0
 kFrontierClusterMinSize : 30
+kUseCoverageBoundaryOnFrontier : false 
+kUseCoverageBoundaryOnObjectSurface : false
 
 # Rolling occupancy grid
 rolling_occupancy_grid/resolution_x : 0.4
