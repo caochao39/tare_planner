@@ -76,7 +76,7 @@ viewpoint_manager/resolution_z : 0.0
 kConnectivityHeightDiffThr : 0.25
 kGreedyViewPointSampleRange : 3
 kLocalPathOptimizationItrMax : 10
-kViewPointCollisionMargin : 0.6
+kViewPointCollisionMargin : 0.7
 kViewPointCollisionMarginZPlus : 0.5
 kViewPointCollisionMarginZMinus : 0.5
 kCollisionGridZScale : 1.0
