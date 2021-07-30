@@ -253,11 +253,11 @@ void SensorCoveragePlanner3D::StateEstimationCallback(const nav_msgs::Odometry::
 
   pd_.robot_yaw_ = yaw;
 
-  if (state_estimation_msg->twist.twist.linear.x > 0.1)
+  if (state_estimation_msg->twist.twist.linear.x > 0.4)
   {
     pd_.moving_forward_ = true;
   }
-  else if (state_estimation_msg->twist.twist.linear.x < -0.1)
+  else if (state_estimation_msg->twist.twist.linear.x < -0.4)
   {
     pd_.moving_forward_ = false;
   }
@@ -955,21 +955,24 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   // double dx = pd_.lookahead_point_direction_.x();
   // double dy = pd_.lookahead_point_direction_.y();
 
-  double lx = 1.0;
-  double ly = 0.0;
-  double dx = 1.0;
-  double dy = 0.0;
-  if (pd_.moving_forward_)
-  {
-    lx = 1.0;
-  }
-  else
-  {
-    lx = -1.0;
-  }
+  // double lx = 1.0;
+  // double ly = 0.0;
+  // double dx = 1.0;
+  // double dy = 0.0;
+  // if (pd_.moving_forward_)
+  // {
+  //   lx = 1.0;
+  // }
+  // else
+  // {
+  //   lx = -1.0;
+  // }
 
-  dx = cos(pd_.robot_yaw_) * lx - sin(pd_.robot_yaw_) * ly;
-  dy = sin(pd_.robot_yaw_) * lx + cos(pd_.robot_yaw_) * ly;
+  // dx = cos(pd_.robot_yaw_) * lx - sin(pd_.robot_yaw_) * ly;
+  // dy = sin(pd_.robot_yaw_) * lx + cos(pd_.robot_yaw_) * ly;
+
+  double dx = pd_.moving_direction_.x();
+  double dy = pd_.moving_direction_.y();
 
   double forward_angle_score = -2;
   double backward_angle_score = -2;
