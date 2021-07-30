@@ -58,6 +58,10 @@ public:
   void ExtractVerticalSurface(typename pcl::PointCloud<PCLPointType>::Ptr& cloud, double z_max = DBL_MAX,
                               double z_min = -DBL_MAX)
   {
+    if (cloud->points.empty())
+    {
+      return;
+    }
     pcl::copyPointCloud(*cloud, *extractor_cloud_);
     for (auto& point : extractor_cloud_->points)
     {
@@ -106,6 +110,10 @@ public:
                               typename pcl::PointCloud<OutputPCLPointType>::Ptr& cloud_out, double z_max = DBL_MAX,
                               double z_min = -DBL_MAX)
   {
+    if (cloud_in->points.empty())
+    {
+      return;
+    }
     pcl::copyPointCloud(*cloud_in, *extractor_cloud_);
     for (auto& point : extractor_cloud_->points)
     {
@@ -163,6 +171,10 @@ public:
   void Downsize(typename pcl::PointCloud<PCLPointType>::Ptr& cloud, double leaf_size_x, double leaf_size_y,
                 double leaf_size_z)
   {
+    if (cloud->points.empty())
+    {
+      return;
+    }
     pointcloud_downsize_filter_.setLeafSize(leaf_size_x, leaf_size_y, leaf_size_z);
     pointcloud_downsize_filter_.setInputCloud(cloud);
     pointcloud_downsize_filter_.filter(*cloud);
