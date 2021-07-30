@@ -31,6 +31,11 @@ Now, users should see autonomous exploration in action. To launch with a differe
 roslaunch vehicle_simulator system_<environment>.launch
 roslaunch tare_planner explore_<environment>.launch
 ```
+To run TARE Planner in a [Matterport3D](https://niessner.github.io/Matterport) environment, follow instructions on the development environment page to setup the Matterport3D environment. Then, use the command lines below to launch the system and TARE Planner.
+```bash
+roslaunch vehicle_simulator system_matterport.launch
+roslaunch tare_planner explore_matterport.launch
+```
 
 #### Launch with arguments
 * rosbag_record: record a rosbag or not. If ```=true```, rosbags will be recorded to ```[home]/<bag_path>/<bag_name_prefix>_<timestamp>.bag``` with both the input and output topics from the planner. Note that '\<bag_path\>' and '\<bag_name_prefix\>' are both launch arguments that can be specified by the user.
@@ -38,7 +43,7 @@ roslaunch tare_planner explore_<environment>.launch
 * rviz: launch Rviz for visualization or not. If ```=true```, Rviz will be launched.
 
 ## Publications
-- C. Cao, H. Zhu, H. Choset, and J. Zhang. TARE: A Hierarchical Framework for Efficiently Exploring Complex 3D Environments. Robotics: Science and Systems Conference (RSS). Virtual, July 2021.
+- C. Cao, H. Zhu, H. Choset, and J. Zhang. TARE: A Hierarchical Framework for Efficiently Exploring Complex 3D Environments. Robotics: Science and Systems Conference (RSS). Virtual, July 2021. **Best Paper Award and Best System Paper Award**.
 - C. Cao, H. Zhu, H. Choset, and J. Zhang: Exploring Large and Complex Environments
 Fast and Efficiently. International Conference on Robotics and Automation (ICRA), Xi'an, China, June 2021.
 ```
