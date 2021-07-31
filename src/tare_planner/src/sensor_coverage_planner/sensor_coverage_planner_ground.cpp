@@ -1,5 +1,5 @@
 /**
- * @file sensor_coverage_planner_ground.h
+ * @file sensor_coverage_planner_ground.cpp
  * @author Chao Cao (ccao1@andrew.cmu.edu)
  * @brief Class that does the job of exploration
  * @version 0.1
