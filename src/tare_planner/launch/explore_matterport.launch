@@ -14,7 +14,7 @@
 
     <group if="$(arg use_boundary)">
         <node pkg="tare_planner" type="navigationBoundary" name="navigationBoundary" output="screen" required="true">
-            <param name="boundary_file_dir" type="string" value="$(find tare_planner)/data/boundary_matterport.ply" />
+            <param name="boundary_file_dir" type="string" value="$(find tare_planner)/data/boundary.ply" />
             <param name="sendBoundary" type="bool" value="true" />
             <param name="sendBoundaryInterval" type="int" value="2" />
         </node>
