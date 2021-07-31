@@ -195,6 +195,14 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
+        - Alpha: 1
+          Class: rviz/Polygon
+          Color: 25; 255; 0
+          Enabled: false
+          Name: Boundary
+          Topic: /navigation_boundary
+          Unreliable: false
+          Value: false
       Enabled: true
       Name: Global
     - Class: rviz/Group
