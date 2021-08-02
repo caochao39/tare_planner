@@ -21,7 +21,7 @@ kExtendWayPoint : true
 kUseLineOfSightLookAheadPoint : true
 kNoExplorationReturnHome : true
 kExtendWayPointDistanceBig : 8.0
-kExtendWayPointDistanceSmall : 3.5
+kExtendWayPointDistanceSmall : 4.5
 kKeyposeCloudDwzFilterLeafSize : 0.2
 kRushHomeDist : 10
 kAtHomeDistThreshold : 0.5
@@ -44,7 +44,7 @@ rolling_occupancy_grid/resolution_x : 0.3
 rolling_occupancy_grid/resolution_y : 0.3
 rolling_occupancy_grid/resolution_z : 0.3
 
-kSurfaceCloudDwzLeafSize : 0.3
+kSurfaceCloudDwzLeafSize : 0.5
 kCollisionCloudDwzLeafSize : 0.2
 kKeyposeCloudStackNum : 5
 kPointCloudRowNum : 50

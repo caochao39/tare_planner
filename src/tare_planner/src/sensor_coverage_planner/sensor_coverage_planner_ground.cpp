@@ -952,8 +952,8 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
     exit(1);
   }
 
-  // double dx = pd_.lookahead_point_direction_.x();
-  // double dy = pd_.lookahead_point_direction_.y();
+  double dx = pd_.lookahead_point_direction_.x();
+  double dy = pd_.lookahead_point_direction_.y();
 
   // double lx = 1.0;
   // double ly = 0.0;
@@ -971,8 +971,8 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   // dx = cos(pd_.robot_yaw_) * lx - sin(pd_.robot_yaw_) * ly;
   // dy = sin(pd_.robot_yaw_) * lx + cos(pd_.robot_yaw_) * ly;
 
-  double dx = pd_.moving_direction_.x();
-  double dy = pd_.moving_direction_.y();
+  // double dx = pd_.moving_direction_.x();
+  // double dy = pd_.moving_direction_.y();
 
   double forward_angle_score = -2;
   double backward_angle_score = -2;
