@@ -80,7 +80,7 @@ TARE Planner was used by the [CMU-OSU Team](https://www.subt-explorer.com) in at
 
 ## Author
 
-Chao Cao (ccao1@andrew.cmu.edu)
+[Chao Cao](http://caochao.me) (ccao1@andrew.cmu.edu)
 
 ## Credit
 
