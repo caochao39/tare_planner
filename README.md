@@ -1,10 +1,10 @@
 TARE planner involves a hierarchical framework for highly efficient exploration - one level in the framework maintains data densely and computes a detailed path within a local planning horizon, another level maintains data sparsely and computes a coarse path at the global scale. The paths at both levels are joined together to form the exploration path. The framework draws the insight that detailed processing is most effective close to the vehicle, while coarse processing provides sufficient utility far away from the vehicle. The framework trades-off details at the global scale for computational speed. In practice, the framework prioritizes the exploration in the surroundings of the vehicle while keeping the global picture in mind.
 
+Please use instructions on our [project page](https://www.cmu-exploration.com/tare-planner).
+
 <p align="center">
   <img src="img/method.png" alt="Method" width="60%"/>
 </p>
-
-Please use instructions on our [project page](https://www.cmu-exploration.com/tare-planner).
 
 ## Usage
 
