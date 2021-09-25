@@ -8,7 +8,9 @@ Please use instructions on our [project page](https://www.cmu-exploration.com/ta
 
 ## Usage
 
-The repository has been tested in Ubuntu 18.04 with ROS Melodic and Ubuntu 20.04 with ROS Noetic. Due to usage of [OR-Tools](https://developers.google.com/optimization) library, the code only supports AMD64 architecture and currently does not compile on ARM computers. To setup TARE Planner, clone the repository.
+The repository has been tested in Ubuntu 18.04 with ROS Melodic and Ubuntu 20.04 with ROS Noetic. Due to usage of [OR-Tools](https://developers.google.com/optimization) library, the code only supports AMD64 architecture and currently does not compile on ARM computers. Follow instructions in [Autonomous Exploration Development Environment](http://cmu-exploration.com) to setup the development environment. Make sure to checkout the branch that matches the computer setup, compile, and download the simulation environments.
+
+To setup TARE Planner, clone the repository.
 ```
 git clone https://github.com/caochao39/tare_planner.git
 ```
@@ -18,7 +20,7 @@ In a terminal, go to the folder and compile.
 cd tare_planner
 catkin_make
 ```
-To run the code, setup [Autonomous Exploration Development Environment](http://cmu-exploration.com) (checkout the correct branch, compile, and download the simulation environments). Then, go to the folder in a terminal, source the ROS workspace, and launch.
+To run the code, go to the development environment folder in a terminal, source the ROS workspace, and launch.
 ```
 source devel/setup.sh
 roslaunch vehicle_simulator system_garage.launch
