@@ -39,17 +39,10 @@ roslaunch vehicle_simulator system_matterport.launch
 roslaunch tare_planner explore_matterport.launch
 ```
 
-### Launch with arguments
-
-* rosbag_record: record a rosbag or not. If ```=true```, rosbags will be recorded to ```[home]/<bag_path>/<bag_name_prefix>_<timestamp>.bag``` with both the input and output topics from the planner. Note that '\<bag_path\>' and '\<bag_name_prefix\>' are both launch arguments that can be specified by the user.
-
-* rviz: launch Rviz for visualization or not. If ```=true```, Rviz will be launched.
-
 ## Publications
 
 - C. Cao, H. Zhu, H. Choset, and J. Zhang. TARE: A Hierarchical Framework for Efficiently Exploring Complex 3D Environments. Robotics: Science and Systems Conference (RSS). Virtual, July 2021. **Best Paper Award and Best System Paper Award**.
-- C. Cao, H. Zhu, H. Choset, and J. Zhang: Exploring Large and Complex Environments
-Fast and Efficiently. International Conference on Robotics and Automation (ICRA), Xi'an, China, June 2021.
+
 ```
 @inproceedings{cao2021tare,
   title={TARE: A Hierarchical Framework for Efficiently Exploring Complex 3D Environments},
@@ -59,10 +52,14 @@ Fast and Efficiently. International Conference on Robotics and Automation (ICRA)
   month={July},
   address={Virtual}
 }
+```
 
+- C. Cao, H. Zhu, H. Choset, and J. Zhang: Exploring Large and Complex Environments
+Fast and Efficiently. International Conference on Robotics and Automation (ICRA), Xi'an, China, June 2021.
+
+```
 @inproceedings{cao2021exploring,
-  title={Exploring Large and Complex Environments
-Fast and Efficiently},
+  title={Exploring Large and Complex Environments Fast and Efficiently},
   author={Chao, Cao and Hongbiao, Zhu and Howie, Choset and Ji, Zhang},
   booktitle={IEEE International Conference on Robotics and Automation (ICRA)},
   year={2021},
