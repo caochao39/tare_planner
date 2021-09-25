@@ -73,7 +73,7 @@ Fast and Efficiently},
 
 ## Application
 
-TARE Planner was used by the [CMU-OSU Team](https://www.subt-explorer.com) in attending [DARPA Subterranean Challenge](https://www.subtchallenge.com). The team won 1st place in Tunnel Circuit, 2nd place in Urban Circuit, and 4th place in the final competition. Below is our result from Urban Circuit which took place in Satsop Nuclear Plant, WA. Our vehicle traveled over 886m in 1458s to explore the site, fully autonomously.
+TARE Planner was used by the [CMU-OSU Team](https://www.subt-explorer.com) in attending [DARPA Subterranean Challenge](https://www.subtchallenge.com). In the final competition which took place in Louisville Mega Cavern, KY, the team's robots accurately mapped the most number of areas on the site (26/28 sectors) among all the teams, winning a "Most Sectors Explored Award". The numbers indicate the strength of our system in autonomous exploration. Below is the result from Urban Circuit which took place in Satsop Nuclear Plant, WA. Our vehicle traveled over 886m in 1458s to explore the site, fully autonomously.
 <p align="center">
   <img src="img/urban.jpg" alt="Urban Circuit" width="50%"/>
 </p>
