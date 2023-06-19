@@ -1,4 +1,7 @@
 build/
 log/
+install/
 .catkin_workspace
 devel/
+.clang-format
+.vscode/
