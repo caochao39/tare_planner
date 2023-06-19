@@ -28,7 +28,7 @@ public:
   void SetNodePosition(int node_index, const Eigen::Vector3d& position);
   void AddOneWayEdge(int from_node_index, int to_node_index, double distance);
   void AddTwoWayEdge(int from_node_index, int to_node_index, double distance);
-  double GetShortestPath(int from_node_index, int to_node_index, bool get_path, nav_msgs::Path& shortest_path,
+  double GetShortestPath(int from_node_index, int to_node_index, bool get_path, nav_msgs::msg::Path& shortest_path,
                          std::vector<int>& node_indices);
 
 private:

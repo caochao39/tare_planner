@@ -238,7 +238,7 @@ public:
       UpdateFrontiers();
     }
   }
-  inline void UpdateCoverageBoundary(const geometry_msgs::Polygon& polygon)
+  inline void UpdateCoverageBoundary(const geometry_msgs::msg::Polygon& polygon)
   {
     coverage_boundary_ = polygon;
   }
@@ -329,7 +329,7 @@ private:
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> diff_cloud_;
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> terrain_cloud_;
 
-  geometry_msgs::Polygon coverage_boundary_;
+  geometry_msgs::msg::Polygon coverage_boundary_;
 
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> planner_cloud_;
   std::unique_ptr<pointcloud_manager_ns::PointCloudManager> pointcloud_manager_;

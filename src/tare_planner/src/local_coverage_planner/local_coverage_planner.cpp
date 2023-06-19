@@ -325,7 +325,7 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveTSP(const std::v
                                                                     std::vector<int>& ordered_viewpoint_indices)
 
 {
-  // nav_msgs::Path tsp_path;
+  // nav_msgs::msg::Path tsp_path;
   exploration_path_ns::ExplorationPath tsp_path;
 
   if (selected_viewpoint_indices.empty())
@@ -387,7 +387,7 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveTSP(const std::v
     for (int j = 0; j < i; j++)
     {
       int to_ind = selected_viewpoint_indices[j];
-      nav_msgs::Path path = viewpoint_manager_->GetViewPointShortestPath(from_ind, to_ind);
+      nav_msgs::msg::Path path = viewpoint_manager_->GetViewPointShortestPath(from_ind, to_ind);
       double path_length = misc_utils_ns::GetPathLength(path);
       //   int to_graph_idx = graph_index_map_[to_ind];
       //   double path_length =
@@ -569,7 +569,7 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveTSP(const std::v
       }
       tsp_path.Append(cur_node);
 
-      nav_msgs::Path path_between_viewpoints = viewpoint_manager_->GetViewPointShortestPath(cur_ind, next_ind);
+      nav_msgs::msg::Path path_between_viewpoints = viewpoint_manager_->GetViewPointShortestPath(cur_ind, next_ind);
 
       //   std::vector<int> path_graph_indices;
       //   misc_utils_ns::AStarSearch(candidate_viewpoint_graph_, candidate_viewpoint_dist_,

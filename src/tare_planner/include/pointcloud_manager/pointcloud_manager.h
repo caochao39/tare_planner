@@ -70,7 +70,7 @@ public:
   pcl::PointCloud<pcl::PointXYZI>::Ptr GetRolledInOccupancyCloud();
   void GetOccupancyCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& occupancy_cloud);
   void StoreOccupancyCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr& occupancy_cloud);
-  void GetMarker(visualization_msgs::Marker& marker);
+  void GetMarker(visualization_msgs::msg::Marker& marker);
   void GetVisualizationPointCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr vis_cloud);
   Eigen::Vector3d GetNeighborCellsOrigin()
   {

@@ -64,8 +64,8 @@ struct ExplorationPath
   void Append(const Node& node);
   void Append(const ExplorationPath& path);
   void Reverse();
-  nav_msgs::Path GetPath() const;
-  void FromPath(const nav_msgs::Path& path);
+  nav_msgs::msg::Path GetPath() const;
+  void FromPath(const nav_msgs::msg::Path& path);
   void GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr vis_cloud) const;
   void GetKeyPointCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr vis_cloud) const;
   void GetNodePositions(std::vector<Eigen::Vector3d>& positions) const;

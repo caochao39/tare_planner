@@ -127,7 +127,7 @@ struct PlannerData
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> point_cloud_manager_neighbor_cloud_;
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> reordered_global_subspace_cloud_;
 
-  nav_msgs::Odometry keypose_;
+  nav_msgs::msg::Odometry keypose_;
   geometry_msgs::msg::Point robot_position_;
   geometry_msgs::msg::Point last_robot_position_;
   lidar_model_ns::LiDARModel robot_viewpoint_;
@@ -227,7 +227,7 @@ private:
 
   // Callback functions
   void ExplorationStartCallback(const std_msgs::Bool::ConstPtr& start_msg);
-  void StateEstimationCallback(const nav_msgs::Odometry::ConstPtr& state_estimation_msg);
+  void StateEstimationCallback(const nav_msgs::msg::Odometry::ConstPtr& state_estimation_msg);
   void RegisteredScanCallback(const sensor_msgs::PointCloud2ConstPtr& registered_cloud_msg);
   void TerrainMapCallback(const sensor_msgs::PointCloud2ConstPtr& terrain_map_msg);
   void TerrainMapExtCallback(const sensor_msgs::PointCloud2ConstPtr& terrain_cloud_large_msg);

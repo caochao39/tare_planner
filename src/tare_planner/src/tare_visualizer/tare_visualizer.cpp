@@ -17,8 +17,8 @@ TAREVisualizer::TAREVisualizer(ros::NodeHandle& nh, ros::NodeHandle& nh_private)
 {
   ReadParameters(nh_private);
 
-  marker_publisher_ = nh.advertise<visualization_msgs::Marker>("tare_visualizer/marker", 1);
-  local_path_publisher_ = nh.advertise<nav_msgs::Path>("tare_visualizer/local_path", 1);
+  marker_publisher_ = nh.advertise<visualization_msgs::msg::Marker>("tare_visualizer/marker", 1);
+  local_path_publisher_ = nh.advertise<nav_msgs::msg::Path>("tare_visualizer/local_path", 1);
 
   global_subspaces_marker_ =
       std::make_shared<misc_utils_ns::Marker>(nh, "tare_visualizer/exploring_subspaces", kWorldFrameID);
@@ -68,11 +68,11 @@ bool TAREVisualizer::ReadParameters(ros::NodeHandle& nh)
 
 void TAREVisualizer::InitializeMarkers()
 {
-  global_subspaces_marker_->SetType(visualization_msgs::Marker::CUBE_LIST);
+  global_subspaces_marker_->SetType(visualization_msgs::msg::Marker::CUBE_LIST);
   global_subspaces_marker_->SetScale(kGlobalSubspaceSize, kGlobalSubspaceSize, kGlobalSubspaceHeight);
   global_subspaces_marker_->SetColorRGBA(kExploringSubspaceMarkerColor);
 
-  local_planning_horizon_marker_->SetType(visualization_msgs::Marker::LINE_LIST);
+  local_planning_horizon_marker_->SetType(visualization_msgs::msg::Marker::LINE_LIST);
   local_planning_horizon_marker_->SetScale(kLocalPlanningHorizonMarkerWidth, 0, 0);
   local_planning_horizon_marker_->SetColorRGBA(kExploringSubspaceMarkerColor);
 }
@@ -167,7 +167,7 @@ void TAREVisualizer::GetGlobalSubspaceMarker(const std::unique_ptr<grid_world_ns
       continue;
     }
     geometry_msgs::msg::Point cell_center = grid_world->GetCellPosition(cell_ind);
-    std_msgs::ColorRGBA color;
+    std_msgs::msg::ColorRGBA color;
     color.r = 0.0;
     color.g = 1.0;
     color.b = 0.0;
@@ -189,12 +189,12 @@ void TAREVisualizer::PublishMarkers()
   local_planning_horizon_marker_->Publish();
   if (!global_subspaces_marker_->marker_.points.empty())
   {
-    global_subspaces_marker_->SetAction(visualization_msgs::Marker::ADD);
+    global_subspaces_marker_->SetAction(visualization_msgs::msg::Marker::ADD);
     global_subspaces_marker_->Publish();
   }
   else
   {
-    global_subspaces_marker_->SetAction(visualization_msgs::Marker::DELETE);
+    global_subspaces_marker_->SetAction(visualization_msgs::msg::Marker::DELETE);
     global_subspaces_marker_->Publish();
   }
 }

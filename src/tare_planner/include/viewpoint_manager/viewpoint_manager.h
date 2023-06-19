@@ -115,12 +115,12 @@ public:
   {
     return vp_.kResolution;
   }
-  inline void UpdateViewPointBoundary(const geometry_msgs::Polygon& polygon)
+  inline void UpdateViewPointBoundary(const geometry_msgs::msg::Polygon& polygon)
   {
     viewpoint_boundary_ = polygon;
   }
 
-  inline void UpdateNogoBoundary(const std::vector<geometry_msgs::Polygon>& nogo_boundary)
+  inline void UpdateNogoBoundary(const std::vector<geometry_msgs::msg::Polygon>& nogo_boundary)
   {
     nogo_boundary_ = nogo_boundary;
   }
@@ -312,12 +312,12 @@ public:
   {
     return candidate_indices_;
   }
-  nav_msgs::Path GetViewPointShortestPath(int start_viewpoint_ind, int target_viewpoint_ind);
-  nav_msgs::Path GetViewPointShortestPath(const Eigen::Vector3d& start_position,
+  nav_msgs::msg::Path GetViewPointShortestPath(int start_viewpoint_ind, int target_viewpoint_ind);
+  nav_msgs::msg::Path GetViewPointShortestPath(const Eigen::Vector3d& start_position,
                                           const Eigen::Vector3d& target_position);
   bool GetViewPointShortestPathWithMaxLength(const Eigen::Vector3d& start_position,
                                              const Eigen::Vector3d& target_position, double max_path_length,
-                                             nav_msgs::Path& path);
+                                             nav_msgs::msg::Path& path);
 
   void UpdateCandidateViewPointCellStatus(std::unique_ptr<grid_world_ns::GridWorld> const& grid_world);
 
@@ -367,8 +367,8 @@ private:
   pcl::PointCloud<pcl::PointXYZI>::Ptr viewpoint_candidate_cloud_;
   pcl::PointCloud<pcl::PointXYZI>::Ptr viewpoint_in_collision_cloud_;
 
-  geometry_msgs::Polygon viewpoint_boundary_;
-  std::vector<geometry_msgs::Polygon> nogo_boundary_;
+  geometry_msgs::msg::Polygon viewpoint_boundary_;
+  std::vector<geometry_msgs::msg::Polygon> nogo_boundary_;
 };
 
 }  // namespace viewpoint_manager_ns

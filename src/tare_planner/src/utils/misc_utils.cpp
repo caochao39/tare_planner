@@ -79,7 +79,7 @@ void RightRotatePoint(geometry_msgs::msg::Point& pnt)
 }
 
 template <class CloudType>
-void KeyposeToMap(CloudType& cloud, const nav_msgs::Odometry::ConstPtr& keypose)
+void KeyposeToMap(CloudType& cloud, const nav_msgs::msg::Odometry::ConstPtr& keypose)
 {
   float tx = (float)keypose->pose.pose.position.x;
   float ty = (float)keypose->pose.pose.position.y;
@@ -407,7 +407,7 @@ bool LineSegIntersectWithTolerance(const geometry_msgs::msg::Point& p1, const ge
 /// \param p point
 /// \param polygon polygon
 /// \return true if the point is inside the polygon
-bool PointInPolygon(const geometry_msgs::msg::Point& point, const geometry_msgs::Polygon& polygon)
+bool PointInPolygon(const geometry_msgs::msg::Point& point, const geometry_msgs::msg::Polygon& polygon)
 {
   int polygon_pnt_num = polygon.points.size();
   if (polygon_pnt_num < 3)
@@ -527,7 +527,7 @@ double LineSegDistance3D(const geometry_msgs::msg::Point& point, const geometry_
 /// \param p point
 /// \param polygon polygon
 /// \return distance
-double DistancePoint2DToPolygon(const geometry_msgs::msg::Point& point, const geometry_msgs::Polygon& polygon)
+double DistancePoint2DToPolygon(const geometry_msgs::msg::Point& point, const geometry_msgs::msg::Polygon& polygon)
 {
   int polygon_pnt_num = polygon.points.size();
   if (polygon_pnt_num < 1)
@@ -589,7 +589,7 @@ double RadianToDegree(double radian)
   return radian * 180.0 / M_PI;
 }
 
-void ConcatenatePath(nav_msgs::Path& path1, const nav_msgs::Path& path2, int from_ind, int to_ind)
+void ConcatenatePath(nav_msgs::msg::Path& path1, const nav_msgs::msg::Path& path2, int from_ind, int to_ind)
 {
   if (path2.poses.empty())
   {
@@ -791,7 +791,7 @@ float ApproxAtan2(float y, float x)
   return th;
 }
 
-double GetPathLength(const nav_msgs::Path& path)
+double GetPathLength(const nav_msgs::msg::Path& path)
 {
   double path_length = 0.0;
   if (path.poses.size() < 2)
@@ -978,9 +978,9 @@ bool AStarSearchWithMaxPathLength(const std::vector<std::vector<int>>& graph,
   return found_path;
 }
 
-nav_msgs::Path SimplifyPath(const nav_msgs::Path& path)
+nav_msgs::msg::Path SimplifyPath(const nav_msgs::msg::Path& path)
 {
-  nav_msgs::Path simplified_path;
+  nav_msgs::msg::Path simplified_path;
   if (path.poses.size() <= 2)
   {
     simplified_path = path;
@@ -1004,9 +1004,9 @@ nav_msgs::Path SimplifyPath(const nav_msgs::Path& path)
   return simplified_path;
 }
 
-nav_msgs::Path DeduplicatePath(const nav_msgs::Path& path, double min_dist)
+nav_msgs::msg::Path DeduplicatePath(const nav_msgs::msg::Path& path, double min_dist)
 {
-  nav_msgs::Path deduplicated_path;
+  nav_msgs::msg::Path deduplicated_path;
   if (path.poses.size() <= 2)
   {
     deduplicated_path = path;
@@ -1083,10 +1083,10 @@ void UniquifyIntVector(std::vector<int>& list)
 }  // namespace misc_utils_ns
 
 template void misc_utils_ns::KeyposeToMap<pcl::PointCloud<pcl::PointXYZ>::Ptr>(
-    pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const nav_msgs::Odometry::ConstPtr& keypose);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const nav_msgs::msg::Odometry::ConstPtr& keypose);
 template void misc_utils_ns::KeyposeToMap<pcl::PointCloud<pcl::PointXYZI>::Ptr>(
-    pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud, const nav_msgs::Odometry::ConstPtr& keypose);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud, const nav_msgs::msg::Odometry::ConstPtr& keypose);
 template void misc_utils_ns::KeyposeToMap<pcl::PointCloud<pcl::PointXYZINormal>::Ptr>(
-    pcl::PointCloud<pcl::PointXYZINormal>::Ptr& cloud, const nav_msgs::Odometry::ConstPtr& keypose);
+    pcl::PointCloud<pcl::PointXYZINormal>::Ptr& cloud, const nav_msgs::msg::Odometry::ConstPtr& keypose);
 template void misc_utils_ns::KeyposeToMap<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>(
-    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr& cloud, const nav_msgs::Odometry::ConstPtr& keypose);
+    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr& cloud, const nav_msgs::msg::Odometry::ConstPtr& keypose);

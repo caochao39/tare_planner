@@ -30,7 +30,7 @@ public:
   static double pointcloud_resolution_;
   explicit LiDARModel(double px = 0.0, double py = 0.0, double pz = 0.0, double rw = 1.0, double rx = 0.0,
                       double ry = 0.0, double rz = 0.0);
-  explicit LiDARModel(const geometry_msgs::Pose& pose);
+  explicit LiDARModel(const geometry_msgs::msg::Pose& pose);
   ~LiDARModel() = default;
 
   /**
@@ -147,11 +147,11 @@ public:
     pointcloud_resolution_ = cloud_dwz_resol * kCloudInflateRatio;
   }
 
-  void setPose(const geometry_msgs::Pose& pose)
+  void setPose(const geometry_msgs::msg::Pose& pose)
   {
     pose_ = pose;
   }
-  geometry_msgs::Pose getPose()
+  geometry_msgs::msg::Pose getPose()
   {
     return pose_;
   }
@@ -280,6 +280,6 @@ private:
   // Whether a voxel is reset
   std::array<bool, kHorizontalVoxelSize * kVerticalVoxelSize> reset_;
   // Pose of the lidar model
-  geometry_msgs::Pose pose_;
+  geometry_msgs::msg::Pose pose_;
 };
 }  // namespace lidar_model_ns

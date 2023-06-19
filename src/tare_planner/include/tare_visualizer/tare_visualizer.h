@@ -40,8 +40,8 @@ private:
   const std::string kWorldFrameID = "map";
   bool kExploringSubspaceMarkerColorGradientAlpha;
   double kExploringSubspaceMarkerColorMaxAlpha;
-  std_msgs::ColorRGBA kExploringSubspaceMarkerColor;
-  std_msgs::ColorRGBA kLocalPlanningHorizonMarkerColor;
+  std_msgs::msg::ColorRGBA kExploringSubspaceMarkerColor;
+  std_msgs::msg::ColorRGBA kLocalPlanningHorizonMarkerColor;
   double kLocalPlanningHorizonMarkerWidth;
   double kLocalPlanningHorizonSizeX;
   double kLocalPlanningHorizonSizeY;
@@ -61,8 +61,8 @@ private:
   pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>::Ptr uncovered_surface_point_cloud_;
   pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>::Ptr viewpoint_candidate_cloud_;
   pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>::Ptr viewpoint_cloud_;
-  nav_msgs::Path local_path_;
-  nav_msgs::Path global_path_;
+  nav_msgs::msg::Path local_path_;
+  nav_msgs::msg::Path global_path_;
 
   geometry_msgs::msg::Point local_planning_horizon_origin_;
   geometry_msgs::msg::Point global_subspace_origin_;

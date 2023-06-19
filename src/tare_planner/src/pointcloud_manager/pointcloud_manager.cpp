@@ -177,7 +177,7 @@ void PointCloudManager::StoreOccupancyCloud(const pcl::PointCloud<pcl::PointXYZI
   }
 }
 
-void PointCloudManager::GetMarker(visualization_msgs::Marker& marker)
+void PointCloudManager::GetMarker(visualization_msgs::msg::Marker& marker)
 {
   marker.points.clear();
   marker.colors.clear();
@@ -196,7 +196,7 @@ void PointCloudManager::GetMarker(visualization_msgs::Marker& marker)
         cell_center.y = j * kCellSize + kCellSize / 2 + origin_.y;
         cell_center.z = k * kCellHeight + kCellHeight / 2 + origin_.z;
         marker.points.push_back(cell_center);
-        std_msgs::ColorRGBA color;
+        std_msgs::msg::ColorRGBA color;
         color.r = 1.0;
         color.g = 0.0;
         color.b = 0.0;

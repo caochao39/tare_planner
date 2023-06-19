@@ -82,12 +82,12 @@ void ExplorationPath::Reverse()
   std::reverse(nodes_.begin(), nodes_.end());
 }
 
-nav_msgs::Path ExplorationPath::GetPath() const
+nav_msgs::msg::Path ExplorationPath::GetPath() const
 {
-  nav_msgs::Path path;
+  nav_msgs::msg::Path path;
   for (int i = 0; i < nodes_.size(); i++)
   {
-    geometry_msgs::PoseStamped pose;
+    geometry_msgs::msg::PoseStamped pose;
     pose.pose.position.x = nodes_[i].position_.x();
     pose.pose.position.y = nodes_[i].position_.y();
     pose.pose.position.z = nodes_[i].position_.z();
@@ -96,7 +96,7 @@ nav_msgs::Path ExplorationPath::GetPath() const
   }
   return path;
 }
-void ExplorationPath::FromPath(const nav_msgs::Path& path)
+void ExplorationPath::FromPath(const nav_msgs::msg::Path& path)
 {
   nodes_.clear();
   for (int i = 0; i < path.poses.size(); i++)

@@ -96,8 +96,8 @@ int main(int argc, char** argv)
   nhPrivate.getParam("sendBoundary", sendBoundary);
   nhPrivate.getParam("sendBoundaryInterval", sendBoundaryInterval);
 
-  ros::Publisher pubBoundary = nh.advertise<geometry_msgs::PolygonStamped>("/navigation_boundary", 5);
-  geometry_msgs::PolygonStamped boundaryMsgs;
+  ros::Publisher pubBoundary = nh.advertise<geometry_msgs::msg::PolygonStamped>("/navigation_boundary", 5);
+  geometry_msgs::msg::PolygonStamped boundaryMsgs;
   boundaryMsgs.header.frame_id = "map";
 
   // read boundary from file

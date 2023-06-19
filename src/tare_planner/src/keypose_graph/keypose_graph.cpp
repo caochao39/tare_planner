@@ -185,7 +185,7 @@ int KeyposeGraph::AddNonKeyposeNode(const geometry_msgs::msg::Point& new_node_po
   return new_node_index;
 }
 
-void KeyposeGraph::AddPath(const nav_msgs::Path& path)
+void KeyposeGraph::AddPath(const nav_msgs::msg::Path& path)
 {
   if (path.poses.size() < 2)
   {
@@ -225,7 +225,7 @@ void KeyposeGraph::AddPath(const nav_msgs::Path& path)
   UpdateNodes();
 }
 
-void KeyposeGraph::GetMarker(visualization_msgs::Marker& node_marker, visualization_msgs::Marker& edge_marker)
+void KeyposeGraph::GetMarker(visualization_msgs::msg::Marker& node_marker, visualization_msgs::msg::Marker& edge_marker)
 {
   node_marker.points.clear();
   edge_marker.points.clear();
@@ -506,7 +506,7 @@ void KeyposeGraph::CheckConnectivity(const geometry_msgs::msg::Point& robot_posi
   }
 }
 
-int KeyposeGraph::AddKeyposeNode(const nav_msgs::Odometry& keypose, const planning_env_ns::PlanningEnv& planning_env)
+int KeyposeGraph::AddKeyposeNode(const nav_msgs::msg::Odometry& keypose, const planning_env_ns::PlanningEnv& planning_env)
 {
   current_keypose_position_ = keypose.pose.pose.position;
   current_keypose_id_ = static_cast<int>(keypose.pose.covariance[0]);
@@ -782,15 +782,15 @@ geometry_msgs::msg::Point KeyposeGraph::GetClosestNodePosition(const geometry_ms
 
 bool KeyposeGraph::GetShortestPathWithMaxLength(const geometry_msgs::msg::Point& start_point,
                                                 const geometry_msgs::msg::Point& target_point, double max_path_length,
-                                                bool get_path, nav_msgs::Path& path)
+                                                bool get_path, nav_msgs::msg::Path& path)
 {
   if (nodes_.size() < 2)
   {
     if (get_path)
     {
-      geometry_msgs::PoseStamped start_pose;
+      geometry_msgs::msg::PoseStamped start_pose;
       start_pose.pose.position = start_point;
-      geometry_msgs::PoseStamped target_pose;
+      geometry_msgs::msg::PoseStamped target_pose;
       target_pose.pose.position = target_point;
       path.poses.push_back(start_pose);
       path.poses.push_back(target_pose);
@@ -862,7 +862,7 @@ bool KeyposeGraph::GetShortestPathWithMaxLength(const geometry_msgs::msg::Point&
     path.poses.clear();
     for (const auto& ind : path_indices)
     {
-      geometry_msgs::PoseStamped pose;
+      geometry_msgs::msg::PoseStamped pose;
       pose.pose.position = nodes_[ind].position_;
       pose.pose.orientation.w = nodes_[ind].keypose_id_;
       pose.pose.orientation.x = ind;
@@ -874,15 +874,15 @@ bool KeyposeGraph::GetShortestPathWithMaxLength(const geometry_msgs::msg::Point&
 }
 
 double KeyposeGraph::GetShortestPath(const geometry_msgs::msg::Point& start_point, const geometry_msgs::msg::Point& target_point,
-                                     bool get_path, nav_msgs::Path& path, bool use_connected_nodes)
+                                     bool get_path, nav_msgs::msg::Path& path, bool use_connected_nodes)
 {
   if (nodes_.size() < 2)
   {
     if (get_path)
     {
-      geometry_msgs::PoseStamped start_pose;
+      geometry_msgs::msg::PoseStamped start_pose;
       start_pose.pose.position = start_point;
-      geometry_msgs::PoseStamped target_pose;
+      geometry_msgs::msg::PoseStamped target_pose;
       target_pose.pose.position = target_point;
       path.poses.push_back(start_pose);
       path.poses.push_back(target_pose);
@@ -957,7 +957,7 @@ double KeyposeGraph::GetShortestPath(const geometry_msgs::msg::Point& start_poin
     path.poses.clear();
     for (const auto& ind : path_indices)
     {
-      geometry_msgs::PoseStamped pose;
+      geometry_msgs::msg::PoseStamped pose;
       pose.pose.position = nodes_[ind].position_;
       pose.pose.orientation.w = nodes_[ind].keypose_id_;
       pose.pose.orientation.x = ind;

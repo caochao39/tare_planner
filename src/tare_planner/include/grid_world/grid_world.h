@@ -151,11 +151,11 @@ public:
   {
     return roadmap_connection_point_;
   }
-  nav_msgs::Path GetPathToKeyposeGraph()
+  nav_msgs::msg::Path GetPathToKeyposeGraph()
   {
     return path_to_keypose_graph_;
   }
-  void SetPathToKeyposeGraph(const nav_msgs::Path& path)
+  void SetPathToKeyposeGraph(const nav_msgs::msg::Path& path)
   {
     path_to_keypose_graph_ = path;
   }
@@ -201,7 +201,7 @@ private:
   // Position for connecting the cell to the global roadmap
   Eigen::Vector3d roadmap_connection_point_;
   // Path to the nearest keypose on the keypose graph
-  nav_msgs::Path path_to_keypose_graph_;
+  nav_msgs::msg::Path path_to_keypose_graph_;
   // If the path has been added to the keypose graph
   bool path_added_to_keypose_graph_;
   // If the roadmap connection point has been added to the cell
@@ -274,7 +274,7 @@ public:
   void GetCellSub(int& row_idx, int& col_idx, int& level_idx, double qx, double qy, double qz);
   Eigen::Vector3i GetCellSub(const Eigen::Vector3d& point);
   // Get the visualization markers for Rviz display.
-  void GetMarker(visualization_msgs::Marker& marker);
+  void GetMarker(visualization_msgs::msg::Marker& marker);
   // Get the visualization pointcloud for debugging purpose
   void GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& vis_cloud);
 
@@ -354,7 +354,7 @@ public:
   void GetCellViewPointPositions(std::vector<Eigen::Vector3d>& viewpoint_positions);
   void AddPathsInBetweenCells(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
                               const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph);
-  bool PathValid(const nav_msgs::Path& path, int from_cell_ind, int to_cell_ind);
+  bool PathValid(const nav_msgs::msg::Path& path, int from_cell_ind, int to_cell_ind);
   bool HasDirectKeyposeGraphConnection(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
                                        const Eigen::Vector3d& start_position, const Eigen::Vector3d& goal_position);
 
@@ -384,7 +384,7 @@ private:
   std::vector<int> neighbor_cell_indices_;
   std::vector<int> almost_covered_cell_indices_;
   std::vector<std::pair<int, int>> to_connect_cell_indices_;
-  std::vector<nav_msgs::Path> to_connect_cell_paths_;
+  std::vector<nav_msgs::msg::Path> to_connect_cell_paths_;
   Eigen::Vector3d home_position_;
   Eigen::Vector3d cur_keypose_;
   bool set_home_;

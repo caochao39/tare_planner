@@ -42,7 +42,7 @@ LiDARModel::LiDARModel(double px, double py, double pz, double rw, double rx, do
   ResetCoverage();
 }
 
-LiDARModel::LiDARModel(const geometry_msgs::Pose& pose)
+LiDARModel::LiDARModel(const geometry_msgs::msg::Pose& pose)
   : LiDARModel(pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.x,
                pose.orientation.y, pose.orientation.z)
 {

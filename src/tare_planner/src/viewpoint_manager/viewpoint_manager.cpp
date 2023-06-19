@@ -1265,9 +1265,9 @@ int ViewPointManager::GetViewPointCandidate()
   return candidate_indices_.size();
 }
 
-nav_msgs::Path ViewPointManager::GetViewPointShortestPath(int start_viewpoint_ind, int target_viewpoint_ind)
+nav_msgs::msg::Path ViewPointManager::GetViewPointShortestPath(int start_viewpoint_ind, int target_viewpoint_ind)
 {
-  nav_msgs::Path path;
+  nav_msgs::msg::Path path;
   if (!InRange(start_viewpoint_ind))
   {
     ROS_WARN_STREAM("ViewPointManager::GetViewPointShortestPath start viewpoint ind: " << start_viewpoint_ind
@@ -1294,7 +1294,7 @@ nav_msgs::Path ViewPointManager::GetViewPointShortestPath(int start_viewpoint_in
     {
       int graph_idx = path_graph_indices[i];
       int ind = candidate_indices_[graph_idx];
-      geometry_msgs::PoseStamped pose;
+      geometry_msgs::msg::PoseStamped pose;
       pose.pose.position = GetViewPointPosition(ind);
       path.poses.push_back(pose);
     }
@@ -1302,10 +1302,10 @@ nav_msgs::Path ViewPointManager::GetViewPointShortestPath(int start_viewpoint_in
   return path;
 }
 
-nav_msgs::Path ViewPointManager::GetViewPointShortestPath(const Eigen::Vector3d& start_position,
+nav_msgs::msg::Path ViewPointManager::GetViewPointShortestPath(const Eigen::Vector3d& start_position,
                                                           const Eigen::Vector3d& target_position)
 {
-  nav_msgs::Path path;
+  nav_msgs::msg::Path path;
   if (!InLocalPlanningHorizon(start_position))
   {
     ROS_WARN_STREAM("ViewPointManager::GetViewPointShortestPath start position " << start_position.transpose()
@@ -1326,7 +1326,7 @@ nav_msgs::Path ViewPointManager::GetViewPointShortestPath(const Eigen::Vector3d&
 
 bool ViewPointManager::GetViewPointShortestPathWithMaxLength(const Eigen::Vector3d& start_position,
                                                              const Eigen::Vector3d& target_position,
-                                                             double max_path_length, nav_msgs::Path& path)
+                                                             double max_path_length, nav_msgs::msg::Path& path)
 {
   if (!InLocalPlanningHorizon(start_position))
   {
@@ -1357,7 +1357,7 @@ bool ViewPointManager::GetViewPointShortestPathWithMaxLength(const Eigen::Vector
     {
       int graph_idx = path_graph_indices[i];
       int ind = candidate_indices_[graph_idx];
-      geometry_msgs::PoseStamped pose;
+      geometry_msgs::msg::PoseStamped pose;
       pose.pose.position = GetViewPointPosition(ind);
       path.poses.push_back(pose);
     }

@@ -122,7 +122,7 @@ public:
     return nodes_.size();
   }
   int GetConnectedNodeNum();
-  void GetMarker(visualization_msgs::Marker& node_marker, visualization_msgs::Marker& edge_marker);
+  void GetMarker(visualization_msgs::msg::Marker& node_marker, visualization_msgs::msg::Marker& edge_marker);
   void GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
   std::vector<int> GetConnectedGraphNodeIndices()
   {
@@ -133,11 +133,11 @@ public:
                            const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager);
   void UpdateNodes();
   void CheckConnectivity(const geometry_msgs::msg::Point& robot_position);
-  int AddKeyposeNode(const nav_msgs::Odometry& keypose, const planning_env_ns::PlanningEnv& planning_env);
+  int AddKeyposeNode(const nav_msgs::msg::Odometry& keypose, const planning_env_ns::PlanningEnv& planning_env);
   bool HasEdgeBetween(int node_ind1, int node_ind2);
   bool IsConnected(const Eigen::Vector3d& from_position, const Eigen::Vector3d& to_position);
   int AddNonKeyposeNode(const geometry_msgs::msg::Point& new_node_position);
-  void AddPath(const nav_msgs::Path& path);
+  void AddPath(const nav_msgs::msg::Path& path);
   void SetAllowVerticalEdge(bool allow_vertical_edge)
   {
     allow_vertical_edge_ = allow_vertical_edge;
@@ -150,9 +150,9 @@ public:
   int GetClosestKeyposeID(const geometry_msgs::msg::Point& point);
   geometry_msgs::msg::Point GetClosestNodePosition(const geometry_msgs::msg::Point& point);
   bool GetShortestPathWithMaxLength(const geometry_msgs::msg::Point& start_point, const geometry_msgs::msg::Point& target_point,
-                                    double max_path_length, bool get_path, nav_msgs::Path& path);
+                                    double max_path_length, bool get_path, nav_msgs::msg::Path& path);
   double GetShortestPath(const geometry_msgs::msg::Point& start_point, const geometry_msgs::msg::Point& target_point,
-                         bool get_path, nav_msgs::Path& path, bool use_connected_nodes = false);
+                         bool get_path, nav_msgs::msg::Path& path, bool use_connected_nodes = false);
 
   double& SetAddNodeMinDist()
   {

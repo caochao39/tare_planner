@@ -119,21 +119,21 @@ void PlannerData::Initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
   cur_keypose_node_ind_ = 0;
 
   keypose_graph_node_marker_ = std::make_unique<misc_utils_ns::Marker>(nh, "keypose_graph_node_marker", kWorldFrameID);
-  keypose_graph_node_marker_->SetType(visualization_msgs::Marker::POINTS);
+  keypose_graph_node_marker_->SetType(visualization_msgs::msg::Marker::POINTS);
   keypose_graph_node_marker_->SetScale(0.4, 0.4, 0.1);
   keypose_graph_node_marker_->SetColorRGBA(1.0, 0.0, 0.0, 1.0);
   keypose_graph_edge_marker_ = std::make_unique<misc_utils_ns::Marker>(nh, "keypose_graph_edge_marker", kWorldFrameID);
-  keypose_graph_edge_marker_->SetType(visualization_msgs::Marker::LINE_LIST);
+  keypose_graph_edge_marker_->SetType(visualization_msgs::msg::Marker::LINE_LIST);
   keypose_graph_edge_marker_->SetScale(0.05, 0.0, 0.0);
   keypose_graph_edge_marker_->SetColorRGBA(1.0, 1.0, 0.0, 0.9);
 
   nogo_boundary_marker_ = std::make_unique<misc_utils_ns::Marker>(nh, "nogo_boundary_marker", kWorldFrameID);
-  nogo_boundary_marker_->SetType(visualization_msgs::Marker::LINE_LIST);
+  nogo_boundary_marker_->SetType(visualization_msgs::msg::Marker::LINE_LIST);
   nogo_boundary_marker_->SetScale(0.05, 0.0, 0.0);
   nogo_boundary_marker_->SetColorRGBA(1.0, 0.0, 0.0, 0.8);
 
   grid_world_marker_ = std::make_unique<misc_utils_ns::Marker>(nh, "grid_world_marker", kWorldFrameID);
-  grid_world_marker_->SetType(visualization_msgs::Marker::CUBE_LIST);
+  grid_world_marker_->SetType(visualization_msgs::msg::Marker::CUBE_LIST);
   grid_world_marker_->SetScale(1.0, 1.0, 1.0);
   grid_world_marker_->SetColorRGBA(1.0, 0.0, 0.0, 0.8);
 
@@ -210,12 +210,12 @@ bool SensorCoveragePlanner3D::initialize(ros::NodeHandle& nh, ros::NodeHandle& n
   nogo_boundary_sub_ =
       nh.subscribe(pp_.sub_nogo_boundary_topic_, 1, &SensorCoveragePlanner3D::NogoBoundaryCallback, this);
 
-  global_path_full_publisher_ = nh.advertise<nav_msgs::Path>("global_path_full", 1);
-  global_path_publisher_ = nh.advertise<nav_msgs::Path>("global_path", 1);
-  old_global_path_publisher_ = nh.advertise<nav_msgs::Path>("old_global_path", 1);
-  to_nearest_global_subspace_path_publisher_ = nh.advertise<nav_msgs::Path>("to_nearest_global_subspace_path", 1);
-  local_tsp_path_publisher_ = nh.advertise<nav_msgs::Path>("local_path", 1);
-  exploration_path_publisher_ = nh.advertise<nav_msgs::Path>("exploration_path", 1);
+  global_path_full_publisher_ = nh.advertise<nav_msgs::msg::Path>("global_path_full", 1);
+  global_path_publisher_ = nh.advertise<nav_msgs::msg::Path>("global_path", 1);
+  old_global_path_publisher_ = nh.advertise<nav_msgs::msg::Path>("old_global_path", 1);
+  to_nearest_global_subspace_path_publisher_ = nh.advertise<nav_msgs::msg::Path>("to_nearest_global_subspace_path", 1);
+  local_tsp_path_publisher_ = nh.advertise<nav_msgs::msg::Path>("local_path", 1);
+  exploration_path_publisher_ = nh.advertise<nav_msgs::msg::Path>("exploration_path", 1);
   waypoint_pub_ = nh.advertise<geometry_msgs::msg::PointStamped>(pp_.pub_waypoint_topic_, 2);
   exploration_finish_pub_ = nh.advertise<std_msgs::Bool>(pp_.pub_exploration_finish_topic_, 2);
   runtime_breakdown_pub_ = nh.advertise<std_msgs::Int32MultiArray>(pp_.pub_runtime_breakdown_topic_, 2);
@@ -236,7 +236,7 @@ void SensorCoveragePlanner3D::ExplorationStartCallback(const std_msgs::Bool::Con
   }
 }
 
-void SensorCoveragePlanner3D::StateEstimationCallback(const nav_msgs::Odometry::ConstPtr& state_estimation_msg)
+void SensorCoveragePlanner3D::StateEstimationCallback(const nav_msgs::msg::Odometry::ConstPtr& state_estimation_msg)
 {
   pd_.robot_position_ = state_estimation_msg->pose.pose.position;
   // Todo: use a boolean
@@ -359,8 +359,8 @@ void SensorCoveragePlanner3D::NogoBoundaryCallback(const geometry_msgs::PolygonS
   }
   double polygon_id = polygon_msg->polygon.points[0].z;
   int polygon_point_size = polygon_msg->polygon.points.size();
-  std::vector<geometry_msgs::Polygon> nogo_boundary;
-  geometry_msgs::Polygon polygon;
+  std::vector<geometry_msgs::msg::Polygon> nogo_boundary;
+  geometry_msgs::msg::Polygon polygon;
   for (int i = 0; i < polygon_point_size; i++)
   {
     if (polygon_msg->polygon.points[i].z == polygon_id)
@@ -485,7 +485,7 @@ void SensorCoveragePlanner3D::UpdateViewPointCoverage()
       pd_.planning_env_->GetStackedCloud());
   // Update robot coverage
   pd_.robot_viewpoint_.ResetCoverage();
-  geometry_msgs::Pose robot_pose;
+  geometry_msgs::msg::Pose robot_pose;
   robot_pose.position = pd_.robot_position_;
   pd_.robot_viewpoint_.setPose(robot_pose);
   UpdateRobotViewPointCoverage();
@@ -605,7 +605,7 @@ void SensorCoveragePlanner3D::GlobalPlanning(std::vector<int>& global_cell_tsp_o
 void SensorCoveragePlanner3D::PublishGlobalPlanningVisualization(
     const exploration_path_ns::ExplorationPath& global_path, const exploration_path_ns::ExplorationPath& local_path)
 {
-  nav_msgs::Path global_path_full = global_path.GetPath();
+  nav_msgs::msg::Path global_path_full = global_path.GetPath();
   global_path_full.header.frame_id = "map";
   global_path_full.header.stamp = ros::Time::now();
   global_path_full_publisher_.publish(global_path_full);
@@ -635,10 +635,10 @@ void SensorCoveragePlanner3D::PublishGlobalPlanningVisualization(
     end_index = i;
   }
 
-  nav_msgs::Path global_path_trim;
+  nav_msgs::msg::Path global_path_trim;
   if (local_path.nodes_.size() >= 2)
   {
-    geometry_msgs::PoseStamped first_pose;
+    geometry_msgs::msg::PoseStamped first_pose;
     first_pose.pose.position.x = local_path.nodes_.front().position_.x();
     first_pose.pose.position.y = local_path.nodes_.front().position_.y();
     first_pose.pose.position.z = local_path.nodes_.front().position_.z();
@@ -647,7 +647,7 @@ void SensorCoveragePlanner3D::PublishGlobalPlanningVisualization(
 
   for (int i = start_index; i <= end_index; i++)
   {
-    geometry_msgs::PoseStamped pose;
+    geometry_msgs::msg::PoseStamped pose;
     pose.pose.position.x = global_path.nodes_[i].position_.x();
     pose.pose.position.y = global_path.nodes_[i].position_.y();
     pose.pose.position.z = global_path.nodes_[i].position_.z();
@@ -655,7 +655,7 @@ void SensorCoveragePlanner3D::PublishGlobalPlanningVisualization(
   }
   if (local_path.nodes_.size() >= 2)
   {
-    geometry_msgs::PoseStamped last_pose;
+    geometry_msgs::msg::PoseStamped last_pose;
     last_pose.pose.position.x = local_path.nodes_.back().position_.x();
     last_pose.pose.position.y = local_path.nodes_.back().position_.y();
     last_pose.pose.position.z = local_path.nodes_.back().position_.z();
@@ -669,7 +669,7 @@ void SensorCoveragePlanner3D::PublishGlobalPlanningVisualization(
   pd_.grid_world_vis_cloud_->Publish();
   pd_.grid_world_->GetMarker(pd_.grid_world_marker_->marker_);
   pd_.grid_world_marker_->Publish();
-  nav_msgs::Path full_path = pd_.exploration_path_.GetPath();
+  nav_msgs::msg::Path full_path = pd_.exploration_path_.GetPath();
   full_path.header.frame_id = "map";
   full_path.header.stamp = ros::Time::now();
   // exploration_path_publisher_.publish(full_path);
@@ -698,7 +698,7 @@ void SensorCoveragePlanner3D::PublishLocalPlanningVisualization(const exploratio
   pd_.viewpoint_manager_->GetVisualizationCloud(pd_.viewpoint_vis_cloud_->cloud_);
   pd_.viewpoint_vis_cloud_->Publish();
   pd_.lookahead_point_cloud_->Publish();
-  nav_msgs::Path local_tsp_path = local_path.GetPath();
+  nav_msgs::msg::Path local_tsp_path = local_path.GetPath();
   local_tsp_path.header.frame_id = "map";
   local_tsp_path.header.stamp = ros::Time::now();
   local_tsp_path_publisher_.publish(local_tsp_path);

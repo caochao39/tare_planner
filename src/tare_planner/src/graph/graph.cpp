@@ -70,7 +70,7 @@ void Graph::AddTwoWayEdge(int from_node_index, int to_node_index, double distanc
   AddOneWayEdge(to_node_index, from_node_index, distance);
 }
 
-double Graph::GetShortestPath(int from_node_index, int to_node_index, bool get_path, nav_msgs::Path& shortest_path,
+double Graph::GetShortestPath(int from_node_index, int to_node_index, bool get_path, nav_msgs::msg::Path& shortest_path,
                               std::vector<int>& node_indices)
 {
   node_indices.clear();
@@ -80,7 +80,7 @@ double Graph::GetShortestPath(int from_node_index, int to_node_index, bool get_p
     shortest_path.poses.clear();
     for (const auto& node_index : node_indices)
     {
-      geometry_msgs::PoseStamped pose;
+      geometry_msgs::msg::PoseStamped pose;
       pose.pose.position.x = positions_[node_index].x();
       pose.pose.position.y = positions_[node_index].y();
       pose.pose.position.z = positions_[node_index].z();

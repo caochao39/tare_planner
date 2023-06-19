@@ -298,7 +298,7 @@ Eigen::Vector3i GridWorld::GetCellSub(const Eigen::Vector3d& point)
   return subspaces_->Pos2Sub(point);
 }
 
-void GridWorld::GetMarker(visualization_msgs::Marker& marker)
+void GridWorld::GetMarker(visualization_msgs::msg::Marker& marker)
 {
   marker.points.clear();
   marker.colors.clear();
@@ -318,7 +318,7 @@ void GridWorld::GetMarker(visualization_msgs::Marker& marker)
       {
         int cell_ind = subspaces_->Sub2Ind(i, j, k);
         geometry_msgs::msg::Point cell_center = subspaces_->GetCell(cell_ind).GetPosition();
-        std_msgs::ColorRGBA color;
+        std_msgs::msg::ColorRGBA color;
         bool add_marker = false;
         if (subspaces_->GetCell(cell_ind).GetStatus() == CellStatus::UNSEEN)
         {
@@ -803,13 +803,13 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
 
     geometry_msgs::msg::Point home_position;
 
-    nav_msgs::Path return_home_path;
+    nav_msgs::msg::Path return_home_path;
     if (!use_keypose_graph_ || keypose_graph == nullptr || keypose_graph->GetNodeNum() == 0)
     {
-      geometry_msgs::PoseStamped robot_pose;
+      geometry_msgs::msg::PoseStamped robot_pose;
       robot_pose.pose.position = robot_position_;
 
-      geometry_msgs::PoseStamped home_pose;
+      geometry_msgs::msg::PoseStamped home_pose;
       home_pose.pose.position = home_position;
       return_home_path.poses.push_back(robot_pose);
       return_home_path.poses.push_back(home_pose);
@@ -866,7 +866,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
       else
       {
         // Use keypose graph
-        nav_msgs::Path path_tmp;
+        nav_msgs::msg::Path path_tmp;
         distance_matrix[i][j] =
             static_cast<int>(10 * keypose_graph->GetShortestPath(exploring_cell_positions[i],
                                                                  exploring_cell_positions[j], false, path_tmp, false));
@@ -905,7 +905,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
     for (int i = 0; i < node_index.size(); i++)
     {
       int cell_ind = node_index[i];
-      geometry_msgs::PoseStamped pose;
+      geometry_msgs::msg::PoseStamped pose;
       pose.pose.position = exploring_cell_positions[cell_ind];
       exploration_path_ns::Node node(exploring_cell_positions[cell_ind],
                                      exploration_path_ns::NodeType::GLOBAL_VIEWPOINT);
@@ -930,7 +930,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
       cur_position = exploring_cell_positions[cur_ind];
       next_position = exploring_cell_positions[next_ind];
 
-      nav_msgs::Path keypose_path;
+      nav_msgs::msg::Path keypose_path;
       keypose_graph->GetShortestPath(cur_position, next_position, true, keypose_path, false);
 
       exploration_path_ns::Node node(Eigen::Vector3d(cur_position.x, cur_position.y, cur_position.z));
@@ -1117,7 +1117,7 @@ void GridWorld::AddPathsInBetweenCells(const std::shared_ptr<viewpoint_manager_n
         continue;
       }
 
-      nav_msgs::Path path_in_between = viewpoint_manager->GetViewPointShortestPath(
+      nav_msgs::msg::Path path_in_between = viewpoint_manager->GetViewPointShortestPath(
           from_cell_roadmap_connection_position, to_cell_roadmap_connection_position);
 
       if (PathValid(path_in_between, from_cell_ind, to_cell_ind))
@@ -1153,7 +1153,7 @@ void GridWorld::AddPathsInBetweenCells(const std::shared_ptr<viewpoint_manager_n
   }
 }
 
-bool GridWorld::PathValid(const nav_msgs::Path& path, int from_cell_ind, int to_cell_ind)
+bool GridWorld::PathValid(const nav_msgs::msg::Path& path, int from_cell_ind, int to_cell_ind)
 {
   if (path.poses.size() >= 2)
   {
@@ -1194,7 +1194,7 @@ bool GridWorld::HasDirectKeyposeGraphConnection(const std::unique_ptr<keypose_gr
   geo_goal_position.z = goal_position.z();
 
   double max_path_length = kCellSize * 2;
-  nav_msgs::Path path;
+  nav_msgs::msg::Path path;
   bool found_path =
       keypose_graph->GetShortestPathWithMaxLength(geo_start_position, geo_goal_position, max_path_length, false, path);
   return found_path;

@@ -19,6 +19,7 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <limits>
+#include <cfloat>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/transform_datatypes.h>
 #include <visualization_msgs/msg/marker.hpp>
@@ -63,7 +64,7 @@ void RightRotatePoint(PCLPointType& pnt);
 void LeftRotatePoint(geometry_msgs::msg::Point& pnt);
 void RightRotatePoint(geometry_msgs::msg::Point& pnt);
 template <class CloudType>
-void KeyposeToMap(CloudType& cloud, const nav_msgs::Odometry::ConstPtr& keypose);
+void KeyposeToMap(CloudType& cloud, const nav_msgs::msg::Odometry::ConstPtr& keypose);
 double PointXYDist(const geometry_msgs::msg::Point& pnt1, const geometry_msgs::msg::Point& pnt2);
 double PointXYDist(const PCLPointType& pnt1, const PCLPointType& pnt2);
 template <class P1, class P2>
@@ -90,12 +91,12 @@ int ThreePointOrientation(const geometry_msgs::msg::Point& p, const geometry_msg
 bool PointOnLineSeg(const geometry_msgs::msg::Point& p, const geometry_msgs::msg::Point& q, const geometry_msgs::msg::Point& r);
 double AngleOverlap(double s1, double e1, double s2, double e2);
 double AngleDiff(double source_angle, double target_angle);
-bool PointInPolygon(const geometry_msgs::msg::Point& point, const geometry_msgs::Polygon& polygon);
+bool PointInPolygon(const geometry_msgs::msg::Point& point, const geometry_msgs::msg::Polygon& polygon);
 double LineSegDistance2D(const geometry_msgs::msg::Point& point, const geometry_msgs::msg::Point& line_segment_start,
                          const geometry_msgs::msg::Point& line_segment_end);
 double LineSegDistance3D(const geometry_msgs::msg::Point& point, const geometry_msgs::msg::Point& line_segment_start,
                          const geometry_msgs::msg::Point& line_segment_end);
-double DistancePoint2DToPolygon(const geometry_msgs::msg::Point& point, const geometry_msgs::Polygon& polygon);
+double DistancePoint2DToPolygon(const geometry_msgs::msg::Point& point, const geometry_msgs::msg::Polygon& polygon);
 void LinInterpPoints(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2, double resolution,
                      std::vector<Eigen::Vector3d>& interp_points);
 template <class PCLPointType>
@@ -142,7 +143,7 @@ double RadianToDegree(double radian);
  * @param from_ind
  * @param to_ind
  */
-void ConcatenatePath(nav_msgs::Path& path1, const nav_msgs::Path& path2, int from_ind = -1, int to_ind = -1);
+void ConcatenatePath(nav_msgs::msg::Path& path1, const nav_msgs::msg::Path& path2, int from_ind = -1, int to_ind = -1);
 /**
  * Function to check if an index is within the range of a list
  * @tparam T
@@ -291,27 +292,27 @@ private:
 
 public:
   static int id_;
-  visualization_msgs::Marker marker_;
+  visualization_msgs::msg::Marker marker_;
   explicit Marker(ros::NodeHandle* nh, std::string pub_topic, std::string frame_id)
     : pub_topic_(pub_topic), frame_id_(frame_id)
   {
-    marker_pub_ = nh->advertise<visualization_msgs::Marker>(pub_topic_, 2);
+    marker_pub_ = nh->advertise<visualization_msgs::msg::Marker>(pub_topic_, 2);
     id_++;
     marker_.id = id_;
-    marker_.action = visualization_msgs::Marker::ADD;
+    marker_.action = visualization_msgs::msg::Marker::ADD;
     marker_.pose.orientation.w = 1.0;
   }
   explicit Marker(ros::NodeHandle& nh, std::string pub_topic, std::string frame_id)
     : pub_topic_(pub_topic), frame_id_(frame_id)
   {
-    marker_pub_ = nh.advertise<visualization_msgs::Marker>(pub_topic_, 2);
+    marker_pub_ = nh.advertise<visualization_msgs::msg::Marker>(pub_topic_, 2);
     id_++;
     marker_.id = id_;
-    marker_.action = visualization_msgs::Marker::ADD;
+    marker_.action = visualization_msgs::msg::Marker::ADD;
     marker_.pose.orientation.w = 1.0;
   }
   ~Marker() = default;
-  void SetColorRGBA(const std_msgs::ColorRGBA& color)
+  void SetColorRGBA(const std_msgs::msg::ColorRGBA& color)
   {
     marker_.color = color;
   }
@@ -332,13 +333,13 @@ public:
   {
     marker_.type = type;
   }
-  void SetAction(visualization_msgs::Marker::_action_type action)
+  void SetAction(visualization_msgs::msg::Marker::_action_type action)
   {
     marker_.action = action;
   }
   void Publish()
   {
-    misc_utils_ns::Publish<visualization_msgs::Marker>(marker_pub_, marker_, frame_id_);
+    misc_utils_ns::Publish<visualization_msgs::msg::Marker>(marker_pub_, marker_, frame_id_);
   }
 
   typedef std::shared_ptr<Marker> Ptr;
@@ -357,7 +358,7 @@ bool InFOVSimple(const Eigen::Vector3d& point_position, const Eigen::Vector3d& v
                  bool print = false);
 float ApproxAtan(float z);
 float ApproxAtan2(float y, float x);
-double GetPathLength(const nav_msgs::Path& path);
+double GetPathLength(const nav_msgs::msg::Path& path);
 double GetPathLength(const std::vector<Eigen::Vector3d>& path);
 double AStarSearch(const std::vector<std::vector<int>>& graph, const std::vector<std::vector<double>>& node_dist,
                    const std::vector<geometry_msgs::msg::Point>& node_positions, int from_idx, int to_idx, bool get_path,
@@ -367,8 +368,8 @@ bool AStarSearchWithMaxPathLength(const std::vector<std::vector<int>>& graph,
                                   const std::vector<geometry_msgs::msg::Point>& node_positions, int from_idx, int to_idx,
                                   bool get_path, std::vector<int>& path_indices, double& shortest_dist,
                                   double max_path_length = DBL_MAX);
-nav_msgs::Path SimplifyPath(const nav_msgs::Path& path);
-nav_msgs::Path DeduplicatePath(const nav_msgs::Path& path, double min_dist);
+nav_msgs::msg::Path SimplifyPath(const nav_msgs::msg::Path& path);
+nav_msgs::msg::Path DeduplicatePath(const nav_msgs::msg::Path& path, double min_dist);
 void SampleLineSegments(const std::vector<Eigen::Vector3d>& initial_points, double sample_resol,
                         std::vector<Eigen::Vector3d>& sample_points);
 void UniquifyIntVector(std::vector<int>& list);
