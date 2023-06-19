@@ -37,7 +37,7 @@ Cell::Cell(double x, double y, double z)
   status_ = CellStatus::UNSEEN;
 }
 
-Cell::Cell(const geometry_msgs::Point& center) : Cell(center.x, center.y, center.z)
+Cell::Cell(const geometry_msgs::msg::Point& center) : Cell(center.x, center.y, center.z)
 {
 }
 
@@ -175,7 +175,7 @@ void GridWorld::ReadParameters(ros::NodeHandle& nh)
   kCellUnknownToExploringThr = misc_utils_ns::getParam<int>(nh, "kCellUnknownToExploringThr", 1);
 }
 
-void GridWorld::UpdateNeighborCells(const geometry_msgs::Point& robot_position)
+void GridWorld::UpdateNeighborCells(const geometry_msgs::msg::Point& robot_position)
 {
   if (!initialized_)
   {
@@ -192,7 +192,7 @@ void GridWorld::UpdateNeighborCells(const geometry_msgs::Point& robot_position)
         for (int k = 0; k < kLevelNum; k++)
         {
           Eigen::Vector3d subspace_center_position = subspaces_->Sub2Pos(i, j, k);
-          geometry_msgs::Point subspace_center_geo_position;
+          geometry_msgs::msg::Point subspace_center_geo_position;
           subspace_center_geo_position.x = subspace_center_position.x();
           subspace_center_geo_position.y = subspace_center_position.y();
           subspace_center_geo_position.z = subspace_center_position.z();
@@ -221,7 +221,7 @@ void GridWorld::UpdateNeighborCells(const geometry_msgs::Point& robot_position)
   }
 }
 
-void GridWorld::UpdateRobotPosition(const geometry_msgs::Point& robot_position)
+void GridWorld::UpdateRobotPosition(const geometry_msgs::msg::Point& robot_position)
 {
   robot_position_ = robot_position;
   int robot_cell_ind = GetCellInd(robot_position_.x, robot_position_.y, robot_position_.z);
@@ -245,7 +245,7 @@ void GridWorld::UpdateCellKeyposeGraphNodes(const std::unique_ptr<keypose_graph_
   }
   for (const auto& node_ind : keypose_graph_connected_node_indices)
   {
-    geometry_msgs::Point node_position = keypose_graph->GetNodePosition(node_ind);
+    geometry_msgs::msg::Point node_position = keypose_graph->GetNodePosition(node_ind);
     int cell_ind = GetCellInd(node_position.x, node_position.y, node_position.z);
     if (subspaces_->InRange(cell_ind))
     {
@@ -317,7 +317,7 @@ void GridWorld::GetMarker(visualization_msgs::Marker& marker)
       for (int k = 0; k < kLevelNum; k++)
       {
         int cell_ind = subspaces_->Sub2Ind(i, j, k);
-        geometry_msgs::Point cell_center = subspaces_->GetCell(cell_ind).GetPosition();
+        geometry_msgs::msg::Point cell_center = subspaces_->GetCell(cell_ind).GetPosition();
         std_msgs::ColorRGBA color;
         bool add_marker = false;
         if (subspaces_->GetCell(cell_ind).GetStatus() == CellStatus::UNSEEN)
@@ -444,7 +444,7 @@ void GridWorld::GetNeighborCellIndices(const Eigen::Vector3i& center_cell_sub, c
     }
   }
 }
-void GridWorld::GetNeighborCellIndices(const geometry_msgs::Point& position, const Eigen::Vector3i& neighbor_range,
+void GridWorld::GetNeighborCellIndices(const geometry_msgs::msg::Point& position, const Eigen::Vector3i& neighbor_range,
                                        std::vector<int>& neighbor_indices)
 {
   Eigen::Vector3i center_cell_sub = GetCellSub(Eigen::Vector3d(position.x, position.y, position.z));
@@ -476,19 +476,19 @@ void GridWorld::SetCellStatus(int cell_ind, grid_world_ns::CellStatus status)
   subspaces_->GetCell(cell_ind).SetStatus(status);
 }
 
-geometry_msgs::Point GridWorld::GetCellPosition(int cell_ind)
+geometry_msgs::msg::Point GridWorld::GetCellPosition(int cell_ind)
 {
   MY_ASSERT(subspaces_->InRange(cell_ind));
   return subspaces_->GetCell(cell_ind).GetPosition();
 }
 
-void GridWorld::SetCellRobotPosition(int cell_ind, const geometry_msgs::Point& robot_position)
+void GridWorld::SetCellRobotPosition(int cell_ind, const geometry_msgs::msg::Point& robot_position)
 {
   MY_ASSERT(subspaces_->InRange(cell_ind));
   subspaces_->GetCell(cell_ind).SetRobotPosition(robot_position);
 }
 
-geometry_msgs::Point GridWorld::GetCellRobotPosition(int cell_ind)
+geometry_msgs::msg::Point GridWorld::GetCellRobotPosition(int cell_ind)
 {
   MY_ASSERT(subspaces_->InRange(cell_ind));
   return subspaces_->GetCell(cell_ind).GetRobotPosition();
@@ -560,7 +560,7 @@ void GridWorld::UpdateCellStatus(const std::shared_ptr<viewpoint_manager_ns::Vie
   }
   for (const auto& viewpoint_ind : viewpoint_manager->candidate_indices_)
   {
-    geometry_msgs::Point viewpoint_position = viewpoint_manager->GetViewPointPosition(viewpoint_ind);
+    geometry_msgs::msg::Point viewpoint_position = viewpoint_manager->GetViewPointPosition(viewpoint_ind);
     Eigen::Vector3i sub =
         subspaces_->Pos2Sub(Eigen::Vector3d(viewpoint_position.x, viewpoint_position.y, viewpoint_position.z));
     if (subspaces_->InRange(sub))
@@ -659,9 +659,9 @@ void GridWorld::UpdateCellStatus(const std::shared_ptr<viewpoint_manager_ns::Vie
       }
       else
       {
-        geometry_msgs::Point cell_position = subspaces_->GetCell(cell_ind).GetPosition();
+        geometry_msgs::msg::Point cell_position = subspaces_->GetCell(cell_ind).GetPosition();
         double xy_dist_to_robot =
-            misc_utils_ns::PointXYDist<geometry_msgs::Point, geometry_msgs::Point>(cell_position, robot_position_);
+            misc_utils_ns::PointXYDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(cell_position, robot_position_);
         double z_dist_to_robot = std::abs(cell_position.z - robot_position_.z);
         if (xy_dist_to_robot < kCellSize && z_dist_to_robot < kCellHeight * 0.8)
         {
@@ -695,7 +695,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
 {
   /****** Get the node on keypose graph associated with the robot position *****/
   double min_dist_to_robot = DBL_MAX;
-  geometry_msgs::Point global_path_robot_position = robot_position_;
+  geometry_msgs::msg::Point global_path_robot_position = robot_position_;
   Eigen::Vector3d eigen_robot_position(robot_position_.x, robot_position_.y, robot_position_.z);
   // Get nearest connected node
   int closest_node_ind = 0;
@@ -736,7 +736,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
 
   /****** Get all the connected exploring cells *****/
   exploration_path_ns::ExplorationPath global_path;
-  std::vector<geometry_msgs::Point> exploring_cell_positions;
+  std::vector<geometry_msgs::msg::Point> exploring_cell_positions;
   std::vector<int> exploring_cell_indices;
   for (int i = 0; i < subspaces_->GetCellNumber(); i++)
   {
@@ -754,7 +754,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
         else
         {
           Eigen::Vector3d connection_point = subspaces_->GetCell(i).GetRoadmapConnectionPoint();
-          geometry_msgs::Point connection_point_geo;
+          geometry_msgs::msg::Point connection_point_geo;
           connection_point_geo.x = connection_point.x();
           connection_point_geo.y = connection_point.y();
           connection_point_geo.z = connection_point.z();
@@ -771,8 +771,8 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
             double min_dist_node_ind = -1;
             for (const auto& node_ind : subspaces_->GetCell(i).GetGraphNodeIndices())
             {
-              geometry_msgs::Point node_position = keypose_graph->GetNodePosition(node_ind);
-              double dist = misc_utils_ns::PointXYZDist<geometry_msgs::Point, geometry_msgs::Point>(
+              geometry_msgs::msg::Point node_position = keypose_graph->GetNodePosition(node_ind);
+              double dist = misc_utils_ns::PointXYZDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(
                   node_position, connection_point_geo);
               if (dist < min_dist)
               {
@@ -801,7 +801,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
   {
     return_home_ = true;
 
-    geometry_msgs::Point home_position;
+    geometry_msgs::msg::Point home_position;
 
     nav_msgs::Path return_home_path;
     if (!use_keypose_graph_ || keypose_graph == nullptr || keypose_graph->GetNodeNum() == 0)
@@ -860,7 +860,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
       {
         // Use straight line connection
         distance_matrix[i][j] =
-            static_cast<int>(10 * misc_utils_ns::PointXYZDist<geometry_msgs::Point, geometry_msgs::Point>(
+            static_cast<int>(10 * misc_utils_ns::PointXYZDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(
                                       exploring_cell_positions[i], exploring_cell_positions[j]));
       }
       else
@@ -916,8 +916,8 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
   }
   else
   {
-    geometry_msgs::Point cur_position;
-    geometry_msgs::Point next_position;
+    geometry_msgs::msg::Point cur_position;
+    geometry_msgs::msg::Point next_position;
     int cur_keypose_id;
     int next_keypose_id;
     int cur_ind;
@@ -952,7 +952,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
       {
         for (int j = 1; j < keypose_path.poses.size() - 1; j++)
         {
-          geometry_msgs::Point node_position;
+          geometry_msgs::msg::Point node_position;
           node_position = keypose_path.poses[j].pose.position;
           exploration_path_ns::Node keypose_node(node_position, exploration_path_ns::NodeType::GLOBAL_VIA_POINT);
           keypose_node.keypose_graph_node_ind_ = static_cast<int>(keypose_path.poses[i].pose.orientation.x);
@@ -1026,8 +1026,8 @@ void GridWorld::AddPathsInBetweenCells(const std::shared_ptr<viewpoint_manager_n
       double min_dist_viewpoint_ind = candidate_viewpoint_indices.front();
       for (const auto& viewpoint_ind : candidate_viewpoint_indices)
       {
-        geometry_msgs::Point viewpoint_position = viewpoint_manager->GetViewPointPosition(viewpoint_ind);
-        double dist_to_cell_center = misc_utils_ns::PointXYDist<geometry_msgs::Point, geometry_msgs::Point>(
+        geometry_msgs::msg::Point viewpoint_position = viewpoint_manager->GetViewPointPosition(viewpoint_ind);
+        double dist_to_cell_center = misc_utils_ns::PointXYDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(
             viewpoint_position, subspaces_->GetCell(cell_ind).GetPosition());
         if (dist_to_cell_center < min_dist)
         {
@@ -1035,7 +1035,7 @@ void GridWorld::AddPathsInBetweenCells(const std::shared_ptr<viewpoint_manager_n
           min_dist_viewpoint_ind = viewpoint_ind;
         }
       }
-      geometry_msgs::Point min_dist_viewpoint_position =
+      geometry_msgs::msg::Point min_dist_viewpoint_position =
           viewpoint_manager->GetViewPointPosition(min_dist_viewpoint_ind);
       subspaces_->GetCell(cell_ind).SetRoadmapConnectionPoint(
           Eigen::Vector3d(min_dist_viewpoint_position.x, min_dist_viewpoint_position.y, min_dist_viewpoint_position.z));
@@ -1183,12 +1183,12 @@ bool GridWorld::HasDirectKeyposeGraphConnection(const std::unique_ptr<keypose_gr
   }
 
   // Search a path connecting start_position and goal_position with a max path length constraint
-  geometry_msgs::Point geo_start_position;
+  geometry_msgs::msg::Point geo_start_position;
   geo_start_position.x = start_position.x();
   geo_start_position.y = start_position.y();
   geo_start_position.z = start_position.z();
 
-  geometry_msgs::Point geo_goal_position;
+  geometry_msgs::msg::Point geo_goal_position;
   geo_goal_position.x = goal_position.x();
   geo_goal_position.y = goal_position.y();
   geo_goal_position.z = goal_position.z();

@@ -15,9 +15,9 @@
 
 #include <Eigen/Core>
 // ROS
-#include <ros/ros.h>
-#include <nav_msgs/Path.h>
-#include <geometry_msgs/Point.h>
+#include <rclcpp/rclcpp.hpp>
+#include <nav_msgs/msg/path.hpp>
+#include <geometry_msgs/msg/point.hpp>
 // PCL
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
@@ -176,7 +176,7 @@ public:
         {
           continue;
         }
-        geometry_msgs::Point viewpoint_position = viewpoints_[i].GetPosition();
+        geometry_msgs::msg::Point viewpoint_position = viewpoints_[i].GetPosition();
         if (misc_utils_ns::InFOVSimple(
                 Eigen::Vector3d(point.x, point.y, point.z),
                 Eigen::Vector3d(viewpoint_position.x, viewpoint_position.y, viewpoint_position.z),
@@ -200,7 +200,7 @@ public:
         {
           continue;
         }
-        geometry_msgs::Point viewpoint_position = viewpoints_[array_ind].GetPosition();
+        geometry_msgs::msg::Point viewpoint_position = viewpoints_[array_ind].GetPosition();
         if (misc_utils_ns::InFOVSimple(
                 Eigen::Vector3d(point.x, point.y, point.z),
                 Eigen::Vector3d(viewpoint_position.x, viewpoint_position.y, viewpoint_position.z),
@@ -230,7 +230,7 @@ public:
   {
     MY_ASSERT(grid_->InRange(viewpoint_ind));
     int array_ind = grid_->GetArrayInd(viewpoint_ind);
-    geometry_msgs::Point viewpoint_position = viewpoints_[array_ind].GetPosition();
+    geometry_msgs::msg::Point viewpoint_position = viewpoints_[array_ind].GetPosition();
     if (std::abs(point.z - viewpoint_position.z) > vp_.kDiffZMax)
     {
       return false;
@@ -282,8 +282,8 @@ public:
   void SetViewPointInCurrentFrameLineOfSight(int viewpoint_ind, bool in_current_frame_line_of_sight,
                                              bool use_array_ind = false);
 
-  geometry_msgs::Point GetViewPointPosition(int viewpoint_ind, bool use_array_ind = false);
-  void SetViewPointPosition(int viewpoint_ind, geometry_msgs::Point position, bool use_array_ind = false);
+  geometry_msgs::msg::Point GetViewPointPosition(int viewpoint_ind, bool use_array_ind = false);
+  void SetViewPointPosition(int viewpoint_ind, geometry_msgs::msg::Point position, bool use_array_ind = false);
 
   int GetViewPointCellInd(int viewpoint_ind, bool use_array_ind = false);
   void SetViewPointCellInd(int viewpoint_ind, int cell_ind, bool use_array_ind = false);
@@ -341,7 +341,7 @@ private:
   void ComputeConnectedNeighborIndices();
   void ComputeInRangeNeighborIndices();
   void GetCandidateViewPointGraph(std::vector<std::vector<int>>& graph, std::vector<std::vector<double>>& dist,
-                                  std::vector<geometry_msgs::Point>& positions);
+                                  std::vector<geometry_msgs::msg::Point>& positions);
   void GetCollisionCorrespondence();
 
   bool initialized_;
@@ -361,7 +361,7 @@ private:
   std::vector<int> collision_point_count_;
   std::vector<std::vector<int>> candidate_viewpoint_graph_;
   std::vector<std::vector<double>> candidate_viewpoint_dist_;
-  std::vector<geometry_msgs::Point> candidate_viewpoint_position_;
+  std::vector<geometry_msgs::msg::Point> candidate_viewpoint_position_;
   pcl::KdTreeFLANN<pcl::PointXYZI>::Ptr kdtree_viewpoint_candidate_;
   pcl::KdTreeFLANN<pcl::PointXYZI>::Ptr kdtree_viewpoint_in_collision_;
   pcl::PointCloud<pcl::PointXYZI>::Ptr viewpoint_candidate_cloud_;

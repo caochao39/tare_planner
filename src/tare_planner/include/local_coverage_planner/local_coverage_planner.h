@@ -12,8 +12,8 @@
 
 #include <Eigen/Core>
 
-#include <ros/ros.h>
-#include <nav_msgs/Path.h>
+#include <rclcpp/rclcpp.hpp>
+#include <nav_msgs/msg/path.hpp>
 
 #include "grid_world/grid_world.h"
 #include "exploration_path/exploration_path.h"

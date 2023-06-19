@@ -273,7 +273,7 @@ bool ViewPointManager::UpdateRobotPosition(const Eigen::Vector3d& robot_position
         for (int z = 0; z < vp_.kNumber.z(); z++)
         {
           int ind = grid_->Sub2Ind(Eigen::Vector3i(x, y, z));
-          geometry_msgs::Point position;
+          geometry_msgs::msg::Point position;
           position.x = origin_.x() + x * vp_.kResolution.x() + vp_.kResolution.x() / 2.0;
           position.y = origin_.y() + y * vp_.kResolution.y() + vp_.kResolution.y() / 2.0;
           position.z = robot_position.z();
@@ -330,7 +330,7 @@ bool ViewPointManager::UpdateRobotPosition(const Eigen::Vector3d& robot_position
   {
     MY_ASSERT(grid_->InRange(ind));
     Eigen::Vector3i sub = grid_->Ind2Sub(ind);
-    geometry_msgs::Point new_position;
+    geometry_msgs::msg::Point new_position;
     new_position.x = origin_.x() + sub.x() * vp_.kResolution.x() + vp_.kResolution.x() / 2.0;
     new_position.y = origin_.y() + sub.y() * vp_.kResolution.y() + vp_.kResolution.y() / 2.0;
     new_position.z = robot_position_.z();
@@ -391,7 +391,7 @@ void ViewPointManager::GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Pt
   {
     if (IsViewPointCandidate(i, true))
     {
-      geometry_msgs::Point position = GetViewPointPosition(i, true);
+      geometry_msgs::msg::Point position = GetViewPointPosition(i, true);
       pcl::PointXYZI vis_point;
       vis_point.x = position.x;
       vis_point.y = position.y;
@@ -492,7 +492,7 @@ void ViewPointManager::CheckViewPointBoundaryCollision()
   // Check for the polygon boundary and nogo zones
   for (int i = 0; i < vp_.kViewPointNumber; i++)
   {
-    geometry_msgs::Point viewpoint_position = GetViewPointPosition(i, true);
+    geometry_msgs::msg::Point viewpoint_position = GetViewPointPosition(i, true);
     if ((!viewpoint_boundary_.points.empty() &&
          !misc_utils_ns::PointInPolygon(viewpoint_position, viewpoint_boundary_)))
     {
@@ -537,7 +537,7 @@ void ViewPointManager::CheckViewPointLineOfSightHelper(const Eigen::Vector3i& st
   if (end_sub == start_sub)
     return;
   int viewpoint_ind = grid_->Sub2Ind(end_sub);
-  geometry_msgs::Point viewpoint_position = GetViewPointPosition(viewpoint_ind);
+  geometry_msgs::msg::Point viewpoint_position = GetViewPointPosition(viewpoint_ind);
   std::vector<Eigen::Vector3i> ray_cast_cells;
   misc_utils_ns::RayCast(start_sub, end_sub, max_sub, min_sub, ray_cast_cells);
   if (ray_cast_cells.size() > 1)
@@ -711,7 +711,7 @@ void ViewPointManager::CheckViewPointInFOV()
   MY_ASSERT(grid_->InRange(robot_sub));
   for (int i = 0; i < vp_.kViewPointNumber; i++)
   {
-    geometry_msgs::Point viewpoint_position = GetViewPointPosition(i, true);
+    geometry_msgs::msg::Point viewpoint_position = GetViewPointPosition(i, true);
     if (!InRobotFOV(Eigen::Vector3d(viewpoint_position.x, viewpoint_position.y, viewpoint_position.z)))
     {
       SetViewPointInLineOfSight(i, false, true);
@@ -784,7 +784,7 @@ void ViewPointManager::CheckViewPointConnectivity()
       int array_ind = grid_->GetArrayInd(i);
       if (!ViewPointInCollision(i))
       {
-        geometry_msgs::Point position = GetViewPointPosition(i);
+        geometry_msgs::msg::Point position = GetViewPointPosition(i);
         Eigen::Vector3d viewpoint_position(position.x, position.y, position.z);
         double dist_to_robot = (viewpoint_position - robot_position_).norm();
         if (dist_to_robot < min_dist_to_robot)
@@ -868,7 +868,7 @@ void ViewPointManager::UpdateViewPointVisited(std::unique_ptr<grid_world_ns::Gri
 {
   for (int i = 0; i < viewpoints_.size(); i++)
   {
-    geometry_msgs::Point viewpoint_position = GetViewPointPosition(i, true);
+    geometry_msgs::msg::Point viewpoint_position = GetViewPointPosition(i, true);
     int cell_ind = grid_world->GetCellInd(viewpoint_position.x, viewpoint_position.y, viewpoint_position.z);
     if (grid_world->IndInBound((cell_ind)))
     {
@@ -891,7 +891,7 @@ void ViewPointManager::SetViewPointHeightWithTerrain(const pcl::PointCloud<pcl::
   Eigen::Vector3i robot_sub = GetViewPointSub(robot_position_);
   int robot_ind = grid_->Sub2Ind(robot_sub);
   MY_ASSERT(grid_->InRange(robot_sub));
-  geometry_msgs::Point robot_viewpoint_position = GetViewPointPosition(robot_ind);
+  geometry_msgs::msg::Point robot_viewpoint_position = GetViewPointPosition(robot_ind);
 
   if (!ViewPointHasTerrainHeight(robot_ind) ||
       std::abs(robot_viewpoint_position.z - robot_position_.z()) > vp_.kViewPointHeightFromTerrainChangeThreshold)
@@ -950,7 +950,7 @@ void ViewPointManager::SetViewPointHeightWithTerrain(const pcl::PointCloud<pcl::
           double neighbor_height = GetViewPointHeight(neighbor_ind);
           if (std::abs(neighbor_height - GetViewPointHeight(i)) > vp_.kViewPointHeightFromTerrainChangeThreshold)
           {
-            geometry_msgs::Point viewpoint_position = GetViewPointPosition(i);
+            geometry_msgs::msg::Point viewpoint_position = GetViewPointPosition(i);
             viewpoint_position.z = neighbor_height;
             ResetViewPoint(i);
             SetViewPointPosition(i, viewpoint_position);
@@ -1092,12 +1092,12 @@ void ViewPointManager::SetViewPointInCurrentFrameLineOfSight(int viewpoint_ind, 
   viewpoints_[array_ind].SetInCurrentFrameLineOfSight(in_current_frame_line_of_sight);
 }
 // Position
-geometry_msgs::Point ViewPointManager::GetViewPointPosition(int viewpoint_ind, bool use_array_ind)
+geometry_msgs::msg::Point ViewPointManager::GetViewPointPosition(int viewpoint_ind, bool use_array_ind)
 {
   int array_ind = GetViewPointArrayInd(viewpoint_ind, use_array_ind);
   return viewpoints_[array_ind].GetPosition();
 }
-void ViewPointManager::SetViewPointPosition(int viewpoint_ind, geometry_msgs::Point position, bool use_array_ind)
+void ViewPointManager::SetViewPointPosition(int viewpoint_ind, geometry_msgs::msg::Point position, bool use_array_ind)
 {
   int array_ind = GetViewPointArrayInd(viewpoint_ind, use_array_ind);
   viewpoints_[array_ind].SetPosition(position);
@@ -1230,7 +1230,7 @@ int ViewPointManager::GetViewPointCandidate()
     {
       SetViewPointCandidate(i, true);
       candidate_indices_.push_back(i);
-      geometry_msgs::Point viewpoint_position = GetViewPointPosition(i);
+      geometry_msgs::msg::Point viewpoint_position = GetViewPointPosition(i);
       pcl::PointXYZI point;
       point.x = viewpoint_position.x;
       point.y = viewpoint_position.y;
@@ -1239,7 +1239,7 @@ int ViewPointManager::GetViewPointCandidate()
     }
     if (ViewPointInCollision(i))
     {
-      geometry_msgs::Point viewpoint_position = GetViewPointPosition(i);
+      geometry_msgs::msg::Point viewpoint_position = GetViewPointPosition(i);
       pcl::PointXYZI point;
       point.x = viewpoint_position.x;
       point.y = viewpoint_position.y;
@@ -1391,7 +1391,7 @@ void ViewPointManager::UpdateCandidateViewPointCellStatus(std::unique_ptr<grid_w
 
 void ViewPointManager::GetCandidateViewPointGraph(std::vector<std::vector<int>>& graph,
                                                   std::vector<std::vector<double>>& dist,
-                                                  std::vector<geometry_msgs::Point>& positions)
+                                                  std::vector<geometry_msgs::msg::Point>& positions)
 {
   graph.clear();
   dist.clear();
@@ -1442,15 +1442,15 @@ int ViewPointManager::GetNearestCandidateViewPointInd(const Eigen::Vector3d& pos
     // Find the closest viewpoint that is a candidate viewpoint
     double min_dist = DBL_MAX;
     int min_dist_ind = -1;
-    geometry_msgs::Point query_position;
+    geometry_msgs::msg::Point query_position;
     query_position.x = position.x();
     query_position.y = position.y();
     query_position.z = position.z();
     for (const auto& cur_viewpoint_ind : candidate_indices_)
     {
-      geometry_msgs::Point cur_position = GetViewPointPosition(cur_viewpoint_ind);
+      geometry_msgs::msg::Point cur_position = GetViewPointPosition(cur_viewpoint_ind);
       double dist =
-          misc_utils_ns::PointXYZDist<geometry_msgs::Point, geometry_msgs::Point>(cur_position, query_position);
+          misc_utils_ns::PointXYZDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(cur_position, query_position);
       if (dist < min_dist)
       {
         min_dist = dist;
@@ -1481,7 +1481,7 @@ bool ViewPointManager::InLocalPlanningHorizon(const Eigen::Vector3d& position)
   if (InRange(viewpoint_ind))
   {
     double max_z_diff = std::max(vp_.kResolution.x(), vp_.kResolution.y()) * 2;
-    geometry_msgs::Point viewpoint_position = GetViewPointPosition(viewpoint_ind);
+    geometry_msgs::msg::Point viewpoint_position = GetViewPointPosition(viewpoint_ind);
     if (std::abs(viewpoint_position.z - position.z()) < max_z_diff &&
         (IsViewPointCandidate(viewpoint_ind) || ViewPointInCollision(viewpoint_ind)))
     {

@@ -83,42 +83,42 @@ void TAREVisualizer::GetLocalPlanningHorizonMarker(double x, double y, double z)
   local_planning_horizon_origin_.y = y;
   local_planning_horizon_origin_.z = z - kLocalPlanningHorizonSizeZ / 2;
 
-  geometry_msgs::Point upper_right;
+  geometry_msgs::msg::Point upper_right;
   upper_right.x = local_planning_horizon_origin_.x + kLocalPlanningHorizonSizeX;
   upper_right.y = local_planning_horizon_origin_.y + kLocalPlanningHorizonSizeY;
   upper_right.z = local_planning_horizon_origin_.z + kLocalPlanningHorizonSizeZ;
 
-  geometry_msgs::Point lower_right;
+  geometry_msgs::msg::Point lower_right;
   lower_right.x = local_planning_horizon_origin_.x;
   lower_right.y = local_planning_horizon_origin_.y + kLocalPlanningHorizonSizeY;
   lower_right.z = local_planning_horizon_origin_.z + kLocalPlanningHorizonSizeZ;
 
-  geometry_msgs::Point upper_left;
+  geometry_msgs::msg::Point upper_left;
   upper_left.x = local_planning_horizon_origin_.x + kLocalPlanningHorizonSizeX;
   upper_left.y = local_planning_horizon_origin_.y;
   upper_left.z = local_planning_horizon_origin_.z + kLocalPlanningHorizonSizeZ;
 
-  geometry_msgs::Point lower_left;
+  geometry_msgs::msg::Point lower_left;
   lower_left.x = local_planning_horizon_origin_.x;
   lower_left.y = local_planning_horizon_origin_.y;
   lower_left.z = local_planning_horizon_origin_.z + kLocalPlanningHorizonSizeZ;
 
-  geometry_msgs::Point upper_right2;
+  geometry_msgs::msg::Point upper_right2;
   upper_right2.x = local_planning_horizon_origin_.x + kLocalPlanningHorizonSizeX;
   upper_right2.y = local_planning_horizon_origin_.y + kLocalPlanningHorizonSizeY;
   upper_right2.z = local_planning_horizon_origin_.z;
 
-  geometry_msgs::Point lower_right2;
+  geometry_msgs::msg::Point lower_right2;
   lower_right2.x = local_planning_horizon_origin_.x;
   lower_right2.y = local_planning_horizon_origin_.y + kLocalPlanningHorizonSizeY;
   lower_right2.z = local_planning_horizon_origin_.z;
 
-  geometry_msgs::Point upper_left2;
+  geometry_msgs::msg::Point upper_left2;
   upper_left2.x = local_planning_horizon_origin_.x + kLocalPlanningHorizonSizeX;
   upper_left2.y = local_planning_horizon_origin_.y;
   upper_left2.z = local_planning_horizon_origin_.z;
 
-  geometry_msgs::Point lower_left2;
+  geometry_msgs::msg::Point lower_left2;
   lower_left2.x = local_planning_horizon_origin_.x;
   lower_left2.y = local_planning_horizon_origin_.y;
   lower_left2.z = local_planning_horizon_origin_.z;
@@ -166,7 +166,7 @@ void TAREVisualizer::GetGlobalSubspaceMarker(const std::unique_ptr<grid_world_ns
     {
       continue;
     }
-    geometry_msgs::Point cell_center = grid_world->GetCellPosition(cell_ind);
+    geometry_msgs::msg::Point cell_center = grid_world->GetCellPosition(cell_ind);
     std_msgs::ColorRGBA color;
     color.r = 0.0;
     color.g = 1.0;

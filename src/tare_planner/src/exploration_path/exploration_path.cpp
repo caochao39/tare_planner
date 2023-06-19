@@ -26,7 +26,7 @@ Node::Node(Eigen::Vector3d position) : Node()
 {
   position_ = position;
 }
-Node::Node(geometry_msgs::Point point, NodeType type) : Node(Eigen::Vector3d(point.x, point.y, point.z))
+Node::Node(geometry_msgs::msg::Point point, NodeType type) : Node(Eigen::Vector3d(point.x, point.y, point.z))
 {
   type_ = type;
 }

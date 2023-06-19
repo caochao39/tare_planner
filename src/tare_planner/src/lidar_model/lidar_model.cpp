@@ -57,7 +57,7 @@ void LiDARModel::GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& vis
                                        double max_range) const
 {
   visualization_cloud->clear();
-  geometry_msgs::Point start_point = pose_.position;
+  geometry_msgs::msg::Point start_point = pose_.position;
   for (int i = 0; i < covered_voxel_.size(); i++)
   {
     int row_index, column_index;
@@ -70,7 +70,7 @@ void LiDARModel::GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& vis
     {
       r = max_range;
     }
-    geometry_msgs::Point end_point;
+    geometry_msgs::msg::Point end_point;
     end_point.x = r * sin(theta) * cos(phi) + pose_.position.x;
     end_point.y = r * sin(theta) * sin(phi) + pose_.position.y;
     end_point.z = r * cos(theta) + pose_.position.z;

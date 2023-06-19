@@ -1,34 +1,29 @@
-<?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>tare_planner</name>
-  <version>0.0.0</version>
+  <version>0.0.1</version>
   <description>TARE Exploration Planner for Ground Vehicles</description>
   <maintainer email="ccao1@andrew.cmu.edu">Chao Cao</maintainer>
 
   <license>BSD</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>nav_msgs</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>rospy</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>pcl_ros</build_depend>
-  <build_depend>libgoogle-glog-dev</build_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <build_export_depend>nav_msgs</build_export_depend>
-  <build_export_depend>roscpp</build_export_depend>
-  <build_export_depend>rospy</build_export_depend>
-  <build_export_depend>sensor_msgs</build_export_depend>
-  <build_export_depend>std_msgs</build_export_depend>
-  <build_export_depend>pcl_ros</build_export_depend>
-  <build_export_depend>libgoogle-glog-dev</build_export_depend>
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>pcl_ros</depend>
+  <depend>pcl_conversions</depend>
+  <depend>libgoogle-glog-dev</depend>
 
-  <exec_depend>nav_msgs</exec_depend>
-  <exec_depend>roscpp</exec_depend>
-  <exec_depend>rospy</exec_depend>
-  <exec_depend>sensor_msgs</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
-  <exec_depend>pcl_ros</exec_depend>
-  <exec_depend>libgoogle-glog-dev</exec_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export> 
 </package>

@@ -537,8 +537,8 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveTSP(const std::v
 
       // Add viewpoint node
       // int cur_array_ind = grid_->GetArrayInd(cur_ind);
-      // geometry_msgs::Point cur_node_position = viewpoints_[cur_array_ind].GetPosition();
-      geometry_msgs::Point cur_node_position = viewpoint_manager_->GetViewPointPosition(cur_ind);
+      // geometry_msgs::msg::Point cur_node_position = viewpoints_[cur_array_ind].GetPosition();
+      geometry_msgs::msg::Point cur_node_position = viewpoint_manager_->GetViewPointPosition(cur_ind);
       exploration_path_ns::Node cur_node(cur_node_position, exploration_path_ns::NodeType::LOCAL_VIEWPOINT);
       cur_node.local_viewpoint_ind_ = cur_ind;
       if (cur_ind == robot_viewpoint_ind_)
@@ -587,7 +587,7 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveTSP(const std::v
           exploration_path_ns::Node node;
           node.type_ = exploration_path_ns::NodeType::LOCAL_VIA_POINT;
           node.local_viewpoint_ind_ = -1;
-          //   geometry_msgs::Point node_position = viewpoint_manager_->GetViewPointPosition(ind);
+          //   geometry_msgs::msg::Point node_position = viewpoint_manager_->GetViewPointPosition(ind);
           //   node.position_.x() = node_position.x;
           //   node.position_.y() = node_position.y;
           //   node.position_.z() = node_position.z;
@@ -598,7 +598,7 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveTSP(const std::v
         }
       }
 
-      geometry_msgs::Point next_node_position = viewpoint_manager_->GetViewPointPosition(next_ind);
+      geometry_msgs::msg::Point next_node_position = viewpoint_manager_->GetViewPointPosition(next_ind);
       exploration_path_ns::Node next_node(next_node_position, exploration_path_ns::NodeType::LOCAL_VIEWPOINT);
       next_node.local_viewpoint_ind_ = next_ind;
       if (next_ind == robot_viewpoint_ind_)
@@ -814,7 +814,7 @@ void LocalCoveragePlanner::GetSelectedViewPointVisCloud(pcl::PointCloud<pcl::Poi
   cloud->clear();
   for (const auto& viewpoint_index : last_selected_viewpoint_indices_)
   {
-    geometry_msgs::Point position = viewpoint_manager_->GetViewPointPosition(viewpoint_index);
+    geometry_msgs::msg::Point position = viewpoint_manager_->GetViewPointPosition(viewpoint_index);
     pcl::PointXYZI point;
     point.x = position.x;
     point.y = position.y;

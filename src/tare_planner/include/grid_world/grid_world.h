@@ -15,10 +15,10 @@
 
 #include <Eigen/Eigen>
 
-#include <ros/ros.h>
-#include <geometry_msgs/Point.h>
-#include <visualization_msgs/Marker.h>
-#include <nav_msgs/Path.h>
+#include <rclcpp/rclcpp.hpp>
+#include <geometry_msgs/msg/point.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+#include <nav_msgs/msg/path.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -48,7 +48,7 @@ class Cell
 {
 public:
   explicit Cell(double x = 0.0, double y = 0.0, double z = 0.0);
-  explicit Cell(const geometry_msgs::Point& center);
+  explicit Cell(const geometry_msgs::msg::Point& center);
   ~Cell() = default;
   bool IsCellConnected(int cell_ind);
   void AddViewPoint(int viewpoint_ind)
@@ -96,15 +96,15 @@ public:
   {
     return keypose_graph_node_indices_;
   }
-  geometry_msgs::Point GetPosition()
+  geometry_msgs::msg::Point GetPosition()
   {
     return center_;
   }
-  void SetPosition(const geometry_msgs::Point& position)
+  void SetPosition(const geometry_msgs::msg::Point& position)
   {
     center_ = position;
   }
-  void SetRobotPosition(const geometry_msgs::Point& robot_position)
+  void SetRobotPosition(const geometry_msgs::msg::Point& robot_position)
   {
     robot_position_ = robot_position;
     robot_position_set_ = true;
@@ -118,7 +118,7 @@ public:
   {
     return robot_position_set_;
   }
-  geometry_msgs::Point GetRobotPosition()
+  geometry_msgs::msg::Point GetRobotPosition()
   {
     return robot_position_;
   }
@@ -179,9 +179,9 @@ public:
 private:
   CellStatus status_;
   // The center location of this cell.
-  geometry_msgs::Point center_;
+  geometry_msgs::msg::Point center_;
   // Position of the robot where this cell is first observed and turned EXPLORING
-  geometry_msgs::Point robot_position_;
+  geometry_msgs::msg::Point robot_position_;
   // Whether the robot position has been set for this cell
   bool robot_position_set_;
   // Number of times the cell is visited by the robot
@@ -216,8 +216,8 @@ public:
                      double cell_height = 6.0, int nearby_grid_num = 5);
   ~GridWorld() = default;
   void ReadParameters(ros::NodeHandle& nh);
-  void UpdateNeighborCells(const geometry_msgs::Point& robot_position);
-  void UpdateRobotPosition(const geometry_msgs::Point& robot_position);
+  void UpdateNeighborCells(const geometry_msgs::msg::Point& robot_position);
+  void UpdateRobotPosition(const geometry_msgs::msg::Point& robot_position);
   void UpdateCellKeyposeGraphNodes(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph);
   int GetMinAddPointNum()
   {
@@ -227,11 +227,11 @@ public:
   {
     return kMinAddFrontierPointNum;
   }
-  geometry_msgs::Point GetOrigin()
+  geometry_msgs::msg::Point GetOrigin()
   {
     // return origin_;
     Eigen::Vector3d origin = subspaces_->GetOrigin();
-    geometry_msgs::Point geo_origin;
+    geometry_msgs::msg::Point geo_origin;
     geo_origin.x = origin.x();
     geo_origin.y = origin.y();
     geo_origin.z = origin.z();
@@ -301,14 +301,14 @@ public:
   };
   void GetNeighborCellIndices(const Eigen::Vector3i& center_cell_sub, const Eigen::Vector3i& neighbor_range,
                               std::vector<int>& neighbor_indices);
-  void GetNeighborCellIndices(const geometry_msgs::Point& position, const Eigen::Vector3i& neighbor_range,
+  void GetNeighborCellIndices(const geometry_msgs::msg::Point& position, const Eigen::Vector3i& neighbor_range,
                               std::vector<int>& neighbor_indices);
   void GetExploringCellIndices(std::vector<int>& exploring_cell_indices);
   CellStatus GetCellStatus(int cell_ind);
   void SetCellStatus(int cell_ind, CellStatus status);
-  geometry_msgs::Point GetCellPosition(int cell_ind);
-  void SetCellRobotPosition(int cell_ind, const geometry_msgs::Point& robot_position);
-  geometry_msgs::Point GetCellRobotPosition(int cell_ind);
+  geometry_msgs::msg::Point GetCellPosition(int cell_ind);
+  void SetCellRobotPosition(int cell_ind, const geometry_msgs::msg::Point& robot_position);
+  geometry_msgs::msg::Point GetCellRobotPosition(int cell_ind);
   void CellAddVisitCount(int cell_ind);
   int GetCellVisitCount(int cell_ind);
   bool IsRobotPositionSet(int cell_ind);
@@ -324,7 +324,7 @@ public:
   {
     cur_keypose_graph_node_ind_ = node_ind;
   }
-  inline void SetCurKeyposeGraphNodePosition(geometry_msgs::Point node_position)
+  inline void SetCurKeyposeGraphNodePosition(geometry_msgs::msg::Point node_position)
   {
     cur_keypose_graph_node_position_ = node_position;
   }
@@ -379,8 +379,8 @@ private:
   bool initialized_;
   bool use_keypose_graph_;
   int cur_keypose_id_;
-  geometry_msgs::Point robot_position_;
-  geometry_msgs::Point origin_;
+  geometry_msgs::msg::Point robot_position_;
+  geometry_msgs::msg::Point origin_;
   std::vector<int> neighbor_cell_indices_;
   std::vector<int> almost_covered_cell_indices_;
   std::vector<std::pair<int, int>> to_connect_cell_indices_;
@@ -389,7 +389,7 @@ private:
   Eigen::Vector3d cur_keypose_;
   bool set_home_;
   bool return_home_;
-  geometry_msgs::Point cur_keypose_graph_node_position_;
+  geometry_msgs::msg::Point cur_keypose_graph_node_position_;
   int cur_keypose_graph_node_ind_;
   int cur_robot_cell_ind_;
   int prev_robot_cell_ind_;

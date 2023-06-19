@@ -216,14 +216,14 @@ bool SensorCoveragePlanner3D::initialize(ros::NodeHandle& nh, ros::NodeHandle& n
   to_nearest_global_subspace_path_publisher_ = nh.advertise<nav_msgs::Path>("to_nearest_global_subspace_path", 1);
   local_tsp_path_publisher_ = nh.advertise<nav_msgs::Path>("local_path", 1);
   exploration_path_publisher_ = nh.advertise<nav_msgs::Path>("exploration_path", 1);
-  waypoint_pub_ = nh.advertise<geometry_msgs::PointStamped>(pp_.pub_waypoint_topic_, 2);
+  waypoint_pub_ = nh.advertise<geometry_msgs::msg::PointStamped>(pp_.pub_waypoint_topic_, 2);
   exploration_finish_pub_ = nh.advertise<std_msgs::Bool>(pp_.pub_exploration_finish_topic_, 2);
   runtime_breakdown_pub_ = nh.advertise<std_msgs::Int32MultiArray>(pp_.pub_runtime_breakdown_topic_, 2);
   runtime_pub_ = nh.advertise<std_msgs::Float32>(pp_.pub_runtime_topic_, 2);
   momentum_activation_count_pub_ = nh.advertise<std_msgs::Int32>(pp_.pub_momentum_activation_count_topic_, 2);
   // Debug
   pointcloud_manager_neighbor_cells_origin_pub_ =
-      nh.advertise<geometry_msgs::PointStamped>("pointcloud_manager_neighbor_cells_origin", 1);
+      nh.advertise<geometry_msgs::msg::PointStamped>("pointcloud_manager_neighbor_cells_origin", 1);
 
   return true;
 }
@@ -378,7 +378,7 @@ void SensorCoveragePlanner3D::NogoBoundaryCallback(const geometry_msgs::PolygonS
   nogo_boundary.push_back(polygon);
   pd_.viewpoint_manager_->UpdateNogoBoundary(nogo_boundary);
 
-  geometry_msgs::Point point;
+  geometry_msgs::msg::Point point;
   for (int i = 0; i < nogo_boundary.size(); i++)
   {
     for (int j = 0; j < nogo_boundary[i].points.size() - 1; j++)
@@ -412,7 +412,7 @@ void SensorCoveragePlanner3D::SendInitialWaypoint()
   double dx = cos(pd_.robot_yaw_) * lx - sin(pd_.robot_yaw_) * ly;
   double dy = sin(pd_.robot_yaw_) * lx + cos(pd_.robot_yaw_) * ly;
 
-  geometry_msgs::PointStamped waypoint;
+  geometry_msgs::msg::PointStamped waypoint;
   waypoint.header.frame_id = "map";
   waypoint.header.stamp = ros::Time::now();
   waypoint.point.x = pd_.robot_position_.x + dx;
@@ -558,7 +558,7 @@ void SensorCoveragePlanner3D::UpdateGlobalRepresentation()
   // DEBUG
   Eigen::Vector3d pointcloud_manager_neighbor_cells_origin =
       pd_.planning_env_->GetPointCloudManagerNeighborCellsOrigin();
-  geometry_msgs::PointStamped pointcloud_manager_neighbor_cells_origin_point;
+  geometry_msgs::msg::PointStamped pointcloud_manager_neighbor_cells_origin_point;
   pointcloud_manager_neighbor_cells_origin_point.header.frame_id = "map";
   pointcloud_manager_neighbor_cells_origin_point.header.stamp = ros::Time::now();
   pointcloud_manager_neighbor_cells_origin_point.point.x = pointcloud_manager_neighbor_cells_origin.x();
@@ -573,7 +573,7 @@ void SensorCoveragePlanner3D::UpdateGlobalRepresentation()
   pd_.planning_env_->UpdateKeyposeCloud<PlannerCloudPointType>(pd_.keypose_cloud_->cloud_);
 
   int closest_node_ind = pd_.keypose_graph_->GetClosestNodeInd(pd_.robot_position_);
-  geometry_msgs::Point closest_node_position = pd_.keypose_graph_->GetClosestNodePosition(pd_.robot_position_);
+  geometry_msgs::msg::Point closest_node_position = pd_.keypose_graph_->GetClosestNodePosition(pd_.robot_position_);
   pd_.grid_world_->SetCurKeyposeGraphNodeInd(closest_node_ind);
   pd_.grid_world_->SetCurKeyposeGraphNodePosition(closest_node_position);
 
@@ -1111,7 +1111,7 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
 
 void SensorCoveragePlanner3D::PublishWaypoint()
 {
-  geometry_msgs::PointStamped waypoint;
+  geometry_msgs::msg::PointStamped waypoint;
   if (exploration_finished_ && near_home_ && pp_.kRushHome)
   {
     waypoint.point.x = pd_.initial_position_.x();
@@ -1134,7 +1134,7 @@ void SensorCoveragePlanner3D::PublishWaypoint()
     waypoint.point.y = dy + pd_.robot_position_.y;
     waypoint.point.z = pd_.lookahead_point_.z();
   }
-  misc_utils_ns::Publish<geometry_msgs::PointStamped>(waypoint_pub_, waypoint, kWorldFrameID);
+  misc_utils_ns::Publish<geometry_msgs::msg::PointStamped>(waypoint_pub_, waypoint, kWorldFrameID);
 }
 
 void SensorCoveragePlanner3D::PublishRuntime()

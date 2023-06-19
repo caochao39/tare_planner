@@ -14,7 +14,7 @@
 #include <cmath>
 #include <Eigen/Core>
 
-#include <nav_msgs/Path.h>
+#include <nav_msgs/msg/path.hpp>
 
 namespace tare
 {

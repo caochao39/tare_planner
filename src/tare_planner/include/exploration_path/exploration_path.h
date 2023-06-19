@@ -17,8 +17,8 @@
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <nav_msgs/Path.h>
-#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/msg/path.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <utils/misc_utils.h>
 #include <utils/pointcloud_utils.h>
@@ -47,7 +47,7 @@ struct Node
   bool nonstop_;
   explicit Node();
   explicit Node(Eigen::Vector3d position);
-  explicit Node(geometry_msgs::Point point, NodeType type);
+  explicit Node(geometry_msgs::msg::Point point, NodeType type);
   ~Node() = default;
   bool IsLocal();
   friend bool operator==(const Node& n1, const Node& n2);

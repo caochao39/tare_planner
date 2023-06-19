@@ -10,7 +10,7 @@
  */
 #pragma once
 
-#include <geometry_msgs/Point.h>
+#include <geometry_msgs/msg/point.hpp>
 #include <lidar_model/lidar_model.h>
 
 namespace viewpoint_ns
@@ -19,7 +19,7 @@ class ViewPoint
 {
 public:
   explicit ViewPoint(double x = 0.0, double y = 0.0, double z = 0.0);
-  explicit ViewPoint(const geometry_msgs::Point& position);
+  explicit ViewPoint(const geometry_msgs::msg::Point& position);
   ~ViewPoint() = default;
 
   template <class PCLPointType>
@@ -32,7 +32,7 @@ public:
   {
     return lidar_model_.CheckVisibility<PCLPointType>(point, occlusion_threshold);
   }
-  void SetPosition(const geometry_msgs::Point& position)
+  void SetPosition(const geometry_msgs::msg::Point& position)
   {
     lidar_model_.setPosition(position);
   }
@@ -54,7 +54,7 @@ public:
     lidar_model_.SetHeight(height);
   }
 
-  geometry_msgs::Point GetPosition() const
+  geometry_msgs::msg::Point GetPosition() const
   {
     return lidar_model_.getPosition();
   }

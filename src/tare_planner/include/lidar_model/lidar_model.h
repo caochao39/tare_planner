@@ -14,8 +14,8 @@
 #include <vector>
 #include <cmath>
 // ROS
-#include <visualization_msgs/Marker.h>
-#include <geometry_msgs/Point.h>
+#include <visualization_msgs/msg/marker.hpp>
+#include <geometry_msgs/msg/point.hpp>
 // PCL
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -42,7 +42,7 @@ public:
   template <class PointType>
   void UpdateCoverage(const PointType& point)
   {
-    double distance_to_point = misc_utils_ns::PointXYZDist<PointType, geometry_msgs::Point>(point, pose_.position);
+    double distance_to_point = misc_utils_ns::PointXYZDist<PointType, geometry_msgs::msg::Point>(point, pose_.position);
 
     if (isZero(distance_to_point))
       return;
@@ -90,7 +90,7 @@ public:
   template <class PointType>
   bool CheckVisibility(const PointType& point, double occlusion_threshold) const
   {
-    double distance_to_point = misc_utils_ns::PointXYZDist<PointType, geometry_msgs::Point>(point, pose_.position);
+    double distance_to_point = misc_utils_ns::PointXYZDist<PointType, geometry_msgs::msg::Point>(point, pose_.position);
 
     if (isZero(distance_to_point))
       return false;
@@ -155,11 +155,11 @@ public:
   {
     return pose_;
   }
-  void setPosition(const geometry_msgs::Point& position)
+  void setPosition(const geometry_msgs::msg::Point& position)
   {
     pose_.position = position;
   }
-  geometry_msgs::Point getPosition() const
+  geometry_msgs::msg::Point getPosition() const
   {
     return pose_.position;
   }

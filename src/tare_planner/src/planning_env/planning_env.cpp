@@ -269,7 +269,7 @@ void PlanningEnv::UpdateCoveredArea(const lidar_model_ns::LiDARModel& robot_view
     std::cout << "Planning cloud empty, cannot update covered area" << std::endl;
     return;
   }
-  geometry_msgs::Point robot_position = robot_viewpoint.getPosition();
+  geometry_msgs::msg::Point robot_position = robot_viewpoint.getPosition();
   double sensor_range = viewpoint_manager->GetSensorRange();
   double coverage_occlusion_thr = viewpoint_manager->GetCoverageOcclusionThr();
   double coverage_dilation_radius = viewpoint_manager->GetCoverageDilationRadius();

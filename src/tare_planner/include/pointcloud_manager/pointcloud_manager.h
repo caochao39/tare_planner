@@ -20,8 +20,8 @@
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
 // ROS
-#include <geometry_msgs/Point.h>
-#include <visualization_msgs/Marker.h>
+#include <geometry_msgs/msg/point.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 
 #include "grid/grid.h"
 #include <utils/misc_utils.h>
@@ -38,7 +38,7 @@ public:
   explicit PointCloudManager(int row_num = 20, int col_num = 20, int level_num = 10, int max_cell_point_num = 100000,
                              double cell_size = 24, double cell_height = 3, int neighbor_cell_num = 5);
   ~PointCloudManager() = default;
-  bool UpdateRobotPosition(const geometry_msgs::Point& robot_position);
+  bool UpdateRobotPosition(const geometry_msgs::msg::Point& robot_position);
   template <class InputPCLPointType>
   void UpdatePointCloud(const pcl::PointCloud<InputPCLPointType>& cloud_in)
   {
@@ -76,7 +76,7 @@ public:
   {
     return neighbor_cells_origin_;
   }
-  geometry_msgs::Point GetOrigin()
+  geometry_msgs::msg::Point GetOrigin()
   {
     return origin_;
   }
@@ -104,8 +104,8 @@ private:
   const int kNeighborCellNum;
   double kCloudDwzFilterLeafSize;
 
-  geometry_msgs::Point robot_position_;
-  geometry_msgs::Point origin_;
+  geometry_msgs::msg::Point robot_position_;
+  geometry_msgs::msg::Point origin_;
   Eigen::Vector3d neighbor_cells_origin_;
 
   int cur_row_idx_;

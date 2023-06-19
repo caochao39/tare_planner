@@ -18,14 +18,14 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/time_synchronizer.h>
-#include <nav_msgs/Odometry.h>
-#include <ros/ros.h>
+#include <nav_msgs/msg/odometry.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/PointCloud2.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/Int32MultiArray.h>
 #include <std_msgs/Float32.h>
-#include <geometry_msgs/PolygonStamped.h>
+#include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <geometry_msgs/Pose.h>
 // PCL
 #include <pcl/PointIndices.h>
@@ -128,8 +128,8 @@ struct PlannerData
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> reordered_global_subspace_cloud_;
 
   nav_msgs::Odometry keypose_;
-  geometry_msgs::Point robot_position_;
-  geometry_msgs::Point last_robot_position_;
+  geometry_msgs::msg::Point robot_position_;
+  geometry_msgs::msg::Point last_robot_position_;
   lidar_model_ns::LiDARModel robot_viewpoint_;
   exploration_path_ns::ExplorationPath exploration_path_;
   Eigen::Vector3d lookahead_point_;

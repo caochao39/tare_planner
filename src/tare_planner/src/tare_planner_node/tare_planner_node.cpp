@@ -1,4 +1,4 @@
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include "sensor_coverage_planner/sensor_coverage_planner_ground.h"
 
 int main(int argc, char** argv)

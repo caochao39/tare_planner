@@ -10,10 +10,10 @@
  */
 #pragma once
 
-#include <ros/ros.h>
-#include <nav_msgs/Path.h>
-#include <std_msgs/ColorRGBA.h>
-#include <geometry_msgs/Point.h>
+#include <rclcpp/rclcpp.hpp>
+#include <nav_msgs/msg/path.hpp>
+#include <std_msgs/msg/color_rgba.hpp>
+#include <geometry_msgs/msg/point.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -64,8 +64,8 @@ private:
   nav_msgs::Path local_path_;
   nav_msgs::Path global_path_;
 
-  geometry_msgs::Point local_planning_horizon_origin_;
-  geometry_msgs::Point global_subspace_origin_;
-  geometry_msgs::Point global_subspace_size_;
+  geometry_msgs::msg::Point local_planning_horizon_origin_;
+  geometry_msgs::msg::Point global_subspace_origin_;
+  geometry_msgs::msg::Point global_subspace_size_;
 };
 }  // namespace tare_visualizer_ns

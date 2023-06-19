@@ -72,7 +72,7 @@ void PointCloudManager::UpdateOrigin()
   occupancy_cloud_grid_->SetOrigin(Eigen::Vector3d(origin_.x, origin_.y, origin_.z));
 }
 
-bool PointCloudManager::UpdateRobotPosition(const geometry_msgs::Point& robot_position)
+bool PointCloudManager::UpdateRobotPosition(const geometry_msgs::msg::Point& robot_position)
 {
   robot_position_ = robot_position;
   if (!initialized_)
@@ -191,7 +191,7 @@ void PointCloudManager::GetMarker(visualization_msgs::Marker& marker)
     {
       for (int k = 0; k < kLevelNum; k++)
       {
-        geometry_msgs::Point cell_center;
+        geometry_msgs::msg::Point cell_center;
         cell_center.x = i * kCellSize + kCellSize / 2 + origin_.x;
         cell_center.y = j * kCellSize + kCellSize / 2 + origin_.y;
         cell_center.z = k * kCellHeight + kCellHeight / 2 + origin_.z;

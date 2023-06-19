@@ -15,8 +15,8 @@
 #include <memory>
 #include <Eigen/Core>
 // ROS
-#include <geometry_msgs/Point.h>
-#include <geometry_msgs/Polygon.h>
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/polygon.hpp>
 // PCL
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/kdtree/kdtree_flann.h>
@@ -90,7 +90,7 @@ public:
   {
     parameters_.kUseFrontier = use_frontier;
   }
-  void UpdateRobotPosition(geometry_msgs::Point robot_position)
+  void UpdateRobotPosition(geometry_msgs::msg::Point robot_position)
   {
     bool pointcloud_manager_rolling = pointcloud_manager_->UpdateRobotPosition(robot_position);
     Eigen::Vector3d pointcloud_manager_neighbor_cells_origin = pointcloud_manager_->GetNeighborCellsOrigin();
@@ -253,7 +253,7 @@ public:
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
     for (int i = 0; i < cloud->points.size(); i++)
     {
-      geometry_msgs::Point geo_point;
+      geometry_msgs::msg::Point geo_point;
       geo_point.x = cloud->points[i].x;
       geo_point.y = cloud->points[i].y;
       geo_point.z = cloud->points[i].z;

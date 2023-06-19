@@ -30,7 +30,7 @@ ViewPoint::ViewPoint(double x, double y, double z)
 {
 }
 
-ViewPoint::ViewPoint(const geometry_msgs::Point& position) : ViewPoint(position.x, position.y, position.z)
+ViewPoint::ViewPoint(const geometry_msgs::msg::Point& position) : ViewPoint(position.x, position.y, position.z)
 {
 }
 
