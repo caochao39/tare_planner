@@ -15,7 +15,7 @@ namespace local_coverage_planner_ns
 {
 const std::string LocalCoveragePlanner::kRuntimeUnit = "us";
 
-bool LocalCoveragePlannerParameter::ReadParameters(ros::NodeHandle& nh)
+bool LocalCoveragePlannerParameter::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
   kMinAddPointNum = misc_utils_ns::getParam<int>(nh, "kMinAddPointNumSmall", 60);
   kMinAddFrontierPointNum = misc_utils_ns::getParam<int>(nh, "kMinAddFrontierPointNum", 30);
@@ -24,7 +24,7 @@ bool LocalCoveragePlannerParameter::ReadParameters(ros::NodeHandle& nh)
 
   return true;
 }
-LocalCoveragePlanner::LocalCoveragePlanner(ros::NodeHandle& nh)
+LocalCoveragePlanner::LocalCoveragePlanner(rclcpp::Node::SharedPtr nh)
   : lookahead_point_update_(false), use_frontier_(true), local_coverage_complete_(false)
 {
   parameters_.ReadParameters(nh);

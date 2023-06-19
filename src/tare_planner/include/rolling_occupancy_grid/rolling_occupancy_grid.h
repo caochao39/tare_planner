@@ -34,7 +34,7 @@ public:
     NOT_FRONTIER = 3
   };
 
-  explicit RollingOccupancyGrid(ros::NodeHandle& nh);
+  explicit RollingOccupancyGrid(rclcpp::Node::SharedPtr nh);
   ~RollingOccupancyGrid() = default;
 
   Eigen::Vector3d GetResolution()

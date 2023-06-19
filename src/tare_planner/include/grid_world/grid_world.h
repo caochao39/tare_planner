@@ -211,11 +211,11 @@ private:
 class GridWorld
 {
 public:
-  explicit GridWorld(ros::NodeHandle& nh);
+  explicit GridWorld(rclcpp::Node::SharedPtr nh);
   explicit GridWorld(int row_num = 1, int col_num = 1, int level_num = 1, double cell_size = 6.0,
                      double cell_height = 6.0, int nearby_grid_num = 5);
   ~GridWorld() = default;
-  void ReadParameters(ros::NodeHandle& nh);
+  void ReadParameters(rclcpp::Node::SharedPtr nh);
   void UpdateNeighborCells(const geometry_msgs::msg::Point& robot_position);
   void UpdateRobotPosition(const geometry_msgs::msg::Point& robot_position);
   void UpdateCellKeyposeGraphNodes(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph);

@@ -13,7 +13,7 @@
 
 namespace rolling_occupancy_grid_ns
 {
-RollingOccupancyGrid::RollingOccupancyGrid(ros::NodeHandle& nh) : initialized_(false), dimension_(3)
+RollingOccupancyGrid::RollingOccupancyGrid(rclcpp::Node::SharedPtr nh) : initialized_(false), dimension_(3)
 {
   double pointcloud_cell_size = misc_utils_ns::getParam<double>(nh, "kPointCloudCellSize", 18);
   double pointcloud_cell_height = misc_utils_ns::getParam<double>(nh, "kPointCloudCellHeight", 1.8);

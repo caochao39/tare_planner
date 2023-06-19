@@ -28,12 +28,12 @@ struct LocalCoveragePlannerParameter
   int kGreedyViewPointSampleRange;
   int kLocalPathOptimizationItrMax;
 
-  bool ReadParameters(ros::NodeHandle& nh);
+  bool ReadParameters(rclcpp::Node::SharedPtr nh);
 };
 class LocalCoveragePlanner
 {
 public:
-  explicit LocalCoveragePlanner(ros::NodeHandle& nh);
+  explicit LocalCoveragePlanner(rclcpp::Node::SharedPtr nh);
   ~LocalCoveragePlanner() = default;
 
   // Update representation

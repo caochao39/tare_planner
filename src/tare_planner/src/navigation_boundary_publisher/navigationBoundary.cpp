@@ -88,7 +88,9 @@ void readBoundaryFile()
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "navigationBoundary");
+  rclcpp::init(argc, argv);
+  rclcpp::Node::SharedPtr nh = rclcpp::Node::make_shared("navigationBoundary");
+
   ros::NodeHandle nh;
   ros::NodeHandle nhPrivate = ros::NodeHandle("~");
 
@@ -116,7 +118,7 @@ int main(int argc, char** argv)
   }
 
   ros::Rate rate(100);
-  bool status = ros::ok();
+  bool status = rclcpp::ok();
   while (status)
   {
     ros::spinOnce();
@@ -129,7 +131,7 @@ int main(int argc, char** argv)
       sendBoundaryCount = 0;
     }
 
-    status = ros::ok();
+    status = rclcpp::ok();
     rate.sleep();
   }
 

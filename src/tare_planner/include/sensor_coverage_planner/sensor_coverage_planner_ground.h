@@ -20,13 +20,13 @@
 #include <message_filters/time_synchronizer.h>
 #include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/PointCloud2.h>
-#include <std_msgs/Bool.h>
-#include <std_msgs/Int32.h>
-#include <std_msgs/Int32MultiArray.h>
-#include <std_msgs/Float32.h>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/int32.hpp>
+#include <std_msgs/msg/int32_multi_array.hpp>
+#include <std_msgs/msg/float32.hpp>
 #include <geometry_msgs/msg/polygon_stamped.hpp>
-#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/msg/pose.hpp>
 // PCL
 #include <pcl/PointIndices.h>
 #include <pcl/filters/extract_indices.h>
@@ -103,7 +103,7 @@ struct PlannerParameters
   int kDirectionChangeCounterThr;
   int kDirectionNoChangeCounterThr;
 
-  bool ReadParameters(ros::NodeHandle& nh);
+  bool ReadParameters(rclcpp::Node::SharedPtr nh);
 };
 
 struct PlannerData
@@ -153,14 +153,14 @@ struct PlannerData
   std::unique_ptr<misc_utils_ns::Marker> nogo_boundary_marker_;
   std::unique_ptr<misc_utils_ns::Marker> grid_world_marker_;
 
-  void Initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p);
+  void Initialize(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedPtr nh_p);
 };
 
 class SensorCoveragePlanner3D
 {
 public:
-  explicit SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeHandle& nh_p);
-  bool initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p);
+  explicit SensorCoveragePlanner3D(rclcpp::Node::SharedPtr nh);
+  bool initialize(rclcpp::Node::SharedPtr nh);
   void execute(const ros::TimerEvent&);
   ~SensorCoveragePlanner3D() = default;
 
@@ -226,14 +226,15 @@ private:
   ros::Publisher pointcloud_manager_neighbor_cells_origin_pub_;
 
   // Callback functions
-  void ExplorationStartCallback(const std_msgs::Bool::ConstPtr& start_msg);
+  void test(const sensor_msgs::msg::PointCloud2::ConstPtr& test_msg);
+  void ExplorationStartCallback(const std_msgs::msg::Bool::ConstPtr& start_msg);
   void StateEstimationCallback(const nav_msgs::msg::Odometry::ConstPtr& state_estimation_msg);
-  void RegisteredScanCallback(const sensor_msgs::PointCloud2ConstPtr& registered_cloud_msg);
-  void TerrainMapCallback(const sensor_msgs::PointCloud2ConstPtr& terrain_map_msg);
-  void TerrainMapExtCallback(const sensor_msgs::PointCloud2ConstPtr& terrain_cloud_large_msg);
-  void CoverageBoundaryCallback(const geometry_msgs::PolygonStampedConstPtr& polygon_msg);
-  void ViewPointBoundaryCallback(const geometry_msgs::PolygonStampedConstPtr& polygon_msg);
-  void NogoBoundaryCallback(const geometry_msgs::PolygonStampedConstPtr& polygon_msg);
+  void RegisteredScanCallback(const sensor_msgs::msg::PointCloud2::ConstPtr& registered_cloud_msg);
+  void TerrainMapCallback(const sensor_msgs::msg::PointCloud2::ConstPtr& terrain_map_msg);
+  void TerrainMapExtCallback(const sensor_msgs::msg::PointCloud2::ConstPtr& terrain_cloud_large_msg);
+  void CoverageBoundaryCallback(const geometry_msgs::msg::PolygonStamped::ConstPtr& polygon_msg);
+  void ViewPointBoundaryCallback(const geometry_msgs::msg::PolygonStamped::ConstPtr& polygon_msg);
+  void NogoBoundaryCallback(const geometry_msgs::msg::PolygonStamped::ConstPtr& polygon_msg);
 
   void SendInitialWaypoint();
   void UpdateKeyposeGraph();

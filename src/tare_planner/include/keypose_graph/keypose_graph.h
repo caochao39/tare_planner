@@ -105,9 +105,9 @@ private:
   }
 
 public:
-  KeyposeGraph(ros::NodeHandle& nh);
+  KeyposeGraph(rclcpp::Node::SharedPtr nh);
   ~KeyposeGraph() = default;
-  void ReadParameters(ros::NodeHandle& nh);
+  void ReadParameters(rclcpp::Node::SharedPtr nh);
   void AddNode(const geometry_msgs::msg::Point& position, int node_ind, int keypose_id, bool is_keypose);
   void AddNodeAndEdge(const geometry_msgs::msg::Point& position, int node_ind, int keypose_id, bool is_keypose,
                       int connected_node_ind, double connected_node_dist);

@@ -169,7 +169,7 @@ T getParam(ros::NodeHandle* nh, const std::string& name, const T default_val)
   return val;
 }
 template <typename T>
-T getParam(ros::NodeHandle& nh, const std::string& name, const T default_val)
+T getParam(rclcpp::Node::SharedPtr nh, const std::string& name, const T default_val)
 {
   T val;
   bool success = nh.getParam(name, val);
@@ -302,7 +302,7 @@ public:
     marker_.action = visualization_msgs::msg::Marker::ADD;
     marker_.pose.orientation.w = 1.0;
   }
-  explicit Marker(ros::NodeHandle& nh, std::string pub_topic, std::string frame_id)
+  explicit Marker(rclcpp::Node::SharedPtr nh, std::string pub_topic, std::string frame_id)
     : pub_topic_(pub_topic), frame_id_(frame_id)
   {
     marker_pub_ = nh.advertise<visualization_msgs::msg::Marker>(pub_topic_, 2);

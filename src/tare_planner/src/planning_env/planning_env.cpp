@@ -14,7 +14,7 @@
 
 namespace planning_env_ns
 {
-void PlanningEnvParameters::ReadParameters(ros::NodeHandle& nh)
+void PlanningEnvParameters::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
   kSurfaceCloudDwzLeafSize = misc_utils_ns::getParam<double>(nh, "kSurfaceCloudDwzLeafSize", 0.2);
   kCollisionCloudDwzLeafSize = misc_utils_ns::getParam<double>(nh, "kCollisionCloudDwzLeafSize", 0.2);

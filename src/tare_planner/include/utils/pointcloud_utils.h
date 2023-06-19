@@ -194,7 +194,7 @@ struct pointcloud_utils_ns::PCLCloud
     cloud_ = typename pcl::PointCloud<PCLPointType>::Ptr(new pcl::PointCloud<PCLPointType>);
     cloud_pub_ = nh->advertise<sensor_msgs::PointCloud2>(pub_cloud_topic_, 2);
   }
-  PCLCloud(ros::NodeHandle& nh, std::string pub_cloud_topic, std::string frame_id)
+  PCLCloud(rclcpp::Node::SharedPtr nh, std::string pub_cloud_topic, std::string frame_id)
     : pub_cloud_topic_(pub_cloud_topic), frame_id_(frame_id)
   {
     cloud_ = typename pcl::PointCloud<PCLPointType>::Ptr(new pcl::PointCloud<PCLPointType>);

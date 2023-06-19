@@ -12,7 +12,7 @@
 
 namespace viewpoint_manager_ns
 {
-bool ViewPointManagerParameter::ReadParameters(ros::NodeHandle& nh)
+bool ViewPointManagerParameter::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
   kUseFrontier = misc_utils_ns::getParam<bool>(nh, "kUseFrontier", false);
 
@@ -70,7 +70,7 @@ bool ViewPointManagerParameter::ReadParameters(ros::NodeHandle& nh)
   return true;
 }
 
-ViewPointManager::ViewPointManager(ros::NodeHandle& nh) : initialized_(false)
+ViewPointManager::ViewPointManager(rclcpp::Node::SharedPtr nh) : initialized_(false)
 {
   vp_.ReadParameters(nh);
 

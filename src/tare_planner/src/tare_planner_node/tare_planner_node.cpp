@@ -3,11 +3,10 @@
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "tare_planner_node");
-  ros::NodeHandle node_handle;
-  ros::NodeHandle private_node_handle("~");
+  rclcpp::init(argc, argv, "tare_planner_node");
+  rclcpp::Node::SharedPtr nh = rclcpp::Node::make_shared("tare_planner_node");
 
-  sensor_coverage_planner_3d_ns::SensorCoveragePlanner3D tare_planner(node_handle, private_node_handle);
+  sensor_coverage_planner_3d_ns::SensorCoveragePlanner3D tare_planner(nh, nh);
 
   ros::spin();
   return 0;

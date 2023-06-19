@@ -24,7 +24,7 @@ KeyposeNode::KeyposeNode(const geometry_msgs::msg::Point& point, int node_ind, i
 {
 }
 
-KeyposeGraph::KeyposeGraph(ros::NodeHandle& nh)
+KeyposeGraph::KeyposeGraph(rclcpp::Node::SharedPtr nh)
   : allow_vertical_edge_(false)
   , current_keypose_id_(0)
   , kAddNodeMinDist(1.0)
@@ -42,7 +42,7 @@ KeyposeGraph::KeyposeGraph(ros::NodeHandle& nh)
   nodes_cloud_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
 }
 
-void KeyposeGraph::ReadParameters(ros::NodeHandle& nh)
+void KeyposeGraph::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
   kAddNodeMinDist = misc_utils_ns::getParam<double>(nh, "keypose_graph/kAddNodeMinDist", 0.5);
   kAddNonKeyposeNodeMinDist = misc_utils_ns::getParam<double>(nh, "keypose_graph/kAddNonKeyposeNodeMinDist", 0.5);

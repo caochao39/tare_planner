@@ -27,8 +27,8 @@ namespace tare_visualizer_ns
 class TAREVisualizer
 {
 public:
-  explicit TAREVisualizer(ros::NodeHandle& nh, ros::NodeHandle& nh_private);
-  bool ReadParameters(ros::NodeHandle& nh);
+  explicit TAREVisualizer(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedPtr nh_private);
+  bool ReadParameters(rclcpp::Node::SharedPtr nh);
 
   void InitializeMarkers();
   void GetLocalPlanningHorizonMarker(double x, double y, double z);

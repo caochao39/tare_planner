@@ -13,7 +13,7 @@
 
 namespace tare_visualizer_ns
 {
-TAREVisualizer::TAREVisualizer(ros::NodeHandle& nh, ros::NodeHandle& nh_private)
+TAREVisualizer::TAREVisualizer(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedPtr nh_private)
 {
   ReadParameters(nh_private);
 
@@ -34,7 +34,7 @@ TAREVisualizer::TAREVisualizer(ros::NodeHandle& nh, ros::NodeHandle& nh_private)
 
   InitializeMarkers();
 }
-bool TAREVisualizer::ReadParameters(ros::NodeHandle& nh)
+bool TAREVisualizer::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
   kExploringSubspaceMarkerColorGradientAlpha =
       misc_utils_ns::getParam<bool>(nh, "kExploringSubspaceMarkerColorGradientAlpha", true);

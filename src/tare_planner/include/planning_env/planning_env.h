@@ -74,7 +74,7 @@ struct planning_env_ns::PlanningEnvParameters
   bool kUseCoverageBoundaryOnFrontier;
   bool kUseCoverageBoundaryOnObjectSurface;
 
-  void ReadParameters(ros::NodeHandle& nh);
+  void ReadParameters(rclcpp::Node::SharedPtr nh);
 };
 
 class planning_env_ns::PlanningEnv

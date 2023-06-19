@@ -14,7 +14,7 @@
 
 namespace sensor_coverage_planner_3d_ns
 {
-bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
+bool PlannerParameters::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
   sub_start_exploration_topic_ =
       misc_utils_ns::getParam<std::string>(nh, "sub_start_exploration_topic_", "/exploration_start");
@@ -65,7 +65,7 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   return true;
 }
 
-void PlannerData::Initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
+void PlannerData::Initialize(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedPtr nh_p)
 {
   keypose_cloud_ =
       std::make_unique<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>>(nh, "keypose_cloud", kWorldFrameID);
@@ -153,7 +153,7 @@ void PlannerData::Initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
   last_robot_position_ = robot_position_;
 }
 
-SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
+SensorCoveragePlanner3D::SensorCoveragePlanner3D(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedPtr nh_p)
   : keypose_cloud_update_(false)
   , initialized_(false)
   , lookahead_point_update_(false)
@@ -178,7 +178,7 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeH
   PrintExplorationStatus("Exploration Started", false);
 }
 
-bool SensorCoveragePlanner3D::initialize(ros::NodeHandle& nh, ros::NodeHandle& nh_p)
+bool SensorCoveragePlanner3D::initialize(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedPtr nh_p)
 {
   if (!pp_.ReadParameters(nh_p))
   {
@@ -228,7 +228,7 @@ bool SensorCoveragePlanner3D::initialize(ros::NodeHandle& nh, ros::NodeHandle& n
   return true;
 }
 
-void SensorCoveragePlanner3D::ExplorationStartCallback(const std_msgs::Bool::ConstPtr& start_msg)
+void SensorCoveragePlanner3D::ExplorationStartCallback(const std_msgs::msg::Bool::ConstPtr& start_msg)
 {
   if (start_msg->data)
   {
@@ -264,7 +264,7 @@ void SensorCoveragePlanner3D::StateEstimationCallback(const nav_msgs::msg::Odome
   initialized_ = true;
 }
 
-void SensorCoveragePlanner3D::RegisteredScanCallback(const sensor_msgs::PointCloud2ConstPtr& registered_scan_msg)
+void SensorCoveragePlanner3D::RegisteredScanCallback(const sensor_msgs::msg::PointCloud2::ConstPtr& registered_scan_msg)
 {
   if (!initialized_)
   {
@@ -304,7 +304,7 @@ void SensorCoveragePlanner3D::RegisteredScanCallback(const sensor_msgs::PointClo
   }
 }
 
-void SensorCoveragePlanner3D::TerrainMapCallback(const sensor_msgs::PointCloud2ConstPtr& terrain_map_msg)
+void SensorCoveragePlanner3D::TerrainMapCallback(const sensor_msgs::msg::PointCloud2::ConstPtr& terrain_map_msg)
 {
   if (pp_.kCheckTerrainCollision)
   {
@@ -321,7 +321,7 @@ void SensorCoveragePlanner3D::TerrainMapCallback(const sensor_msgs::PointCloud2C
   }
 }
 
-void SensorCoveragePlanner3D::TerrainMapExtCallback(const sensor_msgs::PointCloud2ConstPtr& terrain_map_ext_msg)
+void SensorCoveragePlanner3D::TerrainMapExtCallback(const sensor_msgs::msg::PointCloud2::ConstPtr& terrain_map_ext_msg)
 {
   if (pp_.kUseTerrainHeight)
   {
@@ -341,17 +341,17 @@ void SensorCoveragePlanner3D::TerrainMapExtCallback(const sensor_msgs::PointClou
   }
 }
 
-void SensorCoveragePlanner3D::CoverageBoundaryCallback(const geometry_msgs::PolygonStampedConstPtr& polygon_msg)
+void SensorCoveragePlanner3D::CoverageBoundaryCallback(const geometry_msgs::msg::PolygonStamped::ConstPtr& polygon_msg)
 {
   pd_.planning_env_->UpdateCoverageBoundary((*polygon_msg).polygon);
 }
 
-void SensorCoveragePlanner3D::ViewPointBoundaryCallback(const geometry_msgs::PolygonStampedConstPtr& polygon_msg)
+void SensorCoveragePlanner3D::ViewPointBoundaryCallback(const geometry_msgs::msg::PolygonStamped::ConstPtr& polygon_msg)
 {
   pd_.viewpoint_manager_->UpdateViewPointBoundary((*polygon_msg).polygon);
 }
 
-void SensorCoveragePlanner3D::NogoBoundaryCallback(const geometry_msgs::PolygonStampedConstPtr& polygon_msg)
+void SensorCoveragePlanner3D::NogoBoundaryCallback(const geometry_msgs::msg::PolygonStamped::ConstPtr& polygon_msg)
 {
   if (polygon_msg->polygon.points.empty())
   {

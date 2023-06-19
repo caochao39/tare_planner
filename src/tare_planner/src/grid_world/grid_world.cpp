@@ -66,7 +66,7 @@ bool Cell::IsCellConnected(int cell_ind)
   }
 }
 
-GridWorld::GridWorld(ros::NodeHandle& nh) : initialized_(false), use_keypose_graph_(false)
+GridWorld::GridWorld(rclcpp::Node::SharedPtr nh) : initialized_(false), use_keypose_graph_(false)
 {
   ReadParameters(nh);
   robot_position_.x = 0.0;
@@ -155,7 +155,7 @@ GridWorld::GridWorld(int row_num, int col_num, int level_num, double cell_size, 
   return_home_ = false;
 }
 
-void GridWorld::ReadParameters(ros::NodeHandle& nh)
+void GridWorld::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
   kRowNum = misc_utils_ns::getParam<int>(nh, "kGridWorldXNum", 121);
   kColNum = misc_utils_ns::getParam<int>(nh, "kGridWorldYNum", 121);

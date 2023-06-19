@@ -86,14 +86,14 @@ struct ViewPointManagerParameter
   double kInFovXYDistThreshold;
   double kInFovZDiffThreshold;
 
-  bool ReadParameters(ros::NodeHandle& nh);
+  bool ReadParameters(rclcpp::Node::SharedPtr nh);
 };
 
 class ViewPointManager
 {
 public:
   std::vector<int> candidate_indices_;
-  explicit ViewPointManager(ros::NodeHandle& nh);
+  explicit ViewPointManager(rclcpp::Node::SharedPtr nh);
   ~ViewPointManager() = default;
 
   int GetViewPointArrayInd(int viewpoint_ind, bool use_array_ind = false) const;
