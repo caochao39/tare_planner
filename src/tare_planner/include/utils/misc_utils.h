@@ -80,15 +80,17 @@ double PointXYZDist(const P1& pnt1, const P2& pnt2)
 double VectorXYAngle(const Eigen::Vector3d& v1, const Eigen::Vector3d& v2);
 double PointAngle(const geometry_msgs::msg::Point& pnt, const geometry_msgs::msg::Point& robot_pos);
 double PointAngle(const PCLPointType& pnt, const geometry_msgs::msg::Point& robot_pos);
-bool CollinearXY(const geometry_msgs::msg::Point& p1, const geometry_msgs::msg::Point& p2, const geometry_msgs::msg::Point& p3,
-                 double threshold = 0.1);
-bool LineSegIntersect(const geometry_msgs::msg::Point& p1, const geometry_msgs::msg::Point& q1, const geometry_msgs::msg::Point& p2,
-                      const geometry_msgs::msg::Point& q2);
+bool CollinearXY(const geometry_msgs::msg::Point& p1, const geometry_msgs::msg::Point& p2,
+                 const geometry_msgs::msg::Point& p3, double threshold = 0.1);
+bool LineSegIntersect(const geometry_msgs::msg::Point& p1, const geometry_msgs::msg::Point& q1,
+                      const geometry_msgs::msg::Point& p2, const geometry_msgs::msg::Point& q2);
 bool LineSegIntersectWithTolerance(const geometry_msgs::msg::Point& p1, const geometry_msgs::msg::Point& q1,
                                    const geometry_msgs::msg::Point& p2, const geometry_msgs::msg::Point& q2,
                                    const double tolerance);
-int ThreePointOrientation(const geometry_msgs::msg::Point& p, const geometry_msgs::msg::Point& q, const geometry_msgs::msg::Point& r);
-bool PointOnLineSeg(const geometry_msgs::msg::Point& p, const geometry_msgs::msg::Point& q, const geometry_msgs::msg::Point& r);
+int ThreePointOrientation(const geometry_msgs::msg::Point& p, const geometry_msgs::msg::Point& q,
+                          const geometry_msgs::msg::Point& r);
+bool PointOnLineSeg(const geometry_msgs::msg::Point& p, const geometry_msgs::msg::Point& q,
+                    const geometry_msgs::msg::Point& r);
 double AngleOverlap(double s1, double e1, double s2, double e2);
 double AngleDiff(double source_angle, double target_angle);
 bool PointInPolygon(const geometry_msgs::msg::Point& point, const geometry_msgs::msg::Polygon& polygon);
@@ -156,30 +158,30 @@ bool InRange(const std::vector<T>& list, int index)
 {
   return index >= 0 && index < list.size();
 }
-template <typename T>
-T getParam(ros::NodeHandle* nh, const std::string& name, const T default_val)
-{
-  T val;
-  bool success = nh->getParam(name, val);
-  if (!success)
-  {
-    ROS_ERROR_STREAM("Cannot read parameter: " << name);
-    return default_val;
-  }
-  return val;
-}
-template <typename T>
-T getParam(rclcpp::Node::SharedPtr nh, const std::string& name, const T default_val)
-{
-  T val;
-  bool success = nh.getParam(name, val);
-  if (!success)
-  {
-    ROS_ERROR_STREAM("Cannot read parameter: " << name);
-    return default_val;
-  }
-  return val;
-}
+// template <typename T>
+// T getParam(rclcpp::Node::SharedPtr nh, const std::string& name, const T default_val)
+// {
+//   T val;
+//   bool success = nh->getParam(name, val);
+//   if (!success)
+//   {
+//     ROS_ERROR_STREAM("Cannot read parameter: " << name);
+//     return default_val;
+//   }
+//   return val;
+// }
+// template <typename T>
+// T getParam(rclcpp::Node::SharedPtr nh, const std::string& name, const T default_val)
+// {
+//   T val;
+//   bool success = nh.getParam(name, val);
+//   if (!success)
+//   {
+//     ROS_ERROR_STREAM("Cannot read parameter: " << name);
+//     return default_val;
+//   }
+//   return val;
+// }
 /**
  * Function to publish clouds
  * @tparam T PCL PointCloud type
@@ -188,21 +190,22 @@ T getParam(rclcpp::Node::SharedPtr nh, const std::string& name, const T default_
  * @param frame_id
  */
 template <class PCLPointCloudType>
-void PublishCloud(const ros::Publisher& cloud_publisher, const PCLPointCloudType& cloud, const std::string& frame_id)
+void PublishCloud(typename rclcpp::Publisher<PCLPointCloudType>::SharedPtr cloud_publisher,
+                  const PCLPointCloudType& cloud, const std::string& frame_id)
 {
   sensor_msgs::PointCloud2 cloud_msg;
   pcl::toROSMsg(cloud, cloud_msg);
   cloud_msg.header.frame_id = frame_id;
-  cloud_msg.header.stamp = ros::Time::now();
-  cloud_publisher.publish(cloud_msg);
+  cloud_msg.header.stamp = rclcpp::Node::now();
+  cloud_publisher->publish(cloud_msg);
 }
 
 template <class ROSMsgType>
-void Publish(const ros::Publisher& publisher, ROSMsgType& msg, const std::string& frame_id)
+void Publish(typename rclcpp::Publisher<ROSMsgType>::SharedPtr publisher, ROSMsgType& msg, const std::string& frame_id)
 {
   msg.header.frame_id = frame_id;
-  msg.header.stamp = ros::Time::now();
-  publisher.publish(msg);
+  msg.header.stamp = rclcpp::Node::now();
+  publisher->publish(msg);
 }
 
 void SetDifference(std::vector<int>& v1, std::vector<int>& v2, std::vector<int>& diff);
@@ -288,24 +291,15 @@ class Marker
 private:
   std::string pub_topic_;
   std::string frame_id_;
-  ros::Publisher marker_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub_;
 
 public:
   static int id_;
   visualization_msgs::msg::Marker marker_;
-  explicit Marker(ros::NodeHandle* nh, std::string pub_topic, std::string frame_id)
-    : pub_topic_(pub_topic), frame_id_(frame_id)
-  {
-    marker_pub_ = nh->advertise<visualization_msgs::msg::Marker>(pub_topic_, 2);
-    id_++;
-    marker_.id = id_;
-    marker_.action = visualization_msgs::msg::Marker::ADD;
-    marker_.pose.orientation.w = 1.0;
-  }
   explicit Marker(rclcpp::Node::SharedPtr nh, std::string pub_topic, std::string frame_id)
     : pub_topic_(pub_topic), frame_id_(frame_id)
   {
-    marker_pub_ = nh.advertise<visualization_msgs::msg::Marker>(pub_topic_, 2);
+    marker_pub_ = nh->create_publisher<visualization_msgs::msg::Marker>(pub_topic_, 2);
     id_++;
     marker_.id = id_;
     marker_.action = visualization_msgs::msg::Marker::ADD;
@@ -339,7 +333,7 @@ public:
   }
   void Publish()
   {
-    misc_utils_ns::Publish<visualization_msgs::msg::Marker>(marker_pub_, marker_, frame_id_);
+    misc_utils_ns::Publish(marker_pub_, marker_, frame_id_);
   }
 
   typedef std::shared_ptr<Marker> Ptr;
@@ -361,12 +355,12 @@ float ApproxAtan2(float y, float x);
 double GetPathLength(const nav_msgs::msg::Path& path);
 double GetPathLength(const std::vector<Eigen::Vector3d>& path);
 double AStarSearch(const std::vector<std::vector<int>>& graph, const std::vector<std::vector<double>>& node_dist,
-                   const std::vector<geometry_msgs::msg::Point>& node_positions, int from_idx, int to_idx, bool get_path,
-                   std::vector<int>& path_indices);
+                   const std::vector<geometry_msgs::msg::Point>& node_positions, int from_idx, int to_idx,
+                   bool get_path, std::vector<int>& path_indices);
 bool AStarSearchWithMaxPathLength(const std::vector<std::vector<int>>& graph,
                                   const std::vector<std::vector<double>>& node_dist,
-                                  const std::vector<geometry_msgs::msg::Point>& node_positions, int from_idx, int to_idx,
-                                  bool get_path, std::vector<int>& path_indices, double& shortest_dist,
+                                  const std::vector<geometry_msgs::msg::Point>& node_positions, int from_idx,
+                                  int to_idx, bool get_path, std::vector<int>& path_indices, double& shortest_dist,
                                   double max_path_length = DBL_MAX);
 nav_msgs::msg::Path SimplifyPath(const nav_msgs::msg::Path& path);
 nav_msgs::msg::Path DeduplicatePath(const nav_msgs::msg::Path& path, double min_dist);

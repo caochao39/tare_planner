@@ -27,6 +27,8 @@
 #include <std_msgs/msg/float32.hpp>
 #include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/point_stamped.hpp>
+#include <tf2/transform_datatypes.h>
 // PCL
 #include <pcl/PointIndices.h>
 #include <pcl/filters/extract_indices.h>
@@ -63,6 +65,10 @@ typedef misc_utils_ns::Timer Timer;
 
 struct PlannerParameters
 {
+public:
+  PlannerParameters(rclcpp::Node::SharedPtr node);
+  bool ReadParameters();
+
   // String
   std::string sub_start_exploration_topic_;
   std::string sub_keypose_topic_;
@@ -103,11 +109,14 @@ struct PlannerParameters
   int kDirectionChangeCounterThr;
   int kDirectionNoChangeCounterThr;
 
-  bool ReadParameters(rclcpp::Node::SharedPtr nh);
+private:
+  rclcpp::Node::SharedPtr node_;
 };
 
 struct PlannerData
 {
+public:
+  explicit PlannerData(rclcpp::Node::SharedPtr node);
   // PCL clouds TODO: keypose cloud does not need to be PlannerCloudPointType
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> keypose_cloud_;
   std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZ>> registered_scan_stack_;
@@ -153,15 +162,18 @@ struct PlannerData
   std::unique_ptr<misc_utils_ns::Marker> nogo_boundary_marker_;
   std::unique_ptr<misc_utils_ns::Marker> grid_world_marker_;
 
-  void Initialize(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedPtr nh_p);
+  void Initialize();
+
+private:
+  rclcpp::Node::SharedPtr node_;
 };
 
-class SensorCoveragePlanner3D
+class SensorCoveragePlanner3D : public rclcpp::Node
 {
 public:
-  explicit SensorCoveragePlanner3D(rclcpp::Node::SharedPtr nh);
-  bool initialize(rclcpp::Node::SharedPtr nh);
-  void execute(const ros::TimerEvent&);
+  explicit SensorCoveragePlanner3D();
+  bool initialize();
+  void execute();
   ~SensorCoveragePlanner3D() = default;
 
 private:
@@ -195,38 +207,27 @@ private:
   int direction_no_change_count_;
   int momentum_activation_count_;
 
-  ros::Time start_time_;
-  ros::Time global_direction_switch_time_;
+  rclcpp::Time start_time_;
+  rclcpp::Time global_direction_switch_time_;
 
-  ros::Timer execution_timer_;
-
-  // ROS subscribers
-  ros::Subscriber exploration_start_sub_;
-  ros::Subscriber state_estimation_sub_;
-  ros::Subscriber registered_scan_sub_;
-  ros::Subscriber terrain_map_sub_;
-  ros::Subscriber terrain_map_ext_sub_;
-  ros::Subscriber coverage_boundary_sub_;
-  ros::Subscriber viewpoint_boundary_sub_;
-  ros::Subscriber nogo_boundary_sub_;
+  rclcpp::TimerBase::SharedPtr execution_timer_;
 
   // ROS publishers
-  ros::Publisher global_path_full_publisher_;
-  ros::Publisher global_path_publisher_;
-  ros::Publisher old_global_path_publisher_;
-  ros::Publisher to_nearest_global_subspace_path_publisher_;
-  ros::Publisher local_tsp_path_publisher_;
-  ros::Publisher exploration_path_publisher_;
-  ros::Publisher waypoint_pub_;
-  ros::Publisher exploration_finish_pub_;
-  ros::Publisher runtime_breakdown_pub_;
-  ros::Publisher runtime_pub_;
-  ros::Publisher momentum_activation_count_pub_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr global_path_full_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr global_path_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr old_global_path_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr to_nearest_global_subspace_path_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr local_tsp_path_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr exploration_path_publisher_;
+  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr waypoint_pub_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr exploration_finish_pub_;
+  rclcpp::Publisher<std_msgs::msg::Int32MultiArray>::SharedPtr runtime_breakdown_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr runtime_pub_;
+  rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr momentum_activation_count_pub_;
   // Debug
-  ros::Publisher pointcloud_manager_neighbor_cells_origin_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr pointcloud_manager_neighbor_cells_origin_pub_;
 
   // Callback functions
-  void test(const sensor_msgs::msg::PointCloud2::ConstPtr& test_msg);
   void ExplorationStartCallback(const std_msgs::msg::Bool::ConstPtr& start_msg);
   void StateEstimationCallback(const nav_msgs::msg::Odometry::ConstPtr& state_estimation_msg);
   void RegisteredScanCallback(const sensor_msgs::msg::PointCloud2::ConstPtr& registered_cloud_msg);

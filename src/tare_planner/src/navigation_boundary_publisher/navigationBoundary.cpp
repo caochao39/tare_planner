@@ -91,14 +91,15 @@ int main(int argc, char** argv)
   rclcpp::init(argc, argv);
   rclcpp::Node::SharedPtr nh = rclcpp::Node::make_shared("navigationBoundary");
 
-  ros::NodeHandle nh;
-  ros::NodeHandle nhPrivate = ros::NodeHandle("~");
+  nh->declare_parameter<std::string>("boundary_file_dir", "");
+  nh->declare_parameter<bool>("sendBoundary", false);
+  nh->declare_parameter<int>("sendBoundaryInterval", 2);
 
-  nhPrivate.getParam("boundary_file_dir", boundary_file_dir);
-  nhPrivate.getParam("sendBoundary", sendBoundary);
-  nhPrivate.getParam("sendBoundaryInterval", sendBoundaryInterval);
+  nh->get_parameter("boundary_file_dir", boundary_file_dir);
+  nh->get_parameter("sendBoundary", sendBoundary);
+  nh->get_parameter("sendBoundaryInterval", sendBoundaryInterval);
 
-  ros::Publisher pubBoundary = nh.advertise<geometry_msgs::msg::PolygonStamped>("/navigation_boundary", 5);
+  auto pubBoundary = nh->create_publisher<geometry_msgs::msg::PolygonStamped>("/navigation_boundary", 5);
   geometry_msgs::msg::PolygonStamped boundaryMsgs;
   boundaryMsgs.header.frame_id = "map";
 
@@ -117,17 +118,17 @@ int main(int argc, char** argv)
     }
   }
 
-  ros::Rate rate(100);
+  rclcpp::Rate rate(100);
   bool status = rclcpp::ok();
   while (status)
   {
-    ros::spinOnce();
+    rclcpp::spin_some(nh);
 
     // publish boundary messages at certain frame rate
     sendBoundaryCount++;
     if (sendBoundaryCount >= 100 * sendBoundaryInterval && sendBoundary)
     {
-      pubBoundary.publish(boundaryMsgs);
+      pubBoundary->publish(boundaryMsgs);
       sendBoundaryCount = 0;
     }
 

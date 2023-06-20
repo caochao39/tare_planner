@@ -17,8 +17,8 @@ TAREVisualizer::TAREVisualizer(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedP
 {
   ReadParameters(nh_private);
 
-  marker_publisher_ = nh.advertise<visualization_msgs::msg::Marker>("tare_visualizer/marker", 1);
-  local_path_publisher_ = nh.advertise<nav_msgs::msg::Path>("tare_visualizer/local_path", 1);
+  marker_publisher_ = this->create_publisher<visualization_msgs::msg::Marker>("tare_visualizer/marker", 1);
+  local_path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("tare_visualizer/local_path", 1);
 
   global_subspaces_marker_ =
       std::make_shared<misc_utils_ns::Marker>(nh, "tare_visualizer/exploring_subspaces", kWorldFrameID);

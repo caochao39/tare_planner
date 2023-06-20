@@ -16,48 +16,63 @@ namespace planning_env_ns
 {
 void PlanningEnvParameters::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
-  kSurfaceCloudDwzLeafSize = misc_utils_ns::getParam<double>(nh, "kSurfaceCloudDwzLeafSize", 0.2);
-  kCollisionCloudDwzLeafSize = misc_utils_ns::getParam<double>(nh, "kCollisionCloudDwzLeafSize", 0.2);
-  kKeyposeGraphCollisionCheckRadius =
-      misc_utils_ns::getParam<double>(nh, "keypose_graph/kAddEdgeCollisionCheckRadius", 0.4);
-  kKeyposeGraphCollisionCheckPointNumThr =
-      misc_utils_ns::getParam<int>(nh, "keypose_graph/kAddEdgeCollisionCheckPointNumThr", 1);
+  nh->declare_parameter<double>("kSurfaceCloudDwzLeafSize", 0.2);
+  nh->declare_parameter<double>("kCollisionCloudDwzLeafSize", 0.2);
+  nh->declare_parameter<double>("keypose_graph/kAddEdgeCollisionCheckRadius", 0.4);
+  nh->declare_parameter<int>("keypose_graph/kAddEdgeCollisionCheckPointNumThr", 1);
+  nh->declare_parameter<int>("kKeyposeCloudStackNum", 5);
+  nh->declare_parameter<int>("kPointCloudRowNum", 20);
+  nh->declare_parameter<int>("kPointCloudColNum", 20);
+  nh->declare_parameter<int>("kPointCloudLevelNum", 10);
+  nh->declare_parameter<int>("kMaxCellPointNum", 100000);
+  nh->declare_parameter<double>("kPointCloudCellSize", 24.0);
+  nh->declare_parameter<double>("kPointCloudCellHeight", 3.0);
+  nh->declare_parameter<int>("kPointCloudManagerNeighborCellNum", 5);
+  nh->declare_parameter<double>("kCoverCloudZSqueezeRatio", 2.0);
+  nh->declare_parameter<bool>("kUseFrontier", false);
+  nh->declare_parameter<double>("kFrontierClusterTolerance", 1.0);
+  nh->declare_parameter<int>("kFrontierClusterMinSize", 30);
+  nh->declare_parameter<bool>("kUseCoverageBoundaryOnFrontier", false);
+  nh->declare_parameter<bool>("kUseCoverageBoundaryOnObjectSurface", false);
+  nh->declare_parameter<int>("viewpoint_manager/number_x", 40);
+  nh->declare_parameter<double>("viewpoint_manager/resolution_x", 1.0);
+  nh->declare_parameter<double>("kSensorRange", 15.0);
 
-  kKeyposeCloudStackNum = misc_utils_ns::getParam<int>(nh, "kKeyposeCloudStackNum", 5);
+  nh->get_parameter("kSurfaceCloudDwzLeafSize", kSurfaceCloudDwzLeafSize);
+  nh->get_parameter("kCollisionCloudDwzLeafSize", kCollisionCloudDwzLeafSize);
+  nh->get_parameter("keypose_graph/kAddEdgeCollisionCheckRadius", kKeyposeGraphCollisionCheckRadius);
+  nh->get_parameter("keypose_graph/kAddEdgeCollisionCheckPointNumThr", kKeyposeGraphCollisionCheckPointNumThr);
+  nh->get_parameter("kKeyposeCloudStackNum", kKeyposeCloudStackNum);
+  nh->get_parameter("kPointCloudRowNum", kPointCloudRowNum);
+  nh->get_parameter("kPointCloudColNum", kPointCloudColNum);
+  nh->get_parameter("kPointCloudLevelNum", kPointCloudLevelNum);
+  nh->get_parameter("kMaxCellPointNum", kMaxCellPointNum);
+  nh->get_parameter("kPointCloudCellSize", kPointCloudCellSize);
+  nh->get_parameter("kPointCloudCellHeight", kPointCloudCellHeight);
+  nh->get_parameter("kPointCloudManagerNeighborCellNum", kPointCloudManagerNeighborCellNum);
+  nh->get_parameter("kCoverCloudZSqueezeRatio", kCoverCloudZSqueezeRatio);
+  nh->get_parameter("kUseFrontier", kUseFrontier);
+  nh->get_parameter("kFrontierClusterTolerance", kFrontierClusterTolerance);
+  nh->get_parameter("kFrontierClusterMinSize", kFrontierClusterMinSize);
+  nh->get_parameter("kUseCoverageBoundaryOnFrontier", kUseCoverageBoundaryOnFrontier);
+  nh->get_parameter("kUseCoverageBoundaryOnObjectSurface", kUseCoverageBoundaryOnObjectSurface);
+  int viewpoint_number = nh->get_parameter("kUseCoverageBoundaryOnObjectSurface").as_int();
+  double viewpoint_resolution = nh->get_parameter("viewpoint_manager/resolution_x").as_double();
+  double sensor_range = nh->get_parameter("kSensorRange").as_double();
 
-  kPointCloudRowNum = misc_utils_ns::getParam<int>(nh, "kPointCloudRowNum", 20);
-  kPointCloudColNum = misc_utils_ns::getParam<int>(nh, "kPointCloudColNum", 20);
-  kPointCloudLevelNum = misc_utils_ns::getParam<int>(nh, "kPointCloudLevelNum", 10);
-  kMaxCellPointNum = misc_utils_ns::getParam<int>(nh, "kMaxCellPointNum", 100000);
-  kPointCloudCellSize = misc_utils_ns::getParam<double>(nh, "kPointCloudCellSize", 24.0);
-  kPointCloudCellHeight = misc_utils_ns::getParam<double>(nh, "kPointCloudCellHeight", 3.0);
-  kPointCloudManagerNeighborCellNum = misc_utils_ns::getParam<int>(nh, "kPointCloudManagerNeighborCellNum", 5);
-  kCoverCloudZSqueezeRatio = misc_utils_ns::getParam<double>(nh, "kCoverCloudZSqueezeRatio", 2.0);
-
-  kUseFrontier = misc_utils_ns::getParam<bool>(nh, "kUseFrontier", false);
-  kFrontierClusterTolerance = misc_utils_ns::getParam<double>(nh, "kFrontierClusterTolerance", 1.0);
-  kFrontierClusterMinSize = misc_utils_ns::getParam<int>(nh, "kFrontierClusterMinSize", 30);
-
-  kUseCoverageBoundaryOnFrontier = misc_utils_ns::getParam<bool>(nh, "kUseCoverageBoundaryOnFrontier", false);
-  kUseCoverageBoundaryOnObjectSurface = misc_utils_ns::getParam<bool>(nh, "kUseCoverageBoundaryOnObjectSurface", false);
-
-  int viewpoint_number = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_x", 40);
-  double viewpoint_resolution = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resolution_x", 1.0);
   double local_planning_horizon_half_size = viewpoint_number * viewpoint_resolution / 2;
-  double sensor_range = misc_utils_ns::getParam<double>(nh, "kSensorRange", 15);
-
   kExtractFrontierRange.x() = local_planning_horizon_half_size + sensor_range * 2;
   kExtractFrontierRange.y() = local_planning_horizon_half_size + sensor_range * 2;
   kExtractFrontierRange.z() = 2;
 }
 
-PlanningEnv::PlanningEnv(ros::NodeHandle nh, ros::NodeHandle nh_private, std::string world_frame_id)
+PlanningEnv::PlanningEnv(rclcpp::Node::SharedPtr nh, std::string world_frame_id)
   : keypose_cloud_count_(0)
   , vertical_surface_extractor_()
   , vertical_frontier_extractor_()
   , robot_position_update_(false)
 {
-  parameters_.ReadParameters(nh_private);
+  parameters_.ReadParameters(nh);
   keypose_cloud_stack_.resize(parameters_.kKeyposeCloudStackNum);
   for (int i = 0; i < keypose_cloud_stack_.size(); i++)
   {

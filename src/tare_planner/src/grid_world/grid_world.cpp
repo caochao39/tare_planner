@@ -157,22 +157,38 @@ GridWorld::GridWorld(int row_num, int col_num, int level_num, double cell_size, 
 
 void GridWorld::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
-  kRowNum = misc_utils_ns::getParam<int>(nh, "kGridWorldXNum", 121);
-  kColNum = misc_utils_ns::getParam<int>(nh, "kGridWorldYNum", 121);
-  kLevelNum = misc_utils_ns::getParam<int>(nh, "kGridWorldZNum", 121);
-  int viewpoint_number = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_x", 40);
-  double viewpoint_resolution = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resolution_x", 1.0);
+  nh->declare_parameter<int>("kGridWorldXNum", 121);
+  nh->declare_parameter<int>("kGridWorldYNum", 121);
+  nh->declare_parameter<int>("kGridWorldZNum", 12);
+  nh->declare_parameter<int>("viewpoint_manager/number_x", 40);
+  nh->declare_parameter<double>("viewpoint_manager/resolution_x", 1.0);
+  nh->declare_parameter<double>("kGridWorldCellHeight", 8.0);
+  nh->declare_parameter<int>("kGridWorldNearbyGridNum", 5);
+  nh->declare_parameter<int>("kMinAddPointNumSmall", 60);
+  nh->declare_parameter<int>("kMinAddPointNumBig", 100);
+  nh->declare_parameter<int>("kMinAddFrontierPointNum", 30);
+  nh->declare_parameter<int>("kCellExploringToCoveredThr", 1);
+  nh->declare_parameter<int>("kCellCoveredToExploringThr", 10);
+  nh->declare_parameter<int>("kCellExploringToAlmostCoveredThr", 10);
+  nh->declare_parameter<int>("kCellAlmostCoveredToExploringThr", 20);
+  nh->declare_parameter<int>("kCellUnknownToExploringThr", 1);
+
+  nh->get_parameter("kGridWorldXNum", kRowNum);
+  nh->get_parameter("kGridWorldYNum", kColNum);
+  nh->get_parameter("kGridWorldZNum", kLevelNum);
+  int viewpoint_number = nh->get_parameter("viewpoint_manager/number_x").as_int();
+  double viewpoint_resolution = nh->get_parameter("viewpoint_manager/resolution_x").as_double();
   kCellSize = viewpoint_number * viewpoint_resolution / 5;
-  kCellHeight = misc_utils_ns::getParam<double>(nh, "kGridWorldCellHeight", 8.0);
-  KNearbyGridNum = misc_utils_ns::getParam<int>(nh, "kGridWorldNearbyGridNum", 5);
-  kMinAddPointNumSmall = misc_utils_ns::getParam<int>(nh, "kMinAddPointNumSmall", 60);
-  kMinAddPointNumBig = misc_utils_ns::getParam<int>(nh, "kMinAddPointNumBig", 100);
-  kMinAddFrontierPointNum = misc_utils_ns::getParam<int>(nh, "kMinAddFrontierPointNum", 30);
-  kCellExploringToCoveredThr = misc_utils_ns::getParam<int>(nh, "kCellExploringToCoveredThr", 1);
-  kCellCoveredToExploringThr = misc_utils_ns::getParam<int>(nh, "kCellCoveredToExploringThr", 10);
-  kCellExploringToAlmostCoveredThr = misc_utils_ns::getParam<int>(nh, "kCellExploringToAlmostCoveredThr", 10);
-  kCellAlmostCoveredToExploringThr = misc_utils_ns::getParam<int>(nh, "kCellAlmostCoveredToExploringThr", 20);
-  kCellUnknownToExploringThr = misc_utils_ns::getParam<int>(nh, "kCellUnknownToExploringThr", 1);
+  nh->get_parameter("kGridWorldCellHeight", kCellHeight);
+  nh->get_parameter("kGridWorldNearbyGridNum", KNearbyGridNum);
+  nh->get_parameter("kMinAddPointNumSmall", kMinAddPointNumSmall);
+  nh->get_parameter("kMinAddPointNumBig", kMinAddPointNumBig);
+  nh->get_parameter("kMinAddFrontierPointNum", kMinAddFrontierPointNum);
+  nh->get_parameter("kCellExploringToCoveredThr", kCellExploringToCoveredThr);
+  nh->get_parameter("kCellCoveredToExploringThr", kCellCoveredToExploringThr);
+  nh->get_parameter("kCellExploringToAlmostCoveredThr", kCellExploringToAlmostCoveredThr);
+  nh->get_parameter("kCellAlmostCoveredToExploringThr", kCellAlmostCoveredToExploringThr);
+  nh->get_parameter("kCellUnknownToExploringThr", kCellUnknownToExploringThr);
 }
 
 void GridWorld::UpdateNeighborCells(const geometry_msgs::msg::Point& robot_position)
@@ -660,8 +676,8 @@ void GridWorld::UpdateCellStatus(const std::shared_ptr<viewpoint_manager_ns::Vie
       else
       {
         geometry_msgs::msg::Point cell_position = subspaces_->GetCell(cell_ind).GetPosition();
-        double xy_dist_to_robot =
-            misc_utils_ns::PointXYDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(cell_position, robot_position_);
+        double xy_dist_to_robot = misc_utils_ns::PointXYDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(
+            cell_position, robot_position_);
         double z_dist_to_robot = std::abs(cell_position.z - robot_position_.z);
         if (xy_dist_to_robot < kCellSize && z_dist_to_robot < kCellHeight * 0.8)
         {
@@ -836,7 +852,7 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
       }
       else
       {
-        // ROS_ERROR("Cannot find path home");
+        // RCLCPP_ERROR(this->get_logger(), "Cannot find path home");
         // TODO: find a path
       }
     }

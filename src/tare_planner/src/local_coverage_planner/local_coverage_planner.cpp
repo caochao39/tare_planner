@@ -17,10 +17,15 @@ const std::string LocalCoveragePlanner::kRuntimeUnit = "us";
 
 bool LocalCoveragePlannerParameter::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
-  kMinAddPointNum = misc_utils_ns::getParam<int>(nh, "kMinAddPointNumSmall", 60);
-  kMinAddFrontierPointNum = misc_utils_ns::getParam<int>(nh, "kMinAddFrontierPointNum", 30);
-  kGreedyViewPointSampleRange = misc_utils_ns::getParam<int>(nh, "kGreedyViewPointSampleRange", 5);
-  kLocalPathOptimizationItrMax = misc_utils_ns::getParam<int>(nh, "kLocalPathOptimizationItrMax", 10);
+  nh->declare_parameter<int>("kMinAddPointNumSmall", 60);
+  nh->declare_parameter<int>("kMinAddFrontierPointNum", 30);
+  nh->declare_parameter<int>("kGreedyViewPointSampleRange", 5);
+  nh->declare_parameter<int>("kLocalPathOptimizationItrMax", 10);
+
+  nh->get_parameter("kMinAddPointNumSmall", kMinAddPointNum);
+  nh->get_parameter("kMinAddFrontierPointNum", kMinAddFrontierPointNum);
+  nh->get_parameter("kGreedyViewPointSampleRange", kGreedyViewPointSampleRange);
+  nh->get_parameter("kLocalPathOptimizationItrMax", kLocalPathOptimizationItrMax);
 
   return true;
 }

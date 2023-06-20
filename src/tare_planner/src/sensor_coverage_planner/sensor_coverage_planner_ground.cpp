@@ -9,99 +9,137 @@
  *
  */
 
+#include <memory>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
 #include "sensor_coverage_planner/sensor_coverage_planner_ground.h"
 #include "graph/graph.h"
 
+using namespace std::chrono_literals;
+
 namespace sensor_coverage_planner_3d_ns
 {
-bool PlannerParameters::ReadParameters(rclcpp::Node::SharedPtr nh)
+PlannerParameters::PlannerParameters(rclcpp::Node::SharedPtr node) : node_(node)
 {
-  sub_start_exploration_topic_ =
-      misc_utils_ns::getParam<std::string>(nh, "sub_start_exploration_topic_", "/exploration_start");
-  sub_state_estimation_topic_ =
-      misc_utils_ns::getParam<std::string>(nh, "sub_state_estimation_topic_", "/state_estimation_at_scan");
-  sub_registered_scan_topic_ =
-      misc_utils_ns::getParam<std::string>(nh, "sub_registered_scan_topic_", "/registered_scan");
-  sub_terrain_map_topic_ = misc_utils_ns::getParam<std::string>(nh, "sub_terrain_map_topic_", "/terrain_map");
-  sub_terrain_map_ext_topic_ =
-      misc_utils_ns::getParam<std::string>(nh, "sub_terrain_map_ext_topic_", "/terrain_map_ext");
-  sub_coverage_boundary_topic_ =
-      misc_utils_ns::getParam<std::string>(nh, "sub_coverage_boundary_topic_", "/coverage_boundary");
-  sub_viewpoint_boundary_topic_ =
-      misc_utils_ns::getParam<std::string>(nh, "sub_viewpoint_boundary_topic_", "/navigation_boundary");
-  sub_nogo_boundary_topic_ = misc_utils_ns::getParam<std::string>(nh, "sub_nogo_boundary_topic_", "/nogo_boundary");
-  pub_exploration_finish_topic_ =
-      misc_utils_ns::getParam<std::string>(nh, "pub_exploration_finish_topic_", "exploration_finish");
-  pub_runtime_breakdown_topic_ =
-      misc_utils_ns::getParam<std::string>(nh, "pub_runtime_breakdown_topic_", "runtime_breakdown");
-  pub_runtime_topic_ = misc_utils_ns::getParam<std::string>(nh, "pub_runtime_topic_", "/runtime");
-  pub_waypoint_topic_ = misc_utils_ns::getParam<std::string>(nh, "pub_waypoint_topic_", "/way_point");
-  pub_momentum_activation_count_topic_ =
-      misc_utils_ns::getParam<std::string>(nh, "pub_momentum_activation_count_topic_", "momentum_activation_count");
+}
+
+bool PlannerParameters::ReadParameters()
+{
+  node_->declare_parameter<std::string>("sub_start_exploration_topic_", "/exploration_start");
+  node_->declare_parameter<std::string>("sub_state_estimation_topic_", "/state_estimation_at_scan");
+  node_->declare_parameter<std::string>("sub_registered_scan_topic_", "/registered_scan");
+  node_->declare_parameter<std::string>("sub_terrain_map_topic_", "/terrain_map");
+  node_->declare_parameter<std::string>("sub_terrain_map_ext_topic_", "/terrain_map_ext");
+  node_->declare_parameter<std::string>("sub_coverage_boundary_topic_", "/coverage_boundary");
+  node_->declare_parameter<std::string>("sub_viewpoint_boundary_topic_", "/navigation_boundary");
+  node_->declare_parameter<std::string>("sub_nogo_boundary_topic_", "/nogo_boundary");
+  node_->declare_parameter<std::string>("pub_exploration_finish_topic_", "exploration_finish");
+  node_->declare_parameter<std::string>("pub_runtime_breakdown_topic_", "runtime_breakdown");
+  node_->declare_parameter<std::string>("pub_runtime_topic_", "/runtime");
+  node_->declare_parameter<std::string>("pub_waypoint_topic_", "/way_point");
+  node_->declare_parameter<std::string>("pub_momentum_activation_count_topic_", "momentum_activation_count");
 
   // Bool
-  kAutoStart = misc_utils_ns::getParam<bool>(nh, "kAutoStart", false);
-  kRushHome = misc_utils_ns::getParam<bool>(nh, "kRushHome", false);
-  kUseTerrainHeight = misc_utils_ns::getParam<bool>(nh, "kUseTerrainHeight", true);
-  kCheckTerrainCollision = misc_utils_ns::getParam<bool>(nh, "kCheckTerrainCollision", true);
-  kExtendWayPoint = misc_utils_ns::getParam<bool>(nh, "kExtendWayPoint", true);
-  kUseLineOfSightLookAheadPoint = misc_utils_ns::getParam<bool>(nh, "kUseLineOfSightLookAheadPoint", true);
-  kNoExplorationReturnHome = misc_utils_ns::getParam<bool>(nh, "kNoExplorationReturnHome", true);
-  kUseMomentum = misc_utils_ns::getParam<bool>(nh, "kUseMomentum", false);
+  node_->declare_parameter<bool>("kAutoStart", false);
+  node_->declare_parameter<bool>("kRushHome", false);
+  node_->declare_parameter<bool>("kUseTerrainHeight", true);
+  node_->declare_parameter<bool>("kCheckTerrainCollision", true);
+  node_->declare_parameter<bool>("kExtendWayPoint", true);
+  node_->declare_parameter<bool>("kUseLineOfSightLookAheadPoint", true);
+  node_->declare_parameter<bool>("kNoExplorationReturnHome", true);
+  node_->declare_parameter<bool>("kUseMomentum", false);
 
   // Double
-  kKeyposeCloudDwzFilterLeafSize = misc_utils_ns::getParam<double>(nh, "kKeyposeCloudDwzFilterLeafSize", 0.2);
-  kRushHomeDist = misc_utils_ns::getParam<double>(nh, "kRushHomeDist", 10.0);
-  kAtHomeDistThreshold = misc_utils_ns::getParam<double>(nh, "kAtHomeDistThreshold", 0.5);
-  kTerrainCollisionThreshold = misc_utils_ns::getParam<double>(nh, "kTerrainCollisionThreshold", 0.5);
-  kLookAheadDistance = misc_utils_ns::getParam<double>(nh, "kLookAheadDistance", 5.0);
-  kExtendWayPointDistanceBig = misc_utils_ns::getParam<double>(nh, "kExtendWayPointDistanceBig", 8.0);
-  kExtendWayPointDistanceSmall = misc_utils_ns::getParam<double>(nh, "kExtendWayPointDistanceSmall", 3.0);
+  node_->declare_parameter<double>("kKeyposeCloudDwzFilterLeafSize", 0.2);
+  node_->declare_parameter<double>("kRushHomeDist", 10.0);
+  node_->declare_parameter<double>("kAtHomeDistThreshold", 0.5);
+  node_->declare_parameter<double>("kTerrainCollisionThreshold", 0.5);
+  node_->declare_parameter<double>("kLookAheadDistance", 5.0);
+  node_->declare_parameter<double>("kExtendWayPointDistanceBig", 8.0);
+  node_->declare_parameter<double>("kExtendWayPointDistanceSmall", 3.0);
 
   // Int
-  kDirectionChangeCounterThr = misc_utils_ns::getParam<int>(nh, "kDirectionChangeCounterThr", 4);
-  kDirectionNoChangeCounterThr = misc_utils_ns::getParam<int>(nh, "kDirectionNoChangeCounterThr", 5);
+  node_->declare_parameter<int>("kDirectionChangeCounterThr", 4);
+  node_->declare_parameter<int>("kDirectionNoChangeCounterThr", 5);
+
+  node_->get_parameter("sub_start_exploration_topic_", sub_start_exploration_topic_);
+  node_->get_parameter("sub_state_estimation_topic_", sub_state_estimation_topic_);
+  node_->get_parameter("sub_registered_scan_topic_", sub_registered_scan_topic_);
+  node_->get_parameter("sub_terrain_map_topic_", sub_terrain_map_topic_);
+  node_->get_parameter("sub_terrain_map_ext_topic_", sub_terrain_map_ext_topic_);
+  node_->get_parameter("sub_coverage_boundary_topic_", sub_coverage_boundary_topic_);
+  node_->get_parameter("sub_viewpoint_boundary_topic_", sub_viewpoint_boundary_topic_);
+  node_->get_parameter("sub_nogo_boundary_topic_", sub_nogo_boundary_topic_);
+  node_->get_parameter("pub_exploration_finish_topic_", pub_exploration_finish_topic_);
+  node_->get_parameter("pub_runtime_breakdown_topic_", pub_runtime_breakdown_topic_);
+  node_->get_parameter("pub_runtime_topic_", pub_runtime_topic_);
+  node_->get_parameter("pub_waypoint_topic_", pub_waypoint_topic_);
+  node_->get_parameter("pub_momentum_activation_count_topic_", pub_momentum_activation_count_topic_);
+
+  node_->get_parameter("kAutoStart", kAutoStart);
+  node_->get_parameter("kRushHome", kRushHome);
+  node_->get_parameter("kUseTerrainHeight", kUseTerrainHeight);
+  node_->get_parameter("kCheckTerrainCollision", kCheckTerrainCollision);
+  node_->get_parameter("kExtendWayPoint", kExtendWayPoint);
+  node_->get_parameter("kUseLineOfSightLookAheadPoint", kUseLineOfSightLookAheadPoint);
+  node_->get_parameter("kNoExplorationReturnHome", kNoExplorationReturnHome);
+  node_->get_parameter("kUseMomentum", kUseMomentum);
+
+  node_->get_parameter("kKeyposeCloudDwzFilterLeafSize", kKeyposeCloudDwzFilterLeafSize);
+  node_->get_parameter("kRushHomeDist", kRushHomeDist);
+  node_->get_parameter("kAtHomeDistThreshold", kAtHomeDistThreshold);
+  node_->get_parameter("kTerrainCollisionThreshold", kTerrainCollisionThreshold);
+  node_->get_parameter("kLookAheadDistance", kLookAheadDistance);
+  node_->get_parameter("kExtendWayPointDistanceBig", kExtendWayPointDistanceBig);
+  node_->get_parameter("kExtendWayPointDistanceSmall", kExtendWayPointDistanceSmall);
+
+  node_->get_parameter("kDirectionChangeCounterThr", kDirectionChangeCounterThr);
+  node_->get_parameter("kDirectionNoChangeCounterThr", kDirectionNoChangeCounterThr);
 
   return true;
 }
 
-void PlannerData::Initialize(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedPtr nh_p)
+PlannerData::PlannerData(rclcpp::Node::SharedPtr node) : node_(node)
+{
+}
+
+void PlannerData::Initialize()
 {
   keypose_cloud_ =
-      std::make_unique<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>>(nh, "keypose_cloud", kWorldFrameID);
+      std::make_unique<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>>(node_, "keypose_cloud", kWorldFrameID);
   registered_scan_stack_ =
-      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZ>>(nh, "registered_scan_stack", kWorldFrameID);
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZ>>(node_, "registered_scan_stack", kWorldFrameID);
   registered_cloud_ =
-      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "registered_cloud", kWorldFrameID);
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(node_, "registered_cloud", kWorldFrameID);
   large_terrain_cloud_ =
-      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "terrain_cloud_large", kWorldFrameID);
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(node_, "terrain_cloud_large", kWorldFrameID);
   terrain_collision_cloud_ =
-      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "terrain_collision_cloud", kWorldFrameID);
-  terrain_ext_collision_cloud_ =
-      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "terrain_ext_collision_cloud", kWorldFrameID);
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(node_, "terrain_collision_cloud", kWorldFrameID);
+  terrain_ext_collision_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(
+      node_, "terrain_ext_collision_cloud", kWorldFrameID);
   viewpoint_vis_cloud_ =
-      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "viewpoint_vis_cloud", kWorldFrameID);
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(node_, "viewpoint_vis_cloud", kWorldFrameID);
   grid_world_vis_cloud_ =
-      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "grid_world_vis_cloud", kWorldFrameID);
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(node_, "grid_world_vis_cloud", kWorldFrameID);
   exploration_path_cloud_ =
-      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "bspline_path_cloud", kWorldFrameID);
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(node_, "bspline_path_cloud", kWorldFrameID);
 
   selected_viewpoint_vis_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(
-      nh, "selected_viewpoint_vis_cloud", kWorldFrameID);
+      node_, "selected_viewpoint_vis_cloud", kWorldFrameID);
   exploring_cell_vis_cloud_ =
-      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "exploring_cell_vis_cloud", kWorldFrameID);
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(node_, "exploring_cell_vis_cloud", kWorldFrameID);
   collision_cloud_ =
-      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "collision_cloud", kWorldFrameID);
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(node_, "collision_cloud", kWorldFrameID);
   lookahead_point_cloud_ =
-      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "lookahead_point_cloud", kWorldFrameID);
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(node_, "lookahead_point_cloud", kWorldFrameID);
   keypose_graph_vis_cloud_ =
-      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "keypose_graph_cloud", kWorldFrameID);
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(node_, "keypose_graph_cloud", kWorldFrameID);
   viewpoint_in_collision_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(
-      nh, "viewpoint_in_collision_cloud_", kWorldFrameID);
+      node_, "viewpoint_in_collision_cloud_", kWorldFrameID);
   point_cloud_manager_neighbor_cloud_ =
-      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(nh, "pointcloud_manager_cloud", kWorldFrameID);
+      std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(node_, "pointcloud_manager_cloud", kWorldFrameID);
   reordered_global_subspace_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(
-      nh, "reordered_global_subspace_cloud", kWorldFrameID);
+      node_, "reordered_global_subspace_cloud", kWorldFrameID);
 
   planning_env_ = std::make_unique<planning_env_ns::PlanningEnv>(nh, nh_p);
   viewpoint_manager_ = std::make_shared<viewpoint_manager_ns::ViewPointManager>(nh_p);
@@ -153,8 +191,9 @@ void PlannerData::Initialize(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedPtr
   last_robot_position_ = robot_position_;
 }
 
-SensorCoveragePlanner3D::SensorCoveragePlanner3D(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedPtr nh_p)
-  : keypose_cloud_update_(false)
+SensorCoveragePlanner3D::SensorCoveragePlanner3D()
+  : Node("tare_planner_node")
+  , keypose_cloud_update_(false)
   , initialized_(false)
   , lookahead_point_update_(false)
   , relocation_(false)
@@ -173,57 +212,70 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D(rclcpp::Node::SharedPtr nh, rcl
   , direction_change_count_(0)
   , direction_no_change_count_(0)
   , momentum_activation_count_(0)
+  , pp_(shared_from_this())
+  , pd_(shared_from_this())
 {
-  initialize(nh, nh_p);
+  initialize();
   PrintExplorationStatus("Exploration Started", false);
 }
 
-bool SensorCoveragePlanner3D::initialize(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedPtr nh_p)
+bool SensorCoveragePlanner3D::initialize()
 {
-  if (!pp_.ReadParameters(nh_p))
+  if (!pp_.ReadParameters())
   {
-    ROS_ERROR("Read parameters failed");
+    RCLCPP_ERROR(this->get_logger(), "Read parameters failed");
     return false;
   }
 
-  pd_.Initialize(nh, nh_p);
+  pd_.Initialize();
 
   pd_.keypose_graph_->SetAllowVerticalEdge(false);
 
   lidar_model_ns::LiDARModel::setCloudDWZResol(pd_.planning_env_->GetPlannerCloudResolution());
 
-  execution_timer_ = nh.createTimer(ros::Duration(1.0), &SensorCoveragePlanner3D::execute, this);
+  execution_timer_ = this->create_wall_timer(1000ms, std::bind(&SensorCoveragePlanner3D::execute, this));
 
-  exploration_start_sub_ =
-      nh.subscribe(pp_.sub_start_exploration_topic_, 5, &SensorCoveragePlanner3D::ExplorationStartCallback, this);
-  registered_scan_sub_ =
-      nh.subscribe(pp_.sub_registered_scan_topic_, 5, &SensorCoveragePlanner3D::RegisteredScanCallback, this);
-  terrain_map_sub_ = nh.subscribe(pp_.sub_terrain_map_topic_, 5, &SensorCoveragePlanner3D::TerrainMapCallback, this);
-  terrain_map_ext_sub_ =
-      nh.subscribe(pp_.sub_terrain_map_ext_topic_, 5, &SensorCoveragePlanner3D::TerrainMapExtCallback, this);
-  state_estimation_sub_ =
-      nh.subscribe(pp_.sub_state_estimation_topic_, 5, &SensorCoveragePlanner3D::StateEstimationCallback, this);
-  coverage_boundary_sub_ =
-      nh.subscribe(pp_.sub_coverage_boundary_topic_, 1, &SensorCoveragePlanner3D::CoverageBoundaryCallback, this);
-  viewpoint_boundary_sub_ =
-      nh.subscribe(pp_.sub_viewpoint_boundary_topic_, 1, &SensorCoveragePlanner3D::ViewPointBoundaryCallback, this);
-  nogo_boundary_sub_ =
-      nh.subscribe(pp_.sub_nogo_boundary_topic_, 1, &SensorCoveragePlanner3D::NogoBoundaryCallback, this);
+  auto exploration_start_sub_ = this->create_subscription<std_msgs::msg::Bool>(
+      pp_.sub_start_exploration_topic_, 5,
+      std::bind(&SensorCoveragePlanner3D::ExplorationStartCallback, this, std::placeholders::_1));
+  auto registered_scan_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+      pp_.sub_registered_scan_topic_, 5,
+      std::bind(&SensorCoveragePlanner3D::RegisteredScanCallback, this, std::placeholders::_1));
+  auto terrain_map_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+      pp_.sub_terrain_map_topic_, 5,
+      std::bind(&SensorCoveragePlanner3D::TerrainMapCallback, this, std::placeholders::_1));
+  auto terrain_map_ext_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+      pp_.sub_terrain_map_ext_topic_, 5,
+      std::bind(&SensorCoveragePlanner3D::TerrainMapExtCallback, this, std::placeholders::_1));
+  auto state_estimation_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+      pp_.sub_state_estimation_topic_, 5,
+      std::bind(&SensorCoveragePlanner3D::StateEstimationCallback, this, std::placeholders::_1));
+  auto coverage_boundary_sub_ = this->create_subscription<geometry_msgs::msg::PolygonStamped>(
+      pp_.sub_coverage_boundary_topic_, 5,
+      std::bind(&SensorCoveragePlanner3D::CoverageBoundaryCallback, this, std::placeholders::_1));
+  auto viewpoint_boundary_sub_ = this->create_subscription<geometry_msgs::msg::PolygonStamped>(
+      pp_.sub_viewpoint_boundary_topic_, 5,
+      std::bind(&SensorCoveragePlanner3D::ViewPointBoundaryCallback, this, std::placeholders::_1));
+  auto nogo_boundary_sub_ = this->create_subscription<geometry_msgs::msg::PolygonStamped>(
+      pp_.sub_nogo_boundary_topic_, 5,
+      std::bind(&SensorCoveragePlanner3D::NogoBoundaryCallback, this, std::placeholders::_1));
 
-  global_path_full_publisher_ = nh.advertise<nav_msgs::msg::Path>("global_path_full", 1);
-  global_path_publisher_ = nh.advertise<nav_msgs::msg::Path>("global_path", 1);
-  old_global_path_publisher_ = nh.advertise<nav_msgs::msg::Path>("old_global_path", 1);
-  to_nearest_global_subspace_path_publisher_ = nh.advertise<nav_msgs::msg::Path>("to_nearest_global_subspace_path", 1);
-  local_tsp_path_publisher_ = nh.advertise<nav_msgs::msg::Path>("local_path", 1);
-  exploration_path_publisher_ = nh.advertise<nav_msgs::msg::Path>("exploration_path", 1);
-  waypoint_pub_ = nh.advertise<geometry_msgs::msg::PointStamped>(pp_.pub_waypoint_topic_, 2);
-  exploration_finish_pub_ = nh.advertise<std_msgs::Bool>(pp_.pub_exploration_finish_topic_, 2);
-  runtime_breakdown_pub_ = nh.advertise<std_msgs::Int32MultiArray>(pp_.pub_runtime_breakdown_topic_, 2);
-  runtime_pub_ = nh.advertise<std_msgs::Float32>(pp_.pub_runtime_topic_, 2);
-  momentum_activation_count_pub_ = nh.advertise<std_msgs::Int32>(pp_.pub_momentum_activation_count_topic_, 2);
+  global_path_full_publisher_ = this->create_publisher<nav_msgs::msg::Path>("global_path_full", 1);
+  global_path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("global_path", 1);
+  old_global_path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("old_global_path", 1);
+  to_nearest_global_subspace_path_publisher_ =
+      this->create_publisher<nav_msgs::msg::Path>("to_nearest_global_subspace_path", 1);
+  local_tsp_path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("local_path", 1);
+  exploration_path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("exploration_path", 1);
+  waypoint_pub_ = this->create_publisher<geometry_msgs::msg::PointStamped>(pp_.pub_waypoint_topic_, 2);
+  exploration_finish_pub_ = this->create_publisher<std_msgs::msg::Bool>(pp_.pub_exploration_finish_topic_, 2);
+  runtime_breakdown_pub_ = this->create_publisher<std_msgs::msg::Int32MultiArray>(pp_.pub_runtime_breakdown_topic_, 2);
+  runtime_pub_ = this->create_publisher<std_msgs::msg::Float32>(pp_.pub_runtime_topic_, 2);
+  momentum_activation_count_pub_ =
+      this->create_publisher<std_msgs::msg::Int32>(pp_.pub_momentum_activation_count_topic_, 2);
   // Debug
   pointcloud_manager_neighbor_cells_origin_pub_ =
-      nh.advertise<geometry_msgs::msg::PointStamped>("pointcloud_manager_neighbor_cells_origin", 1);
+      this->create_publisher<geometry_msgs::msg::PointStamped>("pointcloud_manager_neighbor_cells_origin", 1);
 
   return true;
 }
@@ -248,8 +300,8 @@ void SensorCoveragePlanner3D::StateEstimationCallback(const nav_msgs::msg::Odome
     pd_.initial_position_.z() = pd_.robot_position_.z;
   }
   double roll, pitch, yaw;
-  geometry_msgs::Quaternion geo_quat = state_estimation_msg->pose.pose.orientation;
-  tf::Matrix3x3(tf::Quaternion(geo_quat.x, geo_quat.y, geo_quat.z, geo_quat.w)).getRPY(roll, pitch, yaw);
+  geometry_msgs::msg::Quaternion geo_quat = state_estimation_msg->pose.pose.orientation;
+  tf2::Matrix3x3(tf2::Quaternion(geo_quat.x, geo_quat.y, geo_quat.z, geo_quat.w)).getRPY(roll, pitch, yaw);
 
   pd_.robot_yaw_ = yaw;
 
@@ -414,11 +466,11 @@ void SensorCoveragePlanner3D::SendInitialWaypoint()
 
   geometry_msgs::msg::PointStamped waypoint;
   waypoint.header.frame_id = "map";
-  waypoint.header.stamp = ros::Time::now();
+  waypoint.header.stamp = rclcpp::Node::now();
   waypoint.point.x = pd_.robot_position_.x + dx;
   waypoint.point.y = pd_.robot_position_.y + dy;
   waypoint.point.z = pd_.robot_position_.z;
-  waypoint_pub_.publish(waypoint);
+  waypoint_pub_->publish(waypoint);
 }
 
 void SensorCoveragePlanner3D::UpdateKeyposeGraph()
@@ -560,11 +612,11 @@ void SensorCoveragePlanner3D::UpdateGlobalRepresentation()
       pd_.planning_env_->GetPointCloudManagerNeighborCellsOrigin();
   geometry_msgs::msg::PointStamped pointcloud_manager_neighbor_cells_origin_point;
   pointcloud_manager_neighbor_cells_origin_point.header.frame_id = "map";
-  pointcloud_manager_neighbor_cells_origin_point.header.stamp = ros::Time::now();
+  pointcloud_manager_neighbor_cells_origin_point.header.stamp = rclcpp::Node::now();
   pointcloud_manager_neighbor_cells_origin_point.point.x = pointcloud_manager_neighbor_cells_origin.x();
   pointcloud_manager_neighbor_cells_origin_point.point.y = pointcloud_manager_neighbor_cells_origin.y();
   pointcloud_manager_neighbor_cells_origin_point.point.z = pointcloud_manager_neighbor_cells_origin.z();
-  pointcloud_manager_neighbor_cells_origin_pub_.publish(pointcloud_manager_neighbor_cells_origin_point);
+  pointcloud_manager_neighbor_cells_origin_pub_->publish(pointcloud_manager_neighbor_cells_origin_point);
 
   if (exploration_finished_ && pp_.kNoExplorationReturnHome)
   {
@@ -607,8 +659,8 @@ void SensorCoveragePlanner3D::PublishGlobalPlanningVisualization(
 {
   nav_msgs::msg::Path global_path_full = global_path.GetPath();
   global_path_full.header.frame_id = "map";
-  global_path_full.header.stamp = ros::Time::now();
-  global_path_full_publisher_.publish(global_path_full);
+  global_path_full.header.stamp = rclcpp::Node::now();
+  global_path_full_publisher_->publish(global_path_full);
   // Get the part that connects with the local path
 
   int start_index = 0;
@@ -662,8 +714,8 @@ void SensorCoveragePlanner3D::PublishGlobalPlanningVisualization(
     global_path_trim.poses.push_back(last_pose);
   }
   global_path_trim.header.frame_id = "map";
-  global_path_trim.header.stamp = ros::Time::now();
-  global_path_publisher_.publish(global_path_trim);
+  global_path_trim.header.stamp = rclcpp::Node::now();
+  global_path_publisher_->publish(global_path_trim);
 
   pd_.grid_world_->GetVisualizationCloud(pd_.grid_world_vis_cloud_->cloud_);
   pd_.grid_world_vis_cloud_->Publish();
@@ -671,8 +723,8 @@ void SensorCoveragePlanner3D::PublishGlobalPlanningVisualization(
   pd_.grid_world_marker_->Publish();
   nav_msgs::msg::Path full_path = pd_.exploration_path_.GetPath();
   full_path.header.frame_id = "map";
-  full_path.header.stamp = ros::Time::now();
-  // exploration_path_publisher_.publish(full_path);
+  full_path.header.stamp = rclcpp::Node::now();
+  // exploration_path_publisher_->publish(full_path);
   pd_.exploration_path_.GetVisualizationCloud(pd_.exploration_path_cloud_->cloud_);
   pd_.exploration_path_cloud_->Publish();
   // pd_.planning_env_->PublishStackedCloud();
@@ -700,8 +752,8 @@ void SensorCoveragePlanner3D::PublishLocalPlanningVisualization(const exploratio
   pd_.lookahead_point_cloud_->Publish();
   nav_msgs::msg::Path local_tsp_path = local_path.GetPath();
   local_tsp_path.header.frame_id = "map";
-  local_tsp_path.header.stamp = ros::Time::now();
-  local_tsp_path_publisher_.publish(local_tsp_path);
+  local_tsp_path.header.stamp = rclcpp::Node::now();
+  local_tsp_path_publisher_->publish(local_tsp_path);
   pd_.local_coverage_planner_->GetSelectedViewPointVisCloud(pd_.selected_viewpoint_vis_cloud_->cloud_);
   pd_.selected_viewpoint_vis_cloud_->Publish();
 
@@ -1134,7 +1186,7 @@ void SensorCoveragePlanner3D::PublishWaypoint()
     waypoint.point.y = dy + pd_.robot_position_.y;
     waypoint.point.z = pd_.lookahead_point_.z();
   }
-  misc_utils_ns::Publish<geometry_msgs::msg::PointStamped>(waypoint_pub_, waypoint, kWorldFrameID);
+  misc_utils_ns::Publish(waypoint_pub_, waypoint, kWorldFrameID);
 }
 
 void SensorCoveragePlanner3D::PublishRuntime()
@@ -1143,7 +1195,7 @@ void SensorCoveragePlanner3D::PublishRuntime()
   local_path_finding_runtime_ =
       (pd_.local_coverage_planner_->GetFindPathRuntime() + pd_.local_coverage_planner_->GetTSPRuntime()) / 1000;
 
-  std_msgs::Int32MultiArray runtime_breakdown_msg;
+  std_msgs::msg::Int32MultiArray runtime_breakdown_msg;
   runtime_breakdown_msg.data.clear();
   runtime_breakdown_msg.data.push_back(update_representation_runtime_);
   runtime_breakdown_msg.data.push_back(local_viewpoint_sampling_runtime_);
@@ -1151,7 +1203,7 @@ void SensorCoveragePlanner3D::PublishRuntime()
   runtime_breakdown_msg.data.push_back(global_planning_runtime_);
   runtime_breakdown_msg.data.push_back(trajectory_optimization_runtime_);
   runtime_breakdown_msg.data.push_back(overall_runtime_);
-  runtime_breakdown_pub_.publish(runtime_breakdown_msg);
+  runtime_breakdown_pub_->publish(runtime_breakdown_msg);
 
   float runtime = 0;
   if (!exploration_finished_ && pp_.kNoExplorationReturnHome)
@@ -1162,9 +1214,9 @@ void SensorCoveragePlanner3D::PublishRuntime()
     }
   }
 
-  std_msgs::Float32 runtime_msg;
+  std_msgs::msg::Float32 runtime_msg;
   runtime_msg.data = runtime / 1000.0;
-  runtime_pub_.publish(runtime_msg);
+  runtime_pub_->publish(runtime_msg);
 }
 
 double SensorCoveragePlanner3D::GetRobotToHomeDistance()
@@ -1175,9 +1227,9 @@ double SensorCoveragePlanner3D::GetRobotToHomeDistance()
 
 void SensorCoveragePlanner3D::PublishExplorationState()
 {
-  std_msgs::Bool exploration_finished_msg;
+  std_msgs::msg::Bool exploration_finished_msg;
   exploration_finished_msg.data = exploration_finished_;
-  exploration_finish_pub_.publish(exploration_finished_msg);
+  exploration_finish_pub_->publish(exploration_finished_msg);
 }
 
 void SensorCoveragePlanner3D::PrintExplorationStatus(std::string status, bool clear_last_line)
@@ -1226,16 +1278,16 @@ void SensorCoveragePlanner3D::CountDirectionChange()
   }
   pd_.last_robot_position_ = pd_.robot_position_;
 
-  std_msgs::Int32 momentum_activation_count_msg;
+  std_msgs::msg::Int32 momentum_activation_count_msg;
   momentum_activation_count_msg.data = momentum_activation_count_;
-  momentum_activation_count_pub_.publish(momentum_activation_count_msg);
+  momentum_activation_count_pub_->publish(momentum_activation_count_msg);
 }
 
-void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
+void SensorCoveragePlanner3D::execute()
 {
   if (!pp_.kAutoStart && !start_exploration_)
   {
-    ROS_INFO("Waiting for start signal");
+    RCLCPP_INFO(this->get_logger(), "Waiting for start signal");
     return;
   }
   Timer overall_processing_timer("overall processing");
@@ -1249,8 +1301,8 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
   if (!initialized_)
   {
     SendInitialWaypoint();
-    start_time_ = ros::Time::now();
-    global_direction_switch_time_ = ros::Time::now();
+    start_time_ = rclcpp::Node::now();
+    global_direction_switch_time_ = rclcpp::Node::now();
     return;
   }
 
@@ -1270,7 +1322,7 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
     int viewpoint_candidate_count = UpdateViewPoints();
     if (viewpoint_candidate_count == 0)
     {
-      ROS_WARN("Cannot get candidate viewpoints, skipping this round");
+      RCLCPP_WARN(rclcpp::get_logger("standalone_logger"), "Cannot get candidate viewpoints, skipping this round");
       return;
     }
 
@@ -1304,7 +1356,7 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
     at_home_ = GetRobotToHomeDistance() < pp_.kAtHomeDistThreshold;
 
     if (pd_.grid_world_->IsReturningHome() && pd_.local_coverage_planner_->IsLocalCoverageComplete() &&
-        (ros::Time::now() - start_time_).toSec() > 5)
+        (rclcpp::Node::now() - start_time_).seconds() > 5)
     {
       if (!exploration_finished_)
       {
