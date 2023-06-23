@@ -22,6 +22,8 @@
 #include <cfloat>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/transform_datatypes.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
 #include <visualization_msgs/msg/marker.hpp>
 #include <math.h>
 #include <iostream>
@@ -190,21 +192,23 @@ bool InRange(const std::vector<T>& list, int index)
  * @param frame_id
  */
 template <class PCLPointCloudType>
-void PublishCloud(typename rclcpp::Publisher<PCLPointCloudType>::SharedPtr cloud_publisher,
+void PublishCloud(rclcpp::Node::SharedPtr node,
+                  typename rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_publisher,
                   const PCLPointCloudType& cloud, const std::string& frame_id)
 {
-  sensor_msgs::PointCloud2 cloud_msg;
+  sensor_msgs::msg::PointCloud2 cloud_msg;
   pcl::toROSMsg(cloud, cloud_msg);
   cloud_msg.header.frame_id = frame_id;
-  cloud_msg.header.stamp = rclcpp::Node::now();
+  cloud_msg.header.stamp = node->now();
   cloud_publisher->publish(cloud_msg);
 }
 
 template <class ROSMsgType>
-void Publish(typename rclcpp::Publisher<ROSMsgType>::SharedPtr publisher, ROSMsgType& msg, const std::string& frame_id)
+void Publish(rclcpp::Node::SharedPtr node, typename rclcpp::Publisher<ROSMsgType>::SharedPtr publisher, ROSMsgType& msg,
+             const std::string& frame_id)
 {
   msg.header.frame_id = frame_id;
-  msg.header.stamp = rclcpp::Node::now();
+  msg.header.stamp = node->now();
   publisher->publish(msg);
 }
 
@@ -292,14 +296,15 @@ private:
   std::string pub_topic_;
   std::string frame_id_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub_;
+  rclcpp::Node::SharedPtr nh_;
 
 public:
   static int id_;
   visualization_msgs::msg::Marker marker_;
   explicit Marker(rclcpp::Node::SharedPtr nh, std::string pub_topic, std::string frame_id)
-    : pub_topic_(pub_topic), frame_id_(frame_id)
+    : nh_(nh), pub_topic_(pub_topic), frame_id_(frame_id)
   {
-    marker_pub_ = nh->create_publisher<visualization_msgs::msg::Marker>(pub_topic_, 2);
+    marker_pub_ = nh_->create_publisher<visualization_msgs::msg::Marker>(pub_topic_, 2);
     id_++;
     marker_.id = id_;
     marker_.action = visualization_msgs::msg::Marker::ADD;
@@ -333,7 +338,7 @@ public:
   }
   void Publish()
   {
-    misc_utils_ns::Publish(marker_pub_, marker_, frame_id_);
+    misc_utils_ns::Publish(nh_, marker_pub_, marker_, frame_id_);
   }
 
   typedef std::shared_ptr<Marker> Ptr;

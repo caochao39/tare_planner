@@ -44,8 +44,9 @@ void Graph::SetNodePosition(int node_index, const Eigen::Vector3d& position)
   }
   else
   {
-    ROS_ERROR_STREAM("Graph::SetNodePosition: node_index: " << node_index << " not in range [0, "
-                                                            << positions_.size() - 1 << "]");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("standalone_logger"),
+                        "Graph::SetNodePosition: node_index: " << node_index << " not in range [0, "
+                                                               << positions_.size() - 1 << "]");
   }
 }
 
@@ -58,9 +59,10 @@ void Graph::AddOneWayEdge(int from_node_index, int to_node_index, double distanc
   }
   else
   {
-    ROS_ERROR_STREAM("Graph::AddOneWayEdge: from_node_index: " << from_node_index << " to_node_index: " << to_node_index
-                                                               << " not in range [0, " << connection_.size() - 1
-                                                               << "]");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("standalone_logger"),
+                        "Graph::AddOneWayEdge: from_node_index: " << from_node_index << " to_node_index: "
+                                                                  << to_node_index << " not in range [0, "
+                                                                  << connection_.size() - 1 << "]");
   }
 }
 

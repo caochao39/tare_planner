@@ -1048,8 +1048,9 @@ geometry_msgs::msg::Point KeyposeGraph::GetNodePosition(int node_ind)
   }
   else
   {
-    ROS_WARN_STREAM("KeyposeGraph::GetNodePosition: node_ind " << node_ind << " out of bound [0, " << nodes_.size() - 1
-                                                               << "]");
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("standalone_logger"), "KeyposeGraph::GetNodePosition: node_ind "
+                                                                    << node_ind << " out of bound [0, "
+                                                                    << nodes_.size() - 1 << "]");
   }
   return node_position;
 }

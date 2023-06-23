@@ -111,7 +111,7 @@ PlanningEnv::PlanningEnv(rclcpp::Node::SharedPtr nh, std::string world_frame_id)
       parameters_.kPointCloudManagerNeighborCellNum);
   pointcloud_manager_->SetCloudDwzFilterLeafSize() = parameters_.kSurfaceCloudDwzLeafSize;
 
-  rolling_occupancy_grid_ = std::make_unique<rolling_occupancy_grid_ns::RollingOccupancyGrid>(nh_private);
+  rolling_occupancy_grid_ = std::make_unique<rolling_occupancy_grid_ns::RollingOccupancyGrid>(nh);
 
   squeezed_planner_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>>(
       nh, "squeezed_planner_cloud", world_frame_id);
@@ -243,7 +243,7 @@ void PlanningEnv::UpdateTerrainCloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr&
 {
   if (cloud->points.empty())
   {
-    ROS_WARN("Terrain cloud empty");
+    RCLCPP_WARN(rclcpp::get_logger("standalone_logger"), "Terrain cloud empty");
   }
   else
   {
@@ -255,7 +255,8 @@ bool PlanningEnv::InCollision(double x, double y, double z) const
 {
   if (stacked_cloud_->cloud_->points.empty())
   {
-    ROS_WARN("PlanningEnv::InCollision(): collision cloud empty, not checking collision");
+    RCLCPP_WARN(rclcpp::get_logger("standalone_logger"),
+                "PlanningEnv::InCollision(): collision cloud empty, not checking collision");
     return false;
   }
   PlannerCloudPointType check_point;

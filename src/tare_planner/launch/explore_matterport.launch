@@ -4,7 +4,7 @@
     <arg name="bag_name_prefix" default="tare_matterport"/>
     <arg name="rviz" default="true"/>
     <arg name="use_boundary" default="false"/>
-    <include file="$(find tare_planner)/launch/explore.launch">
+    <include file="$(find-pkg-share tare_planner)/launch/explore.launch">
         <arg name="scenario" value="matterport"/>
         <arg name="rosbag_record" value="$(arg rosbag_record)"/>
         <arg name="bag_path" value="$(arg bag_path)"/>
@@ -13,8 +13,8 @@
     </include>
 
     <group if="$(arg use_boundary)">
-        <node pkg="tare_planner" type="navigationBoundary" name="navigationBoundary" output="screen" required="true">
-            <param name="boundary_file_dir" type="string" value="$(find tare_planner)/data/boundary.ply" />
+        <node pkg="tare_planner" exec="navigationBoundary" name="navigationBoundary" output="screen" required="true">
+            <param name="boundary_file_dir" type="string" value="$(find-pkg-share tare_planner)/data/boundary.ply" />
             <param name="sendBoundary" type="bool" value="true" />
             <param name="sendBoundaryInterval" type="int" value="2" />
         </node>

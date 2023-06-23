@@ -587,7 +587,7 @@ void GridWorld::UpdateCellStatus(const std::shared_ptr<viewpoint_manager_ns::Vie
     }
     else
     {
-      ROS_ERROR_STREAM("subspace sub out of bound: " << sub.transpose());
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("standalone_logger"), "subspace sub out of bound: " << sub.transpose());
     }
   }
 
@@ -723,12 +723,14 @@ exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
   }
   else if (cur_keypose_graph_node_ind_ >= 0 && cur_keypose_graph_node_ind_ < keypose_graph->GetNodeNum())
   {
-    // ROS_WARN("GridWorld::SolveGlobalTSP: using nearest keypose node for robot position");
+    // RCLCPP_WARN(rclcpp::get_logger("standalone_logger"), "GridWorld::SolveGlobalTSP: using nearest keypose node for
+    // robot position");
     global_path_robot_position = keypose_graph->GetNodePosition(cur_keypose_graph_node_ind_);
   }
   else
   {
-    // ROS_WARN("GridWorld::SolveGlobalTSP: using neighbor cell roadmap connection points for robot position");
+    // RCLCPP_WARN(rclcpp::get_logger("standalone_logger"), "GridWorld::SolveGlobalTSP: using neighbor cell roadmap
+    // connection points for robot position");
     for (int i = 0; i < neighbor_cell_indices_.size(); i++)
     {
       int cell_ind = neighbor_cell_indices_[i];
@@ -1104,7 +1106,8 @@ void GridWorld::AddPathsInBetweenCells(const std::shared_ptr<viewpoint_manager_n
       // Just for debug
       if (!AreNeighbors(from_cell_ind, to_cell_ind))
       {
-        ROS_ERROR_STREAM("Cell " << from_cell_ind << " and " << to_cell_ind << " are not neighbors");
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("standalone_logger"),
+                            "Cell " << from_cell_ind << " and " << to_cell_ind << " are not neighbors");
       }
       if (subspaces_->GetCell(to_cell_ind).GetViewPointIndices().empty())
       {

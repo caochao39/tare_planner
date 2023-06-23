@@ -14,35 +14,64 @@ namespace viewpoint_manager_ns
 {
 bool ViewPointManagerParameter::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
-  kUseFrontier = misc_utils_ns::getParam<bool>(nh, "kUseFrontier", false);
+  nh->declare_parameter<bool>("kUseFrontier", false);
+  nh->declare_parameter<int>("viewpoint_manager/number_x", 80);
+  nh->declare_parameter<int>("viewpoint_manager/number_y", 80);
+  nh->declare_parameter<int>("viewpoint_manager/number_z", 40);
+  nh->declare_parameter<double>("viewpoint_manager/resolution_x", 0.5);
+  nh->declare_parameter<double>("viewpoint_manager/resolution_y", 0.5);
+  nh->declare_parameter<double>("viewpoint_manager/resolution_z", 0.5);
+  nh->declare_parameter<double>("kConnectivityHeightDiffThr", 0.25);
+  nh->declare_parameter<double>("kViewPointCollisionMargin", 0.5);
+  nh->declare_parameter<double>("kViewPointCollisionMarginZPlus", 0.5);
+  nh->declare_parameter<double>("kViewPointCollisionMarginZMinus", 0.5);
+  nh->declare_parameter<double>("kCollisionGridZScale", 2.0);
+  nh->declare_parameter<double>("kCollisionGridResolutionX", 0.5);
+  nh->declare_parameter<double>("kCollisionGridResolutionY", 0.5);
+  nh->declare_parameter<double>("kCollisionGridResolutionZ", 0.5);
+  nh->declare_parameter<bool>("kLineOfSightStopAtNearestObstacle", true);
+  nh->declare_parameter<bool>("kCheckDynamicObstacleCollision", true);
+  nh->declare_parameter<int>("kCollisionFrameCountMax", 3);
+  nh->declare_parameter<double>("kViewPointHeightFromTerrain", 0.75);
+  nh->declare_parameter<double>("kViewPointHeightFromTerrainChangeThreshold", 0.6);
+  nh->declare_parameter<int>("kCollisionPointThr", 3);
+  nh->declare_parameter<double>("kCoverageOcclusionThr", 1.0);
+  nh->declare_parameter<double>("kCoverageDilationRadius", 1.0);
+  nh->declare_parameter<double>("kCoveragePointCloudResolution", 1.0);
+  nh->declare_parameter<double>("kSensorRange", 10.0);
+  nh->declare_parameter<double>("kNeighborRange", 3.0);
+
+  nh->get_parameter("kUseFrontier", kUseFrontier);
+  kNumber.x() = nh->get_parameter("viewpoint_manager/number_x").as_int();
+  kNumber.y() = nh->get_parameter("viewpoint_manager/number_y").as_int();
+  kNumber.z() = nh->get_parameter("viewpoint_manager/number_z").as_int();
+  kResolution.x() = nh->get_parameter("viewpoint_manager/resolution_x").as_double();
+  kResolution.y() = nh->get_parameter("viewpoint_manager/resolution_y").as_double();
+  kResolution.z() = nh->get_parameter("viewpoint_manager/resolution_z").as_double();
+
+  nh->get_parameter("viewpoint_manager/resolution_z", kConnectivityHeightDiffThr);
+  nh->get_parameter("kViewPointCollisionMargin", kViewPointCollisionMargin);
+  nh->get_parameter("kViewPointCollisionMarginZPlus", kViewPointCollisionMarginZPlus);
+  nh->get_parameter("kViewPointCollisionMarginZMinus", kViewPointCollisionMarginZMinus);
+  nh->get_parameter("kCollisionGridZScale", kCollisionGridZScale);
+  kCollisionGridResolution.x() = nh->get_parameter("kCollisionGridResolutionX").as_double();
+  kCollisionGridResolution.y() = nh->get_parameter("kCollisionGridResolutionY").as_double();
+  kCollisionGridResolution.z() = nh->get_parameter("kCollisionGridResolutionZ").as_double();
+  nh->get_parameter("kLineOfSightStopAtNearestObstacle", kLineOfSightStopAtNearestObstacle);
+  nh->get_parameter("kCheckDynamicObstacleCollision", kCheckDynamicObstacleCollision);
+  nh->get_parameter("kCollisionFrameCountMax", kCollisionFrameCountMax);
+  nh->get_parameter("kViewPointHeightFromTerrain", kViewPointHeightFromTerrain);
+  nh->get_parameter("kViewPointHeightFromTerrainChangeThreshold", kViewPointHeightFromTerrainChangeThreshold);
+  nh->get_parameter("kCollisionPointThr", kCollisionPointThr);
+  nh->get_parameter("kCoverageOcclusionThr", kCoverageOcclusionThr);
+  nh->get_parameter("kCoverageDilationRadius", kCoverageDilationRadius);
+  nh->get_parameter("kCoveragePointCloudResolution", kCoveragePointCloudResolution);
+  nh->get_parameter("kSensorRange", kSensorRange);
+  nh->get_parameter("kNeighborRange", kNeighborRange);
 
   dimension_ = 2;
-
-  kNumber.x() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_x", 80);
-  kNumber.y() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_y", 80);
-  kNumber.z() = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_z", 40);
   kViewPointNumber = kNumber.x() * kNumber.y() * kNumber.z();
   kRolloverStepsize = kNumber / 5;
-
-  kResolution.x() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resolution_x", 0.5);
-  kResolution.y() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resolution_y", 0.5);
-  kResolution.z() = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resolution_z", 0.5);
-  kConnectivityHeightDiffThr = misc_utils_ns::getParam<double>(nh, "kConnectivityHeightDiffThr", 0.25);
-  kViewPointCollisionMargin = misc_utils_ns::getParam<double>(nh, "kViewPointCollisionMargin", 0.5);
-  kViewPointCollisionMarginZPlus = misc_utils_ns::getParam<double>(nh, "kViewPointCollisionMarginZPlus", 0.5);
-  kViewPointCollisionMarginZMinus = misc_utils_ns::getParam<double>(nh, "kViewPointCollisionMarginZMinus", 0.5);
-  kCollisionGridZScale = misc_utils_ns::getParam<double>(nh, "kCollisionGridZScale", 2.0);
-  kCollisionGridResolution.x() = misc_utils_ns::getParam<double>(nh, "kCollisionGridResolutionX", 0.5);
-  kCollisionGridResolution.y() = misc_utils_ns::getParam<double>(nh, "kCollisionGridResolutionY", 0.5);
-  kCollisionGridResolution.z() = misc_utils_ns::getParam<double>(nh, "kCollisionGridResolutionZ", 0.5);
-  kLineOfSightStopAtNearestObstacle = misc_utils_ns::getParam<bool>(nh, "kLineOfSightStopAtNearestObstacle", true);
-  kCheckDynamicObstacleCollision = misc_utils_ns::getParam<bool>(nh, "kCheckDynamicObstacleCollision", true);
-  kCollisionFrameCountMax = misc_utils_ns::getParam<int>(nh, "kCollisionFrameCountMax", 3);
-  kViewPointHeightFromTerrain = misc_utils_ns::getParam<double>(nh, "kViewPointHeightFromTerrain", 0.75);
-  kViewPointHeightFromTerrainChangeThreshold =
-      misc_utils_ns::getParam<double>(nh, "kViewPointHeightFromTerrainChangeThreshold", 0.6);
-
-  kCollisionPointThr = misc_utils_ns::getParam<int>(nh, "kCollisionPointThr", 3);
 
   for (int i = 0; i < dimension_; i++)
   {
@@ -55,12 +84,6 @@ bool ViewPointManagerParameter::ReadParameters(rclcpp::Node::SharedPtr nh)
     kCollisionGridSize(i) =
         ceil((kNumber(i) * kResolution(i) + kViewPointCollisionMargin * 2) / kCollisionGridResolution(i));
   }
-
-  kCoverageOcclusionThr = misc_utils_ns::getParam<double>(nh, "kCoverageOcclusionThr", 1.0);
-  kCoverageDilationRadius = misc_utils_ns::getParam<double>(nh, "kCoverageDilationRadius", 1.0);
-  kCoveragePointCloudResolution = misc_utils_ns::getParam<double>(nh, "kSurfaceCloudDwzLeafSize", 1.0);
-  kSensorRange = misc_utils_ns::getParam<double>(nh, "kSensorRange", 10.0);
-  kNeighborRange = misc_utils_ns::getParam<double>(nh, "kNeighborRange", 3.0);
 
   kVerticalFOVRatio = tan(M_PI / 15);
   kDiffZMax = kSensorRange * kVerticalFOVRatio;
@@ -1270,14 +1293,16 @@ nav_msgs::msg::Path ViewPointManager::GetViewPointShortestPath(int start_viewpoi
   nav_msgs::msg::Path path;
   if (!InRange(start_viewpoint_ind))
   {
-    ROS_WARN_STREAM("ViewPointManager::GetViewPointShortestPath start viewpoint ind: " << start_viewpoint_ind
-                                                                                       << " not in range");
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("standalone_logger"),
+                       "ViewPointManager::GetViewPointShortestPath start viewpoint ind: " << start_viewpoint_ind
+                                                                                          << " not in range");
     return path;
   }
   if (!InRange(target_viewpoint_ind))
   {
-    ROS_WARN_STREAM("ViewPointManager::GetViewPointShortestPath target viewpoint ind: " << target_viewpoint_ind
-                                                                                        << " not in range");
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("standalone_logger"),
+                       "ViewPointManager::GetViewPointShortestPath target viewpoint ind: " << target_viewpoint_ind
+                                                                                           << " not in range");
     return path;
   }
 
@@ -1303,19 +1328,21 @@ nav_msgs::msg::Path ViewPointManager::GetViewPointShortestPath(int start_viewpoi
 }
 
 nav_msgs::msg::Path ViewPointManager::GetViewPointShortestPath(const Eigen::Vector3d& start_position,
-                                                          const Eigen::Vector3d& target_position)
+                                                               const Eigen::Vector3d& target_position)
 {
   nav_msgs::msg::Path path;
   if (!InLocalPlanningHorizon(start_position))
   {
-    ROS_WARN_STREAM("ViewPointManager::GetViewPointShortestPath start position " << start_position.transpose()
-                                                                                 << " not in local planning horizon");
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("standalone_logger"),
+                       "ViewPointManager::GetViewPointShortestPath start position "
+                           << start_position.transpose() << " not in local planning horizon");
     return path;
   }
   if (!InLocalPlanningHorizon(target_position))
   {
-    ROS_WARN_STREAM("ViewPointManager::GetViewPointShortestPath target position " << target_position.transpose()
-                                                                                  << " not in local planning horizon");
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("standalone_logger"),
+                       "ViewPointManager::GetViewPointShortestPath target position "
+                           << target_position.transpose() << " not in local planning horizon");
     return path;
   }
   int start_viewpoint_ind = GetNearestCandidateViewPointInd(start_position);
@@ -1330,14 +1357,16 @@ bool ViewPointManager::GetViewPointShortestPathWithMaxLength(const Eigen::Vector
 {
   if (!InLocalPlanningHorizon(start_position))
   {
-    ROS_WARN_STREAM("ViewPointManager::GetViewPointShortestPath start position " << start_position.transpose()
-                                                                                 << " not in local planning horizon");
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("standalone_logger"),
+                       "ViewPointManager::GetViewPointShortestPath start position "
+                           << start_position.transpose() << " not in local planning horizon");
     return false;
   }
   if (!InLocalPlanningHorizon(target_position))
   {
-    ROS_WARN_STREAM("ViewPointManager::GetViewPointShortestPath target position " << target_position.transpose()
-                                                                                  << " not in local planning horizon");
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("standalone_logger"),
+                       "ViewPointManager::GetViewPointShortestPath target position "
+                           << target_position.transpose() << " not in local planning horizon");
     return false;
   }
   int start_viewpoint_ind = GetNearestCandidateViewPointInd(start_position);
@@ -1384,7 +1413,9 @@ void ViewPointManager::UpdateCandidateViewPointCellStatus(std::unique_ptr<grid_w
     }
     else
     {
-      ROS_WARN_STREAM("ViewPointManager::UpdateCandidateViewPointCellStatus: cell ind " << cell_ind << " out of bound");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("standalone_logger"),
+                         "ViewPointManager::UpdateCandidateViewPointCellStatus: cell ind " << cell_ind
+                                                                                           << " out of bound");
     }
   }
 }
@@ -1449,8 +1480,8 @@ int ViewPointManager::GetNearestCandidateViewPointInd(const Eigen::Vector3d& pos
     for (const auto& cur_viewpoint_ind : candidate_indices_)
     {
       geometry_msgs::msg::Point cur_position = GetViewPointPosition(cur_viewpoint_ind);
-      double dist =
-          misc_utils_ns::PointXYZDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(cur_position, query_position);
+      double dist = misc_utils_ns::PointXYZDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(cur_position,
+                                                                                                      query_position);
       if (dist < min_dist)
       {
         min_dist = dist;

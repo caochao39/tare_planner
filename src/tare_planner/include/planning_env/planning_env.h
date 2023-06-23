@@ -131,7 +131,8 @@ public:
   {
     if (cloud->points.empty())
     {
-      ROS_WARN("PlanningEnv::UpdateRegisteredCloud(): registered cloud empty");
+      RCLCPP_WARN(rclcpp::get_logger("standalone_logger"),
+                  "PlanningEnv::UpdateRegisteredCloud(): registered cloud empty");
       return;
     }
     else
@@ -151,7 +152,7 @@ public:
   {
     if (keypose_cloud->points.empty())
     {
-      ROS_WARN("PlanningEnv::UpdateKeyposeCloud(): keypose cloud empty");
+      RCLCPP_WARN(rclcpp::get_logger("standalone_logger"), "PlanningEnv::UpdateKeyposeCloud(): keypose cloud empty");
       return;
     }
     else

@@ -85,9 +85,9 @@ void KeyposeToMap(CloudType& cloud, const nav_msgs::msg::Odometry::ConstPtr& key
   float ty = (float)keypose->pose.pose.position.y;
   float tz = (float)keypose->pose.pose.position.z;
 
-  tf::Quaternion tf_q(keypose->pose.pose.orientation.x, keypose->pose.pose.orientation.y,
-                      keypose->pose.pose.orientation.z, keypose->pose.pose.orientation.w);
-  tf::Matrix3x3 tf_m(tf_q);
+  tf2::Quaternion tf_q(keypose->pose.pose.orientation.x, keypose->pose.pose.orientation.y,
+                       keypose->pose.pose.orientation.z, keypose->pose.pose.orientation.w);
+  tf2::Matrix3x3 tf_m(tf_q);
   double roll, pitch, yaw;
   tf_m.getRPY(roll, pitch, yaw);
 
@@ -178,8 +178,8 @@ double PointAngle(const PCLPointType& pnt, const geometry_msgs::msg::Point& robo
 /// \param p2 Second point
 /// \param p3 Third point
 /// \return Collinear
-bool CollinearXY(const geometry_msgs::msg::Point& p1, const geometry_msgs::msg::Point& p2, const geometry_msgs::msg::Point& p3,
-                 double threshold)
+bool CollinearXY(const geometry_msgs::msg::Point& p1, const geometry_msgs::msg::Point& p2,
+                 const geometry_msgs::msg::Point& p3, double threshold)
 {
   // https://math.stackexchange.com/questions/405966/if-i-have-three-points-is-there-an-easy-way-to-tell-if-they-are-collinear
   double val = (p2.y - p1.y) * (p3.x - p2.x) - (p3.y - p2.y) * (p2.x - p1.x);
@@ -289,7 +289,8 @@ double AngleDiff(double source_angle, double target_angle)
 /// \param q Point to be examined
 /// \param r End point of line segment pr
 /// \return If q is on pr
-bool PointOnLineSeg(const geometry_msgs::msg::Point& p, const geometry_msgs::msg::Point& q, const geometry_msgs::msg::Point& r)
+bool PointOnLineSeg(const geometry_msgs::msg::Point& p, const geometry_msgs::msg::Point& q,
+                    const geometry_msgs::msg::Point& r)
 {
   if (q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) && q.y <= std::max(p.y, r.y) && q.y >= std::min(p.y, r.y))
   {
@@ -306,7 +307,8 @@ bool PointOnLineSeg(const geometry_msgs::msg::Point& p, const geometry_msgs::msg
 /// \param q The second point
 /// \param r The third point
 /// \return 0 --> p, q and r are colinear, 1 --> Clockwise, 2 --> Counterclockwise
-int ThreePointOrientation(const geometry_msgs::msg::Point& p, const geometry_msgs::msg::Point& q, const geometry_msgs::msg::Point& r)
+int ThreePointOrientation(const geometry_msgs::msg::Point& p, const geometry_msgs::msg::Point& q,
+                          const geometry_msgs::msg::Point& r)
 {
   // See https://www.geeksforgeeks.org/orientation-3-ordered-points/
   // for details of below formula.
@@ -324,8 +326,8 @@ int ThreePointOrientation(const geometry_msgs::msg::Point& p, const geometry_msg
 /// \param p2 end point of 'p2q2'
 /// \param q2 end point of 'p2q2'
 /// \return true if line segment 'p1q1' and 'p2q2' intersect, false otherwise
-bool LineSegIntersect(const geometry_msgs::msg::Point& p1, const geometry_msgs::msg::Point& q1, const geometry_msgs::msg::Point& p2,
-                      const geometry_msgs::msg::Point& q2)
+bool LineSegIntersect(const geometry_msgs::msg::Point& p1, const geometry_msgs::msg::Point& q1,
+                      const geometry_msgs::msg::Point& p2, const geometry_msgs::msg::Point& q2)
 {
   // Find the four orientations needed for general and
   // special cases
@@ -825,8 +827,8 @@ double GetPathLength(const std::vector<Eigen::Vector3d>& path)
 }
 
 double AStarSearch(const std::vector<std::vector<int>>& graph, const std::vector<std::vector<double>>& node_dist,
-                   const std::vector<geometry_msgs::msg::Point>& node_positions, int from_idx, int to_idx, bool get_path,
-                   std::vector<int>& path_indices)
+                   const std::vector<geometry_msgs::msg::Point>& node_positions, int from_idx, int to_idx,
+                   bool get_path, std::vector<int>& path_indices)
 {
   MY_ASSERT(graph.size() == node_dist.size());
   MY_ASSERT(graph.size() == node_positions.size());
@@ -842,8 +844,8 @@ double AStarSearch(const std::vector<std::vector<int>>& graph, const std::vector
   std::vector<bool> in_pg(graph.size(), false);
 
   g[from_idx] = 0;
-  f[from_idx] = misc_utils_ns::PointXYZDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(node_positions[from_idx],
-                                                                                        node_positions[to_idx]);
+  f[from_idx] = misc_utils_ns::PointXYZDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(
+      node_positions[from_idx], node_positions[to_idx]);
   pq.push(std::make_pair(f[from_idx], from_idx));
   in_pg[from_idx] = true;
 
@@ -867,8 +869,8 @@ double AStarSearch(const std::vector<std::vector<int>>& graph, const std::vector
       {
         prev[v] = u;
         g[v] = g[u] + d;
-        f[v] = g[v] + misc_utils_ns::PointXYZDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(node_positions[v],
-                                                                                              node_positions[to_idx]);
+        f[v] = g[v] + misc_utils_ns::PointXYZDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(
+                          node_positions[v], node_positions[to_idx]);
         if (!in_pg[v])
         {
           pq.push(std::make_pair(f[v], v));
@@ -898,8 +900,8 @@ double AStarSearch(const std::vector<std::vector<int>>& graph, const std::vector
 
 bool AStarSearchWithMaxPathLength(const std::vector<std::vector<int>>& graph,
                                   const std::vector<std::vector<double>>& node_dist,
-                                  const std::vector<geometry_msgs::msg::Point>& node_positions, int from_idx, int to_idx,
-                                  bool get_path, std::vector<int>& path_indices, double& shortest_dist,
+                                  const std::vector<geometry_msgs::msg::Point>& node_positions, int from_idx,
+                                  int to_idx, bool get_path, std::vector<int>& path_indices, double& shortest_dist,
                                   double max_path_length)
 {
   MY_ASSERT(graph.size() == node_dist.size());
@@ -915,8 +917,8 @@ bool AStarSearchWithMaxPathLength(const std::vector<std::vector<int>>& graph,
   std::vector<bool> in_pg(graph.size(), false);
 
   g[from_idx] = 0;
-  f[from_idx] = misc_utils_ns::PointXYZDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(node_positions[from_idx],
-                                                                                        node_positions[to_idx]);
+  f[from_idx] = misc_utils_ns::PointXYZDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(
+      node_positions[from_idx], node_positions[to_idx]);
   pq.push(std::make_pair(f[from_idx], from_idx));
   in_pg[from_idx] = true;
 
@@ -949,8 +951,8 @@ bool AStarSearchWithMaxPathLength(const std::vector<std::vector<int>>& graph,
       {
         prev[v] = u;
         g[v] = g[u] + d;
-        f[v] = g[v] + misc_utils_ns::PointXYZDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(node_positions[v],
-                                                                                              node_positions[to_idx]);
+        f[v] = g[v] + misc_utils_ns::PointXYZDist<geometry_msgs::msg::Point, geometry_msgs::msg::Point>(
+                          node_positions[v], node_positions[to_idx]);
         if (!in_pg[v])
         {
           pq.push(std::make_pair(f[v], v));

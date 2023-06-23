@@ -27,7 +27,7 @@ namespace tare_visualizer_ns
 class TAREVisualizer
 {
 public:
-  explicit TAREVisualizer(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedPtr nh_private);
+  explicit TAREVisualizer(rclcpp::Node::SharedPtr nh);
   bool ReadParameters(rclcpp::Node::SharedPtr nh);
 
   void InitializeMarkers();
@@ -49,12 +49,8 @@ private:
   double kGlobalSubspaceSize;
   double kGlobalSubspaceHeight;
 
-  ros::Publisher marker_publisher_;
-  ros::Publisher uncovered_surface_point_publisher_;
-  ros::Publisher viewpoint_candidate_publisher_;
-  ros::Publisher viewpoint_publisher_;
-  ros::Publisher local_path_publisher_;
-  ros::Publisher global_path_publisher_;
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr local_path_publisher_;
 
   misc_utils_ns::Marker::Ptr global_subspaces_marker_;
   misc_utils_ns::Marker::Ptr local_planning_horizon_marker_;

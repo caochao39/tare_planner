@@ -133,12 +133,19 @@ target_link_libraries(tare_planner_node ${catkin_LIBRARIES} sensor_coverage_plan
 ## Install ##
 #############
 
+install(TARGETS
+  tare_planner_node
+  DESTINATION lib/${PROJECT_NAME})
+
 install(DIRECTORY launch/
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+        DESTINATION share/${PROJECT_NAME}/
         )
 install(DIRECTORY rviz/
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rviz
+        DESTINATION share/${PROJECT_NAME}/
         )
+install(DIRECTORY config/
+        DESTINATION share/${PROJECT_NAME}
+      )
 
 ament_package()
 

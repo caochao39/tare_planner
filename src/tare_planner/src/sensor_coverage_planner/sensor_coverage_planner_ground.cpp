@@ -141,14 +141,14 @@ void PlannerData::Initialize()
   reordered_global_subspace_cloud_ = std::make_unique<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(
       node_, "reordered_global_subspace_cloud", kWorldFrameID);
 
-  planning_env_ = std::make_unique<planning_env_ns::PlanningEnv>(nh, nh_p);
-  viewpoint_manager_ = std::make_shared<viewpoint_manager_ns::ViewPointManager>(nh_p);
-  local_coverage_planner_ = std::make_unique<local_coverage_planner_ns::LocalCoveragePlanner>(nh_p);
+  planning_env_ = std::make_unique<planning_env_ns::PlanningEnv>(node_);
+  viewpoint_manager_ = std::make_shared<viewpoint_manager_ns::ViewPointManager>(node_);
+  local_coverage_planner_ = std::make_unique<local_coverage_planner_ns::LocalCoveragePlanner>(node_);
   local_coverage_planner_->SetViewPointManager(viewpoint_manager_);
-  keypose_graph_ = std::make_unique<keypose_graph_ns::KeyposeGraph>(nh_p);
-  grid_world_ = std::make_unique<grid_world_ns::GridWorld>(nh_p);
+  keypose_graph_ = std::make_unique<keypose_graph_ns::KeyposeGraph>(node_);
+  grid_world_ = std::make_unique<grid_world_ns::GridWorld>(node_);
   grid_world_->SetUseKeyposeGraph(true);
-  visualizer_ = std::make_unique<tare_visualizer_ns::TAREVisualizer>(nh, nh_p);
+  visualizer_ = std::make_unique<tare_visualizer_ns::TAREVisualizer>(node_);
 
   initial_position_.x() = 0.0;
   initial_position_.y() = 0.0;
@@ -156,21 +156,23 @@ void PlannerData::Initialize()
 
   cur_keypose_node_ind_ = 0;
 
-  keypose_graph_node_marker_ = std::make_unique<misc_utils_ns::Marker>(nh, "keypose_graph_node_marker", kWorldFrameID);
+  keypose_graph_node_marker_ =
+      std::make_unique<misc_utils_ns::Marker>(node_, "keypose_graph_node_marker", kWorldFrameID);
   keypose_graph_node_marker_->SetType(visualization_msgs::msg::Marker::POINTS);
   keypose_graph_node_marker_->SetScale(0.4, 0.4, 0.1);
   keypose_graph_node_marker_->SetColorRGBA(1.0, 0.0, 0.0, 1.0);
-  keypose_graph_edge_marker_ = std::make_unique<misc_utils_ns::Marker>(nh, "keypose_graph_edge_marker", kWorldFrameID);
+  keypose_graph_edge_marker_ =
+      std::make_unique<misc_utils_ns::Marker>(node_, "keypose_graph_edge_marker", kWorldFrameID);
   keypose_graph_edge_marker_->SetType(visualization_msgs::msg::Marker::LINE_LIST);
   keypose_graph_edge_marker_->SetScale(0.05, 0.0, 0.0);
   keypose_graph_edge_marker_->SetColorRGBA(1.0, 1.0, 0.0, 0.9);
 
-  nogo_boundary_marker_ = std::make_unique<misc_utils_ns::Marker>(nh, "nogo_boundary_marker", kWorldFrameID);
+  nogo_boundary_marker_ = std::make_unique<misc_utils_ns::Marker>(node_, "nogo_boundary_marker", kWorldFrameID);
   nogo_boundary_marker_->SetType(visualization_msgs::msg::Marker::LINE_LIST);
   nogo_boundary_marker_->SetScale(0.05, 0.0, 0.0);
   nogo_boundary_marker_->SetColorRGBA(1.0, 0.0, 0.0, 0.8);
 
-  grid_world_marker_ = std::make_unique<misc_utils_ns::Marker>(nh, "grid_world_marker", kWorldFrameID);
+  grid_world_marker_ = std::make_unique<misc_utils_ns::Marker>(node_, "grid_world_marker", kWorldFrameID);
   grid_world_marker_->SetType(visualization_msgs::msg::Marker::CUBE_LIST);
   grid_world_marker_->SetScale(1.0, 1.0, 1.0);
   grid_world_marker_->SetColorRGBA(1.0, 0.0, 0.0, 0.8);
@@ -1186,7 +1188,7 @@ void SensorCoveragePlanner3D::PublishWaypoint()
     waypoint.point.y = dy + pd_.robot_position_.y;
     waypoint.point.z = pd_.lookahead_point_.z();
   }
-  misc_utils_ns::Publish(waypoint_pub_, waypoint, kWorldFrameID);
+  misc_utils_ns::Publish(shared_from_this(), waypoint_pub_, waypoint, kWorldFrameID);
 }
 
 void SensorCoveragePlanner3D::PublishRuntime()

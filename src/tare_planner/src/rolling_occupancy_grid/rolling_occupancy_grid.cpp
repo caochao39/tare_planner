@@ -15,16 +15,24 @@ namespace rolling_occupancy_grid_ns
 {
 RollingOccupancyGrid::RollingOccupancyGrid(rclcpp::Node::SharedPtr nh) : initialized_(false), dimension_(3)
 {
-  double pointcloud_cell_size = misc_utils_ns::getParam<double>(nh, "kPointCloudCellSize", 18);
-  double pointcloud_cell_height = misc_utils_ns::getParam<double>(nh, "kPointCloudCellHeight", 1.8);
-  int pointcloud_cell_neighbor_number = misc_utils_ns::getParam<int>(nh, "kPointCloudManagerNeighborCellNum", 5);
+  nh->declare_parameter<double>("kPointCloudCellSize", 18);
+  nh->declare_parameter<double>("kPointCloudCellHeight", 1.8);
+  nh->declare_parameter<int>("kPointCloudManagerNeighborCellNum", 5);
+  nh->declare_parameter<double>("rolling_occupancy_grid/resolution_x", 0.3);
+  nh->declare_parameter<double>("rolling_occupancy_grid/resolution_y", 0.3);
+  nh->declare_parameter<double>("rolling_occupancy_grid/resolution_z", 0.3);
+
+  double pointcloud_cell_size = nh->get_parameter("kPointCloudCellSize").as_double();
+  double pointcloud_cell_height = nh->get_parameter("kPointCloudCellHeight").as_double();
+  int pointcloud_cell_neighbor_number = nh->get_parameter("kPointCloudManagerNeighborCellNum").as_int();
+
   range_.x() = pointcloud_cell_size * pointcloud_cell_neighbor_number;
   range_.y() = pointcloud_cell_size * pointcloud_cell_neighbor_number;
   range_.z() = pointcloud_cell_height * pointcloud_cell_neighbor_number;
 
-  resolution_.x() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/resolution_x", 0.3);
-  resolution_.y() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/resolution_y", 0.3);
-  resolution_.z() = misc_utils_ns::getParam<double>(nh, "rolling_occupancy_grid/resolution_z", 0.3);
+  resolution_.x() = nh->get_parameter("rolling_occupancy_grid/resolution_x").as_double();
+  resolution_.y() = nh->get_parameter("rolling_occupancy_grid/resolution_y").as_double();
+  resolution_.z() = nh->get_parameter("rolling_occupancy_grid/resolution_z").as_double();
 
   rollover_range_.x() = pointcloud_cell_size;
   rollover_range_.y() = pointcloud_cell_size;
@@ -171,7 +179,7 @@ void RollingOccupancyGrid::RayTrace(const Eigen::Vector3d& origin, const Eigen::
   int ray_trace_count = 0;
   if (!occupancy_array_->InRange(origin_sub))
   {
-    ROS_WARN("RollingOccupancyGrid::RayTrace(), robot not in range");
+    RCLCPP_WARN(rclcpp::get_logger("standalone_logger"), "RollingOccupancyGrid::RayTrace(), robot not in range");
     return;
   }
 
@@ -184,13 +192,15 @@ void RollingOccupancyGrid::RayTrace(const Eigen::Vector3d& origin, const Eigen::
       Eigen::Vector3i cur_sub = occupancy_array_->Ind2Sub(ind);
       if (!occupancy_array_->InRange(cur_sub))
       {
-        ROS_WARN_STREAM("RollingOccupancyGrid::RayTrace() " << cur_sub.transpose() << " sub out of range");
+        RCLCPP_WARN_STREAM(rclcpp::get_logger("standalone_logger"),
+                           "RollingOccupancyGrid::RayTrace() " << cur_sub.transpose() << " sub out of range");
         continue;
       }
       int array_ind = rolling_grid_->GetArrayInd(ind);
       if (occupancy_array_->GetCellValue(array_ind) != OCCUPIED)
       {
-        ROS_WARN_STREAM("RollingOccupancyGrid::RayTrace() " << cur_sub.transpose() << " sub not occupied");
+        RCLCPP_WARN_STREAM(rclcpp::get_logger("standalone_logger"),
+                           "RollingOccupancyGrid::RayTrace() " << cur_sub.transpose() << " sub not occupied");
         continue;
       }
       ray_trace_count++;
@@ -303,7 +313,8 @@ void RollingOccupancyGrid::GetFrontier(pcl::PointCloud<pcl::PointXYZI>::Ptr& fro
 
   if (!occupancy_array_->InRange(origin_sub))
   {
-    ROS_WARN("RollingOccupancyGrid::GetFrontierInRange(), robot not in range");
+    RCLCPP_WARN(rclcpp::get_logger("standalone_logger"),
+                "RollingOccupancyGrid::GetFrontierInRange(), robot not in range");
     return;
   }
   int ray_trace_count = 0;

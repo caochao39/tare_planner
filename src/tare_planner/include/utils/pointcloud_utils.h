@@ -187,18 +187,19 @@ struct pointcloud_utils_ns::PCLCloud
   std::string pub_cloud_topic_;
   std::string frame_id_;
   typename pcl::PointCloud<PCLPointType>::Ptr cloud_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2> cloud_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_pub_;
+  rclcpp::Node::SharedPtr nh_;
 
   PCLCloud(rclcpp::Node::SharedPtr nh, std::string pub_cloud_topic, std::string frame_id)
-    : pub_cloud_topic_(pub_cloud_topic), frame_id_(frame_id)
+    : nh_(nh), pub_cloud_topic_(pub_cloud_topic), frame_id_(frame_id)
   {
     cloud_ = typename pcl::PointCloud<PCLPointType>::Ptr(new pcl::PointCloud<PCLPointType>);
-    cloud_pub_ = nh->create_publisher<sensor_msgs::msg::PointCloud2>(pub_cloud_topic_, 2);
+    cloud_pub_ = nh_->create_publisher<sensor_msgs::msg::PointCloud2>(pub_cloud_topic_, 2);
   }
   ~PCLCloud() = default;
   void Publish()
   {
-    misc_utils_ns::PublishCloud<pcl::PointCloud<PCLPointType>>(cloud_pub_, *cloud_, frame_id_);
+    misc_utils_ns::PublishCloud<pcl::PointCloud<PCLPointType>>(nh_, cloud_pub_, *cloud_, frame_id_);
   }
   typedef std::shared_ptr<PCLCloud<PCLPointType>> Ptr;
 };

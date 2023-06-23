@@ -13,12 +13,12 @@
 
 namespace tare_visualizer_ns
 {
-TAREVisualizer::TAREVisualizer(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedPtr nh_private)
+TAREVisualizer::TAREVisualizer(rclcpp::Node::SharedPtr nh)
 {
-  ReadParameters(nh_private);
+  ReadParameters(nh);
 
-  marker_publisher_ = this->create_publisher<visualization_msgs::msg::Marker>("tare_visualizer/marker", 1);
-  local_path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("tare_visualizer/local_path", 1);
+  marker_publisher_ = nh->create_publisher<visualization_msgs::msg::Marker>("tare_visualizer/marker", 1);
+  local_path_publisher_ = nh->create_publisher<nav_msgs::msg::Path>("tare_visualizer/local_path", 1);
 
   global_subspaces_marker_ =
       std::make_shared<misc_utils_ns::Marker>(nh, "tare_visualizer/exploring_subspaces", kWorldFrameID);
@@ -36,33 +36,45 @@ TAREVisualizer::TAREVisualizer(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedP
 }
 bool TAREVisualizer::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
-  kExploringSubspaceMarkerColorGradientAlpha =
-      misc_utils_ns::getParam<bool>(nh, "kExploringSubspaceMarkerColorGradientAlpha", true);
-  kExploringSubspaceMarkerColorMaxAlpha =
-      misc_utils_ns::getParam<double>(nh, "kExploringSubspaceMarkerColorMaxAlpha", 1.0);
-  kExploringSubspaceMarkerColor.r = misc_utils_ns::getParam<double>(nh, "kExploringSubspaceMarkerColorR", 0.0);
-  kExploringSubspaceMarkerColor.g = misc_utils_ns::getParam<double>(nh, "kExploringSubspaceMarkerColorG", 1.0);
-  kExploringSubspaceMarkerColor.b = misc_utils_ns::getParam<double>(nh, "kExploringSubspaceMarkerColorB", 0.0);
-  kExploringSubspaceMarkerColor.a = misc_utils_ns::getParam<double>(nh, "kExploringSubspaceMarkerColorA", 1.0);
+  nh->declare_parameter<bool>("kExploringSubspaceMarkerColorGradientAlpha", true);
+  nh->declare_parameter<double>("kExploringSubspaceMarkerColorMaxAlpha", 1.0);
+  nh->declare_parameter<double>("kExploringSubspaceMarkerColorR", 0.0);
+  nh->declare_parameter<double>("kExploringSubspaceMarkerColorG", 1.0);
+  nh->declare_parameter<double>("kExploringSubspaceMarkerColorB", 0.0);
+  nh->declare_parameter<double>("kExploringSubspaceMarkerColorA", 1.0);
+  nh->declare_parameter<double>("kLocalPlanningHorizonMarkerColorR", 0.0);
+  nh->declare_parameter<double>("kLocalPlanningHorizonMarkerColorG", 1.0);
+  nh->declare_parameter<double>("kLocalPlanningHorizonMarkerColorB", 0.0);
+  nh->declare_parameter<double>("kLocalPlanningHorizonMarkerColorA", 1.0);
+  nh->declare_parameter<double>("kLocalPlanningHorizonMarkerWidth", 0.3);
+  nh->declare_parameter<int>("viewpoint_manager/number_x", 40);
+  nh->declare_parameter<int>("viewpoint_manager/number_y", 40);
+  nh->declare_parameter<double>("viewpoint_manager/resolution_x", 1.1);
+  nh->declare_parameter<double>("viewpoint_manager/resolution_y", 1.1);
+  nh->declare_parameter<double>("kGridWorldCellHeight", 3.0);
+  nh->declare_parameter<double>("kLocalPlanningHorizonHeight", 3.0);
 
-  kLocalPlanningHorizonMarkerColor.r = misc_utils_ns::getParam<double>(nh, "kLocalPlanningHorizonMarkerColorR", 0.0);
-  kLocalPlanningHorizonMarkerColor.g = misc_utils_ns::getParam<double>(nh, "kLocalPlanningHorizonMarkerColorG", 1.0);
-  kLocalPlanningHorizonMarkerColor.b = misc_utils_ns::getParam<double>(nh, "kLocalPlanningHorizonMarkerColorB", 0.0);
-  kLocalPlanningHorizonMarkerColor.a = misc_utils_ns::getParam<double>(nh, "kLocalPlanningHorizonMarkerColorA", 1.0);
-
-  kLocalPlanningHorizonMarkerWidth = misc_utils_ns::getParam<double>(nh, "kLocalPlanningHorizonMarkerWidth", 0.3);
-  int viewpoint_number = misc_utils_ns::getParam<int>(nh, "viewpoint_manager/number_x", 40);
-  double viewpoint_resolution = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resolution_x", 1.0);
-  kGlobalSubspaceSize = viewpoint_number * viewpoint_resolution / 5;
-  kGlobalSubspaceHeight = misc_utils_ns::getParam<double>(nh, "kGridWorldCellHeight", 3.0);
-
-  double viewpoint_num_x = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/number_x", 35);
-  double viewpoint_num_y = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/number_y", 35);
-  double viewpoint_resolution_x = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resolution_x", 1.1);
-  double viewpoint_resolution_y = misc_utils_ns::getParam<double>(nh, "viewpoint_manager/resolution_y", 1.1);
+  nh->get_parameter("kExploringSubspaceMarkerColorGradientAlpha", kExploringSubspaceMarkerColorGradientAlpha);
+  nh->get_parameter("kExploringSubspaceMarkerColorMaxAlpha", kExploringSubspaceMarkerColorMaxAlpha);
+  kExploringSubspaceMarkerColor.r = nh->get_parameter("kExploringSubspaceMarkerColorR").as_double();
+  kExploringSubspaceMarkerColor.g = nh->get_parameter("kExploringSubspaceMarkerColorG").as_double();
+  kExploringSubspaceMarkerColor.b = nh->get_parameter("kExploringSubspaceMarkerColorB").as_double();
+  kExploringSubspaceMarkerColor.a = nh->get_parameter("kExploringSubspaceMarkerColorA").as_double();
+  kLocalPlanningHorizonMarkerColor.r = nh->get_parameter("kLocalPlanningHorizonMarkerColorR").as_double();
+  kLocalPlanningHorizonMarkerColor.g = nh->get_parameter("kLocalPlanningHorizonMarkerColorG").as_double();
+  kLocalPlanningHorizonMarkerColor.b = nh->get_parameter("kLocalPlanningHorizonMarkerColorB").as_double();
+  kLocalPlanningHorizonMarkerColor.a = nh->get_parameter("kLocalPlanningHorizonMarkerColorA").as_double();
+  nh->get_parameter("kLocalPlanningHorizonMarkerColorA", kLocalPlanningHorizonMarkerWidth);
+  int viewpoint_num_x = nh->get_parameter("viewpoint_manager/number_x").as_int();
+  int viewpoint_num_y = nh->get_parameter("viewpoint_manager/number_y").as_int();
+  double viewpoint_resolution_x = nh->get_parameter("viewpoint_manager/resolution_x").as_double();
+  double viewpoint_resolution_y = nh->get_parameter("viewpoint_manager/resolution_x").as_double();
+  kGlobalSubspaceSize = viewpoint_num_x * viewpoint_resolution_x / 5;
   kLocalPlanningHorizonSizeX = viewpoint_num_x * viewpoint_resolution_x;
   kLocalPlanningHorizonSizeY = viewpoint_num_y * viewpoint_resolution_y;
-  kLocalPlanningHorizonSizeZ = misc_utils_ns::getParam<double>(nh, "kLocalPlanningHorizonHeight", 3.0);
+  nh->get_parameter("kGridWorldCellHeight", kGlobalSubspaceHeight);
+  nh->get_parameter("kLocalPlanningHorizonHeight", kLocalPlanningHorizonSizeZ);
+
   return true;
 }
 
