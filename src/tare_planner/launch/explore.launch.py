@@ -37,21 +37,6 @@ def generate_launch_description():
         default_value='true',
         description='description for rviz argument')
 
-    declare_rosbag_record = DeclareLaunchArgument(
-        'rosbag_record',
-        default_value='false',
-        description='description for rosbag_record argument')
-
-    declare_bag_path = DeclareLaunchArgument(
-        'bag_path',
-        default_value='Desktop',
-        description='description for bag_path argument')
-
-    declare_bag_name_prefix = DeclareLaunchArgument(
-        'bag_name_prefix',
-        default_value='tare',
-        description='description for bag_name_prefix argument')
-
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -60,23 +45,10 @@ def generate_launch_description():
             '-d', get_package_share_directory('tare_planner')+'/tare_planner_ground.rviz'],
         condition=IfCondition(LaunchConfiguration('rviz')))
 
-    record_bag_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [get_package_share_directory('tare_planner'), '/launch/record_bag.launch.py']),
-        condition=IfCondition(LaunchConfiguration('rosbag_record')),
-        launch_arguments={
-            'bag_path': LaunchConfiguration('bag_path'),
-            'bag_name_prefix': LaunchConfiguration('bag_name_prefix')
-        }.items())
-
     return LaunchDescription([
         declare_use_sim_time_cmd,
         declare_scenario,
         declare_rviz,
-        declare_rosbag_record,
-        declare_bag_path,
-        declare_bag_name_prefix,
         GroupAction([rviz_node]),
-        GroupAction([record_bag_launch]),
         OpaqueFunction(function=launch_tare_node, args=[scenario])
     ])
