@@ -267,8 +267,6 @@ void PlanningEnv::UpdateCoveredArea(const lidar_model_ns::LiDARModel& robot_view
     return;
   }
 
-  std::cout << "dbg planner cloud size: " << planner_cloud_->cloud_->points.size() << std::endl;
-
   geometry_msgs::msg::Point robot_position = robot_viewpoint.getPosition();
   double sensor_range = viewpoint_manager->GetSensorRange();
   double coverage_occlusion_thr = viewpoint_manager->GetCoverageOcclusionThr();
@@ -352,21 +350,16 @@ void PlanningEnv::UpdateCoveredArea(const lidar_model_ns::LiDARModel& robot_view
       pointcloud_manager_->UpdateCoveredCloudPoints(cloud_idx, cloud_point_idx);
     }
   }
-
-  std::cout << "dbg finished updating coverage " << std::endl;
 }
 
 void PlanningEnv::GetUncoveredArea(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
                                    int& uncovered_point_num, int& uncovered_frontier_point_num)
 {
-  std::cout << "planenv: GetUncoveredArea dbg1" << std::endl;
   // Clear viewpoint covered point list
   for (const auto& viewpoint_ind : viewpoint_manager->candidate_indices_)
   {
     viewpoint_manager->ResetViewPointCoveredPointList(viewpoint_ind);
   }
-
-  std::cout << "planenv: GetUncoveredArea dbg2" << std::endl;
 
   // Get uncovered points
   uncovered_cloud_->cloud_->clear();
@@ -403,7 +396,6 @@ void PlanningEnv::GetUncoveredArea(const std::shared_ptr<viewpoint_manager_ns::V
       uncovered_point_num++;
     }
   }
-  std::cout << "planenv: GetUncoveredArea dbg3" << std::endl;
 
   // Check uncovered frontiers
   if (parameters_.kUseFrontier)
@@ -435,7 +427,6 @@ void PlanningEnv::GetUncoveredArea(const std::shared_ptr<viewpoint_manager_ns::V
       }
     }
   }
-  std::cout << "planenv: GetUncoveredArea dbg4" << std::endl;
 }
 
 void PlanningEnv::GetVisualizationPointCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr vis_cloud)

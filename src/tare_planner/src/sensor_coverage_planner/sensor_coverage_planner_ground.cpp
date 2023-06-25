@@ -205,7 +205,6 @@ void SensorCoveragePlanner3D::ReadParameters()
 // void PlannerData::Initialize(rclcpp::Node::SharedPtr node_)
 void SensorCoveragePlanner3D::InitializeData()
 {
-  std::cout << "dbg Initializing data" << std::endl;
   keypose_cloud_ = std::make_shared<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>>(
       shared_from_this(), "keypose_cloud", kWorldFrameID);
   registered_scan_stack_ = std::make_shared<pointcloud_utils_ns::PCLCloud<pcl::PointXYZ>>(
@@ -242,27 +241,15 @@ void SensorCoveragePlanner3D::InitializeData()
   reordered_global_subspace_cloud_ = std::make_shared<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>>(
       shared_from_this(), "reordered_global_subspace_cloud", kWorldFrameID);
 
-  std::cout << "dbg Initializing viewpoint_manager" << std::endl;
   viewpoint_manager_ = std::make_shared<viewpoint_manager_ns::ViewPointManager>(shared_from_this());
-  std::cout << "dbg Initialized viewpoint_manager" << std::endl;
-  std::cout << "dbg Initializing keypose_graph" << std::endl;
   keypose_graph_ = std::make_shared<keypose_graph_ns::KeyposeGraph>(shared_from_this());
-  std::cout << "dbg Initialized keypose_graph" << std::endl;
-  std::cout << "dbg Initializing planning_env" << std::endl;
   planning_env_ = std::make_shared<planning_env_ns::PlanningEnv>(shared_from_this());
-  std::cout << "dbg Initialized planning_env" << std::endl;
-  std::cout << "dbg Initializing grid_world" << std::endl;
   grid_world_ = std::make_shared<grid_world_ns::GridWorld>(shared_from_this());
-  std::cout << "dbg Initialized grid world" << std::endl;
   grid_world_->SetUseKeyposeGraph(true);
-  std::cout << "dbg grid_world set keypose_graph" << std::endl;
   local_coverage_planner_ = std::make_shared<local_coverage_planner_ns::LocalCoveragePlanner>(shared_from_this());
-  std::cout << "dbg Initialized local_coverage_planner" << std::endl;
   local_coverage_planner_->SetViewPointManager(viewpoint_manager_);
-  std::cout << "dbg local_coverage_planner set viewpoint_manager" << std::endl;
 
   visualizer_ = std::make_shared<tare_visualizer_ns::TAREVisualizer>(shared_from_this());
-  std::cout << "dbg Initialized visualizer" << std::endl;
 
   initial_position_.x() = 0.0;
   initial_position_.y() = 0.0;
@@ -335,7 +322,6 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D()
 
 bool SensorCoveragePlanner3D::initialize()
 {
-  std::cout << "dbg starting reading parameters" << std::endl;
   ReadParameters();
   // if (!ReadParameters(shared_from_this()))
   // {
@@ -344,9 +330,7 @@ bool SensorCoveragePlanner3D::initialize()
   // }
 
   // Initialize(shared_from_this());
-  std::cout << "dbg finished reading parameters, starting initializing data" << std::endl;
   InitializeData();
-  std::cout << "dbg finished initializing data" << std::endl;
 
   keypose_graph_->SetAllowVerticalEdge(false);
 
@@ -637,7 +621,6 @@ int SensorCoveragePlanner3D::UpdateViewPoints()
   viewpoint_manager_->CheckViewPointLineOfSight();
   viewpoint_manager_->CheckViewPointConnectivity();
   int viewpoint_candidate_count = viewpoint_manager_->GetViewPointCandidate();
-  std::cout << "viewpoint candidate count: " << viewpoint_candidate_count << std::endl;
 
   UpdateVisitedPositions();
   viewpoint_manager_->UpdateViewPointVisited(visited_positions_);
@@ -688,14 +671,11 @@ void SensorCoveragePlanner3D::UpdateCoveredAreas(int& uncovered_point_num, int& 
   misc_utils_ns::Timer update_coverage_area_timer("update covered area");
   update_coverage_area_timer.Start();
   planning_env_->UpdateCoveredArea(robot_viewpoint_, viewpoint_manager_);
-  std::cout << "dbg updated covered area 2" << std::endl;
 
   update_coverage_area_timer.Stop(false);
   misc_utils_ns::Timer get_uncovered_area_timer("get uncovered area");
   get_uncovered_area_timer.Start();
   planning_env_->GetUncoveredArea(viewpoint_manager_, uncovered_point_num, uncovered_frontier_point_num);
-
-  std::cout << "dbg got uncovered area" << std::endl;
 
   get_uncovered_area_timer.Stop(false);
   planning_env_->PublishUncoveredCloud();
@@ -1411,7 +1391,6 @@ void SensorCoveragePlanner3D::CountDirectionChange()
 
 void SensorCoveragePlanner3D::execute()
 {
-  std::cout << "dbg -------------executing-------------" << std::endl;
   if (!kAutoStart && !start_exploration_)
   {
     RCLCPP_INFO(this->get_logger(), "Waiting for start signal");
@@ -1434,12 +1413,9 @@ void SensorCoveragePlanner3D::execute()
     return;
   }
 
-  std::cout << "dbg exe inialized" << std::endl;
-
   overall_processing_timer.Start();
   if (keypose_cloud_update_)
   {
-    std::cout << "dbg exe keypose cloud update" << std::endl;
     keypose_cloud_update_ = false;
 
     CountDirectionChange();
@@ -1449,7 +1425,6 @@ void SensorCoveragePlanner3D::execute()
 
     // Update grid world
     UpdateGlobalRepresentation();
-    std::cout << "dbg exe updated global representation" << std::endl;
 
     int viewpoint_candidate_count = UpdateViewPoints();
     if (viewpoint_candidate_count == 0)
@@ -1459,22 +1434,18 @@ void SensorCoveragePlanner3D::execute()
     }
 
     UpdateKeyposeGraph();
-    std::cout << "dbg exe updated keypose graph" << std::endl;
 
     int uncovered_point_num = 0;
     int uncovered_frontier_point_num = 0;
     if (!exploration_finished_ || !kNoExplorationReturnHome)
     {
       UpdateViewPointCoverage();
-      std::cout << "dbg exe updated viewpoint coverage" << std::endl;
       UpdateCoveredAreas(uncovered_point_num, uncovered_frontier_point_num);
-      std::cout << "dbg exe updated covered areas" << std::endl;
     }
     else
     {
       viewpoint_manager_->ResetViewPointCoverage();
     }
-    std::cout << "dbg exe updated viewpoint coverage" << std::endl;
 
     update_representation_timer.Stop(false);
     update_representation_runtime_ += update_representation_timer.GetDuration("ms");
@@ -1484,27 +1455,18 @@ void SensorCoveragePlanner3D::execute()
     exploration_path_ns::ExplorationPath global_path;
     GlobalPlanning(global_cell_tsp_order, global_path);
 
-    std::cout << "dbg exe got global path" << std::endl;
-
-    std::cout << "uncovered_point_num: " << uncovered_point_num << std::endl;
-    std::cout << "uncovered_frontier_point_num: " << uncovered_frontier_point_num << std::endl;
-
     // Local TSP
     exploration_path_ns::ExplorationPath local_path;
     LocalPlanning(uncovered_point_num, uncovered_frontier_point_num, global_path, local_path);
-
-    std::cout << "dbg exe got local path" << std::endl;
 
     near_home_ = GetRobotToHomeDistance() < kRushHomeDist;
     at_home_ = GetRobotToHomeDistance() < kAtHomeDistThreshold;
 
     double current_time = this->now().seconds();
     double delta_time = current_time - start_time_;
-    std::cout << "start time: " << start_time_ << std::endl;
-    std::cout << "current time: " << current_time << std::endl;
-    std::cout << "delta time: " << delta_time << std::endl;
+
     if (grid_world_->IsReturningHome() && local_coverage_planner_->IsLocalCoverageComplete() &&
-        (current_time - start_time_) > 500)
+        (current_time - start_time_) > 5)
     {
       if (!exploration_finished_)
       {
@@ -1520,8 +1482,6 @@ void SensorCoveragePlanner3D::execute()
     }
 
     exploration_path_ = ConcatenateGlobalLocalPath(global_path, local_path);
-
-    std::cout << "dbg exe combined global and local path" << std::endl;
 
     PublishExplorationState();
 

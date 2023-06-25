@@ -92,8 +92,6 @@ ViewPointManager::ViewPointManager(rclcpp::Node::SharedPtr nh) : initialized_(fa
     }
   }
 
-  std::cout << "dbg number of viewpoints: " << vp_.kViewPointNumber << std::endl;
-
   graph_index_map_.resize(vp_.kViewPointNumber);
   for (auto& ind : graph_index_map_)
   {
@@ -260,8 +258,6 @@ bool ViewPointManager::UpdateRobotPosition(const Eigen::Vector3d& robot_position
 {
   robot_position_ = robot_position;
 
-  std::cout << "dbg updating robot position: " << robot_position_.transpose() << std::endl;
-
   if (!initialized_)
   {
     initialized_ = true;
@@ -348,8 +344,6 @@ void ViewPointManager::UpdateOrigin()
   {
     origin_(i) = robot_position_(i) - (vp_.kResolution(i) * vp_.kNumber(i)) / 2.0;
   }
-
-  std::cout << "updated origin: " << origin_.transpose() << std::endl;
 }
 
 int ViewPointManager::GetViewPointArrayInd(int viewpoint_ind, bool use_array_ind) const
@@ -408,59 +402,21 @@ void ViewPointManager::GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Pt
         vis_point.intensity = GetViewPointCoveredPointNum(i, true);
         vis_point.intensity += i * 1.0 / 10000.0;
       }
-      // if (ViewPointInLineOfSight(i, true))
-      // {
-      //   vis_point.intensity = 1.0;
-
-      //   pcl::PointXYZI vis_point2 = vis_point;
-      //   vis_point2.z += 3.0;
-      //   vis_cloud->points.push_back(vis_point2);
-      // }
-      // if (!ViewPointInCollision(i, true))
-      // {
-      //   vis_point.intensity = 0.0;
-
-      //   pcl::PointXYZI vis_point2 = vis_point;
-      //   vis_point2.z += 6.0;
-      //   vis_cloud->points.push_back(vis_point2);
-      // }
-      // if (ViewPointConnected(i, true))
-      // {
-      //   vis_point.intensity = 2.0;
-
-      //   pcl::PointXYZI vis_point2 = vis_point;
-      //   vis_point2.z += 9.0;
-      //   vis_cloud->points.push_back(vis_point2);
-      // }
-
-      // if (viewpoints_[i].InCurrentFrameLineOfSight())
-      // {
-      //   vis_point.intensity = 100;
-      // }
-      // else
-      // {
-      //   vis_point.intensity = -1;
-      // }
       vis_cloud->points.push_back(vis_point);
     }
   }
-
-  std::cout << "dbg vis_cloud num: " << vis_cloud->points.size() << std::endl;
 }
 
 void ViewPointManager::CheckViewPointCollisionWithCollisionGrid(
     const pcl::PointCloud<pcl::PointXYZI>::Ptr& collision_cloud)
 {
-  int dbg_viewpoint_in_collision_count = 0;
   for (int i = 0; i < viewpoints_.size(); i++)
   {
     if (ViewPointInCollision(i, true))
     {
-      dbg_viewpoint_in_collision_count++;
       AddViewPointCollisionFrameCount(i, true);
     }
   }
-  std::cout << "dbg before checking collision, count: " << dbg_viewpoint_in_collision_count << std::endl;
 
   std::fill(collision_point_count_.begin(), collision_point_count_.end(), 0);
   collision_grid_origin_ = origin_ - Eigen::Vector3d::Ones() * vp_.kViewPointCollisionMargin;
@@ -490,16 +446,6 @@ void ViewPointManager::CheckViewPointCollisionWithCollisionGrid(
       }
     }
   }
-
-  dbg_viewpoint_in_collision_count = 0;
-  for (int i = 0; i < viewpoints_.size(); i++)
-  {
-    if (ViewPointInCollision(i, true))
-    {
-      dbg_viewpoint_in_collision_count++;
-    }
-  }
-  std::cout << "dbg after checking collision, count: " << dbg_viewpoint_in_collision_count << std::endl;
 }
 
 bool ViewPointManager::InCollision(const Eigen::Vector3d& position)
@@ -672,16 +618,6 @@ void ViewPointManager::CheckViewPointLineOfSight()
   if (!initialized_)
     return;
 
-  int dbg_los_count = 0;
-  for (int i = 0; i < viewpoints_.size(); i++)
-  {
-    if (ViewPointInLineOfSight(i))
-    {
-      dbg_los_count++;
-    }
-  }
-  std::cout << "dbg before line of sight check: count: " << dbg_los_count << std::endl;
-
   for (int i = 0; i < viewpoints_.size(); i++)
   {
     SetViewPointInCurrentFrameLineOfSight(i, false, true);
@@ -755,16 +691,6 @@ void ViewPointManager::CheckViewPointLineOfSight()
       }
     }
   }
-
-  dbg_los_count = 0;
-  for (int i = 0; i < viewpoints_.size(); i++)
-  {
-    if (ViewPointInLineOfSight(i))
-    {
-      dbg_los_count++;
-    }
-  }
-  std::cout << "dbg before line of sight check: count: " << dbg_los_count << std::endl;
 }
 
 void ViewPointManager::CheckViewPointInFOV()
@@ -1288,11 +1214,6 @@ int ViewPointManager::GetViewPointCandidate()
   viewpoint_in_collision_cloud_->clear();
   candidate_indices_.clear();
 
-  std::cout << "kViewPointNumber " << vp_.kViewPointNumber << std::endl;
-
-  int dbg_collision_count = 0;
-  int dbg_not_los_count = 0;
-  int dbg_not_connected_count = 0;
   for (int i = 0; i < vp_.kViewPointNumber; i++)
   {
     SetViewPointCandidate(i, false);
@@ -1316,21 +1237,8 @@ int ViewPointManager::GetViewPointCandidate()
       point.z = viewpoint_position.z;
       point.intensity = GetViewPointCollisionFrameCount(i);
       viewpoint_in_collision_cloud_->points.push_back(point);
-      dbg_collision_count++;
-    }
-    if (!ViewPointInLineOfSight(i))
-    {
-      dbg_not_los_count++;
-    }
-    if (!ViewPointConnected(i))
-    {
-      dbg_not_connected_count++;
     }
   }
-  std::cout << "candidate viewpoint num: " << candidate_indices_.size() << std::endl;
-  std::cout << "collision count: " << dbg_collision_count << std::endl;
-  std::cout << "not in los count: " << dbg_not_los_count << std::endl;
-  std::cout << "not connected count: " << dbg_not_connected_count << std::endl;
 
   if (!candidate_indices_.empty())
   {
