@@ -6,14 +6,13 @@ Panels:
       Expanded:
         - /Global1
         - /Local1
-      Splitter Ratio: 0.8294117450714111
-    Tree Height: 441
+      Splitter Ratio: 0.42941176891326904
+    Tree Height: 706
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
     Expanded:
       - /2D Pose Estimate1
-      - /2D Nav Goal1
       - /Publish Point1
     Name: Tool Properties
     Splitter Ratio: 0.5886790156364441
@@ -27,10 +26,6 @@ Panels:
     Name: Time
     SyncMode: 0
     SyncSource: ExploredAreas
-Preferences:
-  PromptSaveOnExit: true
-Toolbars:
-  toolButtonStyle: 2
 Visualization Manager:
   Class: ""
   Displays:
@@ -56,31 +51,45 @@ Visualization Manager:
           Min Intensity: -1
           Name: KeyposeGraphNodes
           Position Transformer: XYZ
-          Queue Size: 10
           Selectable: true
           Size (Pixels): 3
           Size (m): 0.30000001192092896
           Style: Boxes
-          Topic: /sensor_coverage_planner/keypose_graph_cloud
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /keypose_graph_cloud
           Use Fixed Frame: true
           Use rainbow: true
           Value: false
         - Class: rviz_default_plugins/Marker
           Enabled: false
-          Marker Topic: /sensor_coverage_planner/keypose_graph_edge_marker
           Name: KeyposeGraphEdge
           Namespaces:
             {}
-          Queue Size: 100
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /keypose_graph_edge_marker
           Value: false
         - Class: rviz_default_plugins/Marker
           Enabled: true
-          Marker Topic: /sensor_coverage_planner/tare_visualizer/exploring_subspaces
           Name: ExploringSubspaces
           Namespaces:
-            "": true
-          Queue Size: 100
+            {}
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /tare_visualizer/exploring_subspaces
           Value: true
         - Alpha: 1
           Buffer Length: 1
@@ -102,8 +111,13 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /sensor_coverage_planner/global_path
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /global_path
           Value: true
         - Alpha: 1
           Autocompute Intensity Bounds: false
@@ -125,13 +139,17 @@ Visualization Manager:
           Min Intensity: 0
           Name: OverallObjectSurfaces
           Position Transformer: XYZ
-          Queue Size: 10
           Selectable: true
           Size (Pixels): 3
           Size (m): 0.10000000149011612
           Style: Flat Squares
-          Topic: /sensor_coverage_planner/planner_cloud
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /planner_cloud
           Use Fixed Frame: true
           Use rainbow: true
           Value: false
@@ -145,7 +163,7 @@ Visualization Manager:
           Channel Name: intensity
           Class: rviz_default_plugins/PointCloud2
           Color: 255; 255; 255
-          Color Transformer: RGB8
+          Color Transformer: Intensity
           Decay Time: 0
           Enabled: true
           Invert Rainbow: false
@@ -155,13 +173,17 @@ Visualization Manager:
           Min Intensity: 0
           Name: OverallMap
           Position Transformer: XYZ
-          Queue Size: 10
           Selectable: true
           Size (Pixels): 2
           Size (m): 0.009999999776482582
           Style: Points
-          Topic: /overall_map
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /overall_map
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -185,13 +207,17 @@ Visualization Manager:
           Min Intensity: 0
           Name: ExploredAreas
           Position Transformer: XYZ
-          Queue Size: 10
           Selectable: true
           Size (Pixels): 2
           Size (m): 0.009999999776482582
           Style: Points
-          Topic: /explored_areas
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /explored_areas
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -200,8 +226,13 @@ Visualization Manager:
           Color: 25; 255; 0
           Enabled: false
           Name: Boundary
-          Topic: /navigation_boundary
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /navigation_boundary
           Value: false
       Enabled: true
       Name: Global
@@ -209,11 +240,16 @@ Visualization Manager:
       Displays:
         - Class: rviz_default_plugins/Marker
           Enabled: true
-          Marker Topic: /sensor_coverage_planner/tare_visualizer/local_planning_horizon
           Name: LocalPlanningHorizon
           Namespaces:
             "": true
-          Queue Size: 100
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /tare_visualizer/local_planning_horizon
           Value: true
         - Alpha: 0.5
           Autocompute Intensity Bounds: false
@@ -235,13 +271,17 @@ Visualization Manager:
           Min Intensity: -1
           Name: ViewpointCandidates
           Position Transformer: XYZ
-          Queue Size: 10
           Selectable: true
           Size (Pixels): 3
           Size (m): 0.5
           Style: Spheres
-          Topic: /sensor_coverage_planner/viewpoint_vis_cloud
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /viewpoint_vis_cloud
           Use Fixed Frame: true
           Use rainbow: true
           Value: false
@@ -265,13 +305,17 @@ Visualization Manager:
           Min Intensity: 0
           Name: SelectedViewPoints
           Position Transformer: XYZ
-          Queue Size: 10
           Selectable: true
           Size (Pixels): 3
           Size (m): 1
           Style: Spheres
-          Topic: /sensor_coverage_planner/selected_viewpoint_vis_cloud
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /selected_viewpoint_vis_cloud
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -295,13 +339,17 @@ Visualization Manager:
           Min Intensity: 0
           Name: ViewpointToTrack
           Position Transformer: XYZ
-          Queue Size: 10
           Selectable: true
           Size (Pixels): 3
           Size (m): 2
           Style: Spheres
-          Topic: /sensor_coverage_planner/lookahead_point_cloud
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /lookahead_point_cloud
           Use Fixed Frame: true
           Use rainbow: true
           Value: false
@@ -325,8 +373,13 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /sensor_coverage_planner/local_path
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /local_path
           Value: true
         - Alpha: 1
           Autocompute Intensity Bounds: true
@@ -348,13 +401,17 @@ Visualization Manager:
           Min Intensity: 0
           Name: ObjectSurfacesToCover
           Position Transformer: XYZ
-          Queue Size: 10
           Selectable: true
           Size (Pixels): 2
           Size (m): 0.20000000298023224
           Style: Points
-          Topic: /sensor_coverage_planner/uncovered_cloud
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /uncovered_cloud
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -378,13 +435,17 @@ Visualization Manager:
           Min Intensity: 0
           Name: FrontierSurfacesToCover
           Position Transformer: XYZ
-          Queue Size: 10
           Selectable: true
           Size (Pixels): 2
           Size (m): 0.30000001192092896
           Style: Points
-          Topic: /sensor_coverage_planner/uncovered_frontier_cloud
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /uncovered_frontier_cloud
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
@@ -395,8 +456,13 @@ Visualization Manager:
           History Length: 1
           Name: Waypoint
           Radius: 1
-          Topic: /way_point
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /way_point
           Value: true
         - Class: rviz_default_plugins/Axes
           Enabled: true
@@ -425,13 +491,17 @@ Visualization Manager:
           Min Intensity: 1
           Name: FreePaths
           Position Transformer: XYZ
-          Queue Size: 10
           Selectable: true
           Size (Pixels): 3
           Size (m): 0.009999999776482582
           Style: Flat Squares
-          Topic: /free_paths
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /free_paths
           Use Fixed Frame: true
           Use rainbow: true
           Value: false
@@ -455,15 +525,19 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /path
-          Unreliable: false
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /path
           Value: false
       Enabled: true
       Name: Local
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
-    Default Light: true
     Fixed Frame: map
     Frame Rate: 15
   Name: root
@@ -474,16 +548,35 @@ Visualization Manager:
     - Class: rviz_default_plugins/Select
     - Class: rviz_default_plugins/FocusCamera
     - Class: rviz_default_plugins/Measure
+      Line color: 128; 128; 0
     - Class: rviz_default_plugins/SetInitialPose
-      Theta std deviation: 0.2617993950843811
-      Topic: /initialpose
-      X std deviation: 0.5
-      Y std deviation: 0.5
+      Covariance x: 0.25
+      Covariance y: 0.25
+      Covariance yaw: 0.06853891909122467
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /initialpose
     - Class: rviz_default_plugins/SetGoal
-      Topic: /move_base_simple/goal
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /move_base_simple/goal
     - Class: rviz_default_plugins/PublishPoint
       Single click: true
-      Topic: /clicked_point
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /clicked_point
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
   Value: true
   Views:
     Current:
@@ -514,7 +607,7 @@ Window Geometry:
   Height: 818
   Hide Left Dock: true
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd000000040000000000000156000003ccfc0200000008fb0000001200530065006c0065006300740069006f006e0000000016000001320000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730000000016000003cc000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000003ccfc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000016000003cc000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000a000000003efc0100000002fb0000000800540069006d0065000000000000000a00000004f300fffffffb0000000800540069006d00650100000000000004500000000000000000000005a7000002ff00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd000000040000000000000156000002fffc0200000008fb0000001200530065006c0065006300740069006f006e0000000016000001320000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730000000016000002ff000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000003ccfc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000016000003cc000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000a000000003efc0100000002fb0000000800540069006d0065000000000000000a00000002fb00fffffffb0000000800540069006d00650100000000000004500000000000000000000005a7000002ff00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730000000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -524,5 +617,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1447
-  X: 51
+  X: 74
   Y: 27
