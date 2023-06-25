@@ -92,8 +92,8 @@ public:
   void UpdateCoveredCloudPoints(int cloud_index, int point_index);
 
 private:
-  std::unique_ptr<grid_ns::Grid<PCLCloudTypePtr>> pointcloud_grid_;
-  std::unique_ptr<grid_ns::Grid<pcl::PointCloud<pcl::PointXYZI>::Ptr>> occupancy_cloud_grid_;
+  std::shared_ptr<grid_ns::Grid<PCLCloudTypePtr>> pointcloud_grid_;
+  std::shared_ptr<grid_ns::Grid<pcl::PointCloud<pcl::PointXYZI>::Ptr>> occupancy_cloud_grid_;
 
   const int kRowNum;
   const int kColNum;

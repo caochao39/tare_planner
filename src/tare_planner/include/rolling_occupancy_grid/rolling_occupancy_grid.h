@@ -88,8 +88,8 @@ private:
   Eigen::Vector3d resolution_;
   Eigen::Vector3d origin_;
   Eigen::Vector3d robot_position_;
-  std::unique_ptr<rolling_grid_ns::RollingGrid> rolling_grid_;
-  std::unique_ptr<grid_ns::Grid<CellState>> occupancy_array_;
+  std::shared_ptr<rolling_grid_ns::RollingGrid> rolling_grid_;
+  std::shared_ptr<grid_ns::Grid<CellState>> occupancy_array_;
   std::vector<int> updated_grid_indices_;
   pcl::PointCloud<pcl::PointXYZI>::Ptr occupancy_cloud_;
 

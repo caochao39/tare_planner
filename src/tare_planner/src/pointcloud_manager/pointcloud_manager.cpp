@@ -41,11 +41,11 @@ PointCloudManager::PointCloudManager(int row_num, int col_num, int level_num, in
   Eigen::Vector3d pointcloud_grid_origin(origin_.x, origin_.y, origin_.z);
   Eigen::Vector3d pointcloud_grid_resolution(kCellSize, kCellSize, kCellHeight);
   PCLCloudTypePtr cloud_ptr_tmp;
-  pointcloud_grid_ = std::make_unique<grid_ns::Grid<PCLCloudTypePtr>>(
+  pointcloud_grid_ = std::make_shared<grid_ns::Grid<PCLCloudTypePtr>>(
       pointcloud_grid_size, cloud_ptr_tmp, pointcloud_grid_origin, pointcloud_grid_resolution, 3);
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr occupancy_cloud_ptr_tmp;
-  occupancy_cloud_grid_ = std::make_unique<grid_ns::Grid<pcl::PointCloud<pcl::PointXYZI>::Ptr>>(
+  occupancy_cloud_grid_ = std::make_shared<grid_ns::Grid<pcl::PointCloud<pcl::PointXYZI>::Ptr>>(
       pointcloud_grid_size, occupancy_cloud_ptr_tmp, pointcloud_grid_origin, pointcloud_grid_resolution, 3);
 
   for (int i = 0; i < pointcloud_grid_->GetCellNumber(); i++)

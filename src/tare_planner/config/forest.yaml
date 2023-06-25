@@ -23,10 +23,10 @@ kNoExplorationReturnHome : true
 kExtendWayPointDistanceBig : 8.0
 kExtendWayPointDistanceSmall : 4.5
 kKeyposeCloudDwzFilterLeafSize : 0.2
-kRushHomeDist : 10
+kRushHomeDist : 10.0
 kAtHomeDistThreshold : 0.5
 kTerrainCollisionThreshold : 0.5
-kLookAheadDistance : 8
+kLookAheadDistance : 8.0
 kUseMomentum : false 
 kDirectionChangeCounterThr : 6
 kDirectionNoChangeCounterThr : 5
@@ -50,7 +50,7 @@ kPointCloudRowNum : 50
 kPointCloudColNum : 50
 kPointCloudLevelNum : 30
 kMaxCellPointNum : 100000
-kPointCloudCellSize : 18
+kPointCloudCellSize : 18.0
 kPointCloudCellHeight : 1.8
 kPointCloudManagerNeighborCellNum : 5
 kCoverCloudZSqueezeRatio : 2.0

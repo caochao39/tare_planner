@@ -4,7 +4,10 @@
 int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<sensor_coverage_planner_3d_ns::SensorCoveragePlanner3D>());
+  auto node = std::make_shared<sensor_coverage_planner_3d_ns::SensorCoveragePlanner3D>();
+  node->initialize();
+  std::cout << "finished initializing node, spinning now" << std::endl;
+  rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;
 }

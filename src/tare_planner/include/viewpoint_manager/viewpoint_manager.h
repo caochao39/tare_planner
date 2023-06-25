@@ -149,7 +149,7 @@ public:
   bool InRobotFOV(const Eigen::Vector3d& position);
   void CheckViewPointConnectivity();
   void UpdateViewPointVisited(const std::vector<Eigen::Vector3d>& positions);
-  void UpdateViewPointVisited(std::unique_ptr<grid_world_ns::GridWorld> const& grid_world);
+  void UpdateViewPointVisited(std::shared_ptr<grid_world_ns::GridWorld> const& grid_world);
   void SetViewPointHeightWithTerrain(const pcl::PointCloud<pcl::PointXYZI>::Ptr& terrain_cloud,
                                      double terrain_height_threshold = DBL_MAX);
 
@@ -314,12 +314,12 @@ public:
   }
   nav_msgs::msg::Path GetViewPointShortestPath(int start_viewpoint_ind, int target_viewpoint_ind);
   nav_msgs::msg::Path GetViewPointShortestPath(const Eigen::Vector3d& start_position,
-                                          const Eigen::Vector3d& target_position);
+                                               const Eigen::Vector3d& target_position);
   bool GetViewPointShortestPathWithMaxLength(const Eigen::Vector3d& start_position,
                                              const Eigen::Vector3d& target_position, double max_path_length,
                                              nav_msgs::msg::Path& path);
 
-  void UpdateCandidateViewPointCellStatus(std::unique_ptr<grid_world_ns::GridWorld> const& grid_world);
+  void UpdateCandidateViewPointCellStatus(std::shared_ptr<grid_world_ns::GridWorld> const& grid_world);
 
   int GetNearestCandidateViewPointInd(const Eigen::Vector3d& position);
   bool InLocalPlanningHorizon(const Eigen::Vector3d& position);
@@ -335,7 +335,7 @@ public:
   void GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& vis_cloud);
   void GetCollisionViewPointVisCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud);
 
-  typedef std::unique_ptr<ViewPointManager> Ptr;
+  typedef std::shared_ptr<ViewPointManager> Ptr;
 
 private:
   void ComputeConnectedNeighborIndices();
@@ -346,7 +346,7 @@ private:
 
   bool initialized_;
   ViewPointManagerParameter vp_;
-  std::unique_ptr<rolling_grid_ns::RollingGrid> grid_;
+  std::shared_ptr<rolling_grid_ns::RollingGrid> grid_;
   std::vector<viewpoint_ns::ViewPoint> viewpoints_;
   std::vector<std::vector<int>> connected_neighbor_indices_;
   std::vector<std::vector<double>> connected_neighbor_dist_;
@@ -357,7 +357,7 @@ private:
   Eigen::Vector3d origin_;
   Eigen::Vector3d collision_grid_origin_;
   Eigen::Vector3d local_planning_horizon_size_;
-  std::unique_ptr<grid_ns::Grid<std::vector<int>>> collision_grid_;
+  std::shared_ptr<grid_ns::Grid<std::vector<int>>> collision_grid_;
   std::vector<int> collision_point_count_;
   std::vector<std::vector<int>> candidate_viewpoint_graph_;
   std::vector<std::vector<double>> candidate_viewpoint_dist_;

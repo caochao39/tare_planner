@@ -14,12 +14,16 @@ def launch_tare_node(context, scenario):
         executable='tare_planner_node',
         name='tare_planner_node',
         output='screen',
-        namespace='sensor_coverage_planner',
-        parameters=[get_package_share_directory('tare_planner')+'/config/' + scenario_str + '.yaml'])
+        # namespace='sensor_coverage_planner',
+        parameters=[get_package_share_directory('tare_planner')+'/' + scenario_str + '.yaml'])
     return [tare_planner_node]
 
 
 def generate_launch_description():
+    declare_use_sim_time_cmd = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='true',
+        description='Use simulation (Gazebo) clock if true')
 
     scenario = LaunchConfiguration('scenario')
 
@@ -53,7 +57,7 @@ def generate_launch_description():
         executable='rviz2',
         name='tare_planner_ground_rviz',
         arguments=[
-            '-d', get_package_share_directory('tare_planner')+'/rviz/tare_planner_ground.rviz'],
+            '-d', get_package_share_directory('tare_planner')+'/debug.rviz'],
         condition=IfCondition(LaunchConfiguration('rviz')))
 
     record_bag_launch = IncludeLaunchDescription(
@@ -66,6 +70,7 @@ def generate_launch_description():
         }.items())
 
     return LaunchDescription([
+        declare_use_sim_time_cmd,
         declare_scenario,
         declare_rviz,
         declare_rosbag_record,

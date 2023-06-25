@@ -15,13 +15,6 @@ namespace rolling_occupancy_grid_ns
 {
 RollingOccupancyGrid::RollingOccupancyGrid(rclcpp::Node::SharedPtr nh) : initialized_(false), dimension_(3)
 {
-  nh->declare_parameter<double>("kPointCloudCellSize", 18);
-  nh->declare_parameter<double>("kPointCloudCellHeight", 1.8);
-  nh->declare_parameter<int>("kPointCloudManagerNeighborCellNum", 5);
-  nh->declare_parameter<double>("rolling_occupancy_grid/resolution_x", 0.3);
-  nh->declare_parameter<double>("rolling_occupancy_grid/resolution_y", 0.3);
-  nh->declare_parameter<double>("rolling_occupancy_grid/resolution_z", 0.3);
-
   double pointcloud_cell_size = nh->get_parameter("kPointCloudCellSize").as_double();
   double pointcloud_cell_height = nh->get_parameter("kPointCloudCellHeight").as_double();
   int pointcloud_cell_neighbor_number = nh->get_parameter("kPointCloudManagerNeighborCellNum").as_int();
@@ -45,8 +38,9 @@ RollingOccupancyGrid::RollingOccupancyGrid(rclcpp::Node::SharedPtr nh) : initial
     origin_(i) = -range_(i) / 2;
   }
 
-  rolling_grid_ = std::make_unique<rolling_grid_ns::RollingGrid>(grid_size_);
-  occupancy_array_ = std::make_unique<grid_ns::Grid<CellState>>(grid_size_, UNKNOWN, origin_, resolution_);
+  rolling_grid_ = std::make_shared<rolling_grid_ns::RollingGrid>(grid_size_);
+
+  occupancy_array_ = std::make_shared<grid_ns::Grid<CellState>>(grid_size_, UNKNOWN, origin_, resolution_);
 
   robot_position_ = Eigen::Vector3d(0, 0, 0);
 

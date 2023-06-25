@@ -32,7 +32,7 @@ public:
 
   void InitializeMarkers();
   void GetLocalPlanningHorizonMarker(double x, double y, double z);
-  void GetGlobalSubspaceMarker(const std::unique_ptr<grid_world_ns::GridWorld>& grid_world,
+  void GetGlobalSubspaceMarker(const std::shared_ptr<grid_world_ns::GridWorld>& grid_world,
                                const std::vector<int>& ordered_cell_indices);
   void PublishMarkers();
 

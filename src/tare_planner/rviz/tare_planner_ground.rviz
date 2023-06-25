@@ -487,7 +487,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Class: rviz_default_plugins/XYOrbit
+      Class: rviz_default_plugins/Orbit
       Distance: 169.4073486328125
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -505,7 +505,7 @@ Visualization Manager:
       Near Clip Distance: 0.009999999776482582
       Pitch: 1.5697963237762451
       Target Frame: map
-      Value: XYOrbit (rviz)
+      Value: Orbit (rviz)
       Yaw: 3.140395164489746
     Saved: ~
 Window Geometry:

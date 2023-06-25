@@ -14,33 +14,6 @@ namespace viewpoint_manager_ns
 {
 bool ViewPointManagerParameter::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
-  nh->declare_parameter<bool>("kUseFrontier", false);
-  nh->declare_parameter<int>("viewpoint_manager/number_x", 80);
-  nh->declare_parameter<int>("viewpoint_manager/number_y", 80);
-  nh->declare_parameter<int>("viewpoint_manager/number_z", 40);
-  nh->declare_parameter<double>("viewpoint_manager/resolution_x", 0.5);
-  nh->declare_parameter<double>("viewpoint_manager/resolution_y", 0.5);
-  nh->declare_parameter<double>("viewpoint_manager/resolution_z", 0.5);
-  nh->declare_parameter<double>("kConnectivityHeightDiffThr", 0.25);
-  nh->declare_parameter<double>("kViewPointCollisionMargin", 0.5);
-  nh->declare_parameter<double>("kViewPointCollisionMarginZPlus", 0.5);
-  nh->declare_parameter<double>("kViewPointCollisionMarginZMinus", 0.5);
-  nh->declare_parameter<double>("kCollisionGridZScale", 2.0);
-  nh->declare_parameter<double>("kCollisionGridResolutionX", 0.5);
-  nh->declare_parameter<double>("kCollisionGridResolutionY", 0.5);
-  nh->declare_parameter<double>("kCollisionGridResolutionZ", 0.5);
-  nh->declare_parameter<bool>("kLineOfSightStopAtNearestObstacle", true);
-  nh->declare_parameter<bool>("kCheckDynamicObstacleCollision", true);
-  nh->declare_parameter<int>("kCollisionFrameCountMax", 3);
-  nh->declare_parameter<double>("kViewPointHeightFromTerrain", 0.75);
-  nh->declare_parameter<double>("kViewPointHeightFromTerrainChangeThreshold", 0.6);
-  nh->declare_parameter<int>("kCollisionPointThr", 3);
-  nh->declare_parameter<double>("kCoverageOcclusionThr", 1.0);
-  nh->declare_parameter<double>("kCoverageDilationRadius", 1.0);
-  nh->declare_parameter<double>("kCoveragePointCloudResolution", 1.0);
-  nh->declare_parameter<double>("kSensorRange", 10.0);
-  nh->declare_parameter<double>("kNeighborRange", 3.0);
-
   nh->get_parameter("kUseFrontier", kUseFrontier);
   kNumber.x() = nh->get_parameter("viewpoint_manager/number_x").as_int();
   kNumber.y() = nh->get_parameter("viewpoint_manager/number_y").as_int();
@@ -49,7 +22,7 @@ bool ViewPointManagerParameter::ReadParameters(rclcpp::Node::SharedPtr nh)
   kResolution.y() = nh->get_parameter("viewpoint_manager/resolution_y").as_double();
   kResolution.z() = nh->get_parameter("viewpoint_manager/resolution_z").as_double();
 
-  nh->get_parameter("viewpoint_manager/resolution_z", kConnectivityHeightDiffThr);
+  nh->get_parameter("kConnectivityHeightDiffThr", kConnectivityHeightDiffThr);
   nh->get_parameter("kViewPointCollisionMargin", kViewPointCollisionMargin);
   nh->get_parameter("kViewPointCollisionMarginZPlus", kViewPointCollisionMarginZPlus);
   nh->get_parameter("kViewPointCollisionMarginZMinus", kViewPointCollisionMarginZMinus);
@@ -102,7 +75,7 @@ ViewPointManager::ViewPointManager(rclcpp::Node::SharedPtr nh) : initialized_(fa
   viewpoint_candidate_cloud_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
   viewpoint_in_collision_cloud_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
 
-  grid_ = std::make_unique<rolling_grid_ns::RollingGrid>(vp_.kNumber);
+  grid_ = std::make_shared<rolling_grid_ns::RollingGrid>(vp_.kNumber);
   origin_ = Eigen::Vector3d::Zero();
 
   viewpoints_.resize(vp_.kViewPointNumber);
@@ -118,6 +91,8 @@ ViewPointManager::ViewPointManager(rclcpp::Node::SharedPtr nh) : initialized_(fa
       }
     }
   }
+
+  std::cout << "dbg number of viewpoints: " << vp_.kViewPointNumber << std::endl;
 
   graph_index_map_.resize(vp_.kViewPointNumber);
   for (auto& ind : graph_index_map_)
@@ -221,7 +196,7 @@ void ViewPointManager::GetCollisionCorrespondence()
     collision_grid_origin_(i) -= vp_.kViewPointCollisionMargin;
   }
   std::vector<int> viewpoint_index_correspondence;
-  collision_grid_ = std::make_unique<grid_ns::Grid<std::vector<int>>>(
+  collision_grid_ = std::make_shared<grid_ns::Grid<std::vector<int>>>(
       vp_.kCollisionGridSize, viewpoint_index_correspondence, collision_grid_origin_, vp_.kCollisionGridResolution, 2);
   collision_point_count_.resize(collision_grid_->GetCellNumber(), 0);
 
@@ -284,6 +259,9 @@ void ViewPointManager::GetCollisionCorrespondence()
 bool ViewPointManager::UpdateRobotPosition(const Eigen::Vector3d& robot_position)
 {
   robot_position_ = robot_position;
+
+  std::cout << "dbg updating robot position: " << robot_position_.transpose() << std::endl;
+
   if (!initialized_)
   {
     initialized_ = true;
@@ -370,6 +348,8 @@ void ViewPointManager::UpdateOrigin()
   {
     origin_(i) = robot_position_(i) - (vp_.kResolution(i) * vp_.kNumber(i)) / 2.0;
   }
+
+  std::cout << "updated origin: " << origin_.transpose() << std::endl;
 }
 
 int ViewPointManager::GetViewPointArrayInd(int viewpoint_ind, bool use_array_ind) const
@@ -428,6 +408,31 @@ void ViewPointManager::GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Pt
         vis_point.intensity = GetViewPointCoveredPointNum(i, true);
         vis_point.intensity += i * 1.0 / 10000.0;
       }
+      // if (ViewPointInLineOfSight(i, true))
+      // {
+      //   vis_point.intensity = 1.0;
+
+      //   pcl::PointXYZI vis_point2 = vis_point;
+      //   vis_point2.z += 3.0;
+      //   vis_cloud->points.push_back(vis_point2);
+      // }
+      // if (!ViewPointInCollision(i, true))
+      // {
+      //   vis_point.intensity = 0.0;
+
+      //   pcl::PointXYZI vis_point2 = vis_point;
+      //   vis_point2.z += 6.0;
+      //   vis_cloud->points.push_back(vis_point2);
+      // }
+      // if (ViewPointConnected(i, true))
+      // {
+      //   vis_point.intensity = 2.0;
+
+      //   pcl::PointXYZI vis_point2 = vis_point;
+      //   vis_point2.z += 9.0;
+      //   vis_cloud->points.push_back(vis_point2);
+      // }
+
       // if (viewpoints_[i].InCurrentFrameLineOfSight())
       // {
       //   vis_point.intensity = 100;
@@ -439,18 +444,24 @@ void ViewPointManager::GetVisualizationCloud(pcl::PointCloud<pcl::PointXYZI>::Pt
       vis_cloud->points.push_back(vis_point);
     }
   }
+
+  std::cout << "dbg vis_cloud num: " << vis_cloud->points.size() << std::endl;
 }
 
 void ViewPointManager::CheckViewPointCollisionWithCollisionGrid(
     const pcl::PointCloud<pcl::PointXYZI>::Ptr& collision_cloud)
 {
+  int dbg_viewpoint_in_collision_count = 0;
   for (int i = 0; i < viewpoints_.size(); i++)
   {
     if (ViewPointInCollision(i, true))
     {
+      dbg_viewpoint_in_collision_count++;
       AddViewPointCollisionFrameCount(i, true);
     }
   }
+  std::cout << "dbg before checking collision, count: " << dbg_viewpoint_in_collision_count << std::endl;
+
   std::fill(collision_point_count_.begin(), collision_point_count_.end(), 0);
   collision_grid_origin_ = origin_ - Eigen::Vector3d::Ones() * vp_.kViewPointCollisionMargin;
   collision_grid_->SetOrigin(collision_grid_origin_);
@@ -479,6 +490,16 @@ void ViewPointManager::CheckViewPointCollisionWithCollisionGrid(
       }
     }
   }
+
+  dbg_viewpoint_in_collision_count = 0;
+  for (int i = 0; i < viewpoints_.size(); i++)
+  {
+    if (ViewPointInCollision(i, true))
+    {
+      dbg_viewpoint_in_collision_count++;
+    }
+  }
+  std::cout << "dbg after checking collision, count: " << dbg_viewpoint_in_collision_count << std::endl;
 }
 
 bool ViewPointManager::InCollision(const Eigen::Vector3d& position)
@@ -651,6 +672,16 @@ void ViewPointManager::CheckViewPointLineOfSight()
   if (!initialized_)
     return;
 
+  int dbg_los_count = 0;
+  for (int i = 0; i < viewpoints_.size(); i++)
+  {
+    if (ViewPointInLineOfSight(i))
+    {
+      dbg_los_count++;
+    }
+  }
+  std::cout << "dbg before line of sight check: count: " << dbg_los_count << std::endl;
+
   for (int i = 0; i < viewpoints_.size(); i++)
   {
     SetViewPointInCurrentFrameLineOfSight(i, false, true);
@@ -724,6 +755,16 @@ void ViewPointManager::CheckViewPointLineOfSight()
       }
     }
   }
+
+  dbg_los_count = 0;
+  for (int i = 0; i < viewpoints_.size(); i++)
+  {
+    if (ViewPointInLineOfSight(i))
+    {
+      dbg_los_count++;
+    }
+  }
+  std::cout << "dbg before line of sight check: count: " << dbg_los_count << std::endl;
 }
 
 void ViewPointManager::CheckViewPointInFOV()
@@ -887,7 +928,7 @@ void ViewPointManager::UpdateViewPointVisited(const std::vector<Eigen::Vector3d>
   }
 }
 
-void ViewPointManager::UpdateViewPointVisited(std::unique_ptr<grid_world_ns::GridWorld> const& grid_world)
+void ViewPointManager::UpdateViewPointVisited(std::shared_ptr<grid_world_ns::GridWorld> const& grid_world)
 {
   for (int i = 0; i < viewpoints_.size(); i++)
   {
@@ -1246,6 +1287,12 @@ int ViewPointManager::GetViewPointCandidate()
   viewpoint_candidate_cloud_->clear();
   viewpoint_in_collision_cloud_->clear();
   candidate_indices_.clear();
+
+  std::cout << "kViewPointNumber " << vp_.kViewPointNumber << std::endl;
+
+  int dbg_collision_count = 0;
+  int dbg_not_los_count = 0;
+  int dbg_not_connected_count = 0;
   for (int i = 0; i < vp_.kViewPointNumber; i++)
   {
     SetViewPointCandidate(i, false);
@@ -1269,9 +1316,22 @@ int ViewPointManager::GetViewPointCandidate()
       point.z = viewpoint_position.z;
       point.intensity = GetViewPointCollisionFrameCount(i);
       viewpoint_in_collision_cloud_->points.push_back(point);
+      dbg_collision_count++;
+    }
+    if (!ViewPointInLineOfSight(i))
+    {
+      dbg_not_los_count++;
+    }
+    if (!ViewPointConnected(i))
+    {
+      dbg_not_connected_count++;
     }
   }
-  // std::cout << "candidate viewpoint num: " << candidate_indices_.size() << std::endl;
+  std::cout << "candidate viewpoint num: " << candidate_indices_.size() << std::endl;
+  std::cout << "collision count: " << dbg_collision_count << std::endl;
+  std::cout << "not in los count: " << dbg_not_los_count << std::endl;
+  std::cout << "not connected count: " << dbg_not_connected_count << std::endl;
+
   if (!candidate_indices_.empty())
   {
     kdtree_viewpoint_candidate_->setInputCloud(viewpoint_candidate_cloud_);
@@ -1394,7 +1454,7 @@ bool ViewPointManager::GetViewPointShortestPathWithMaxLength(const Eigen::Vector
   return found_path;
 }
 
-void ViewPointManager::UpdateCandidateViewPointCellStatus(std::unique_ptr<grid_world_ns::GridWorld> const& grid_world)
+void ViewPointManager::UpdateCandidateViewPointCellStatus(std::shared_ptr<grid_world_ns::GridWorld> const& grid_world)
 {
   for (const auto& ind : candidate_indices_)
   {
@@ -1500,7 +1560,8 @@ int ViewPointManager::GetNearestCandidateViewPointInd(const Eigen::Vector3d& pos
 void ViewPointManager::GetCollisionViewPointVisCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud)
 {
   cloud->clear();
-  for (const auto& point : viewpoint_in_collision_cloud_->points)
+  // for (const auto& point : viewpoint_in_collision_cloud_->points)
+  for (const auto& point : viewpoint_candidate_cloud_->points)
   {
     cloud->points.push_back(point);
   }

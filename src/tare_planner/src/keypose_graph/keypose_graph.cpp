@@ -45,15 +45,6 @@ KeyposeGraph::KeyposeGraph(rclcpp::Node::SharedPtr nh)
 
 void KeyposeGraph::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
-  nh->declare_parameter<double>("keypose_graph/kAddNodeMinDist", 0.5);
-  nh->declare_parameter<double>("keypose_graph/kAddNonKeyposeNodeMinDist", 0.5);
-  nh->declare_parameter<double>("keypose_graph/kAddEdgeConnectDistThr", 0.5);
-  nh->declare_parameter<double>("keypose_graph/kAddEdgeToLastKeyposeDistThr", 0.5);
-  nh->declare_parameter<double>("keypose_graph/kAddEdgeVerticalThreshold", 0.5);
-  nh->declare_parameter<double>("keypose_graph/kAddEdgeCollisionCheckResolution", 0.5);
-  nh->declare_parameter<double>("keypose_graph/kAddEdgeCollisionCheckRadius", 0.5);
-  nh->declare_parameter<double>("keypose_graph/kAddEdgeCollisionCheckPointNumThr", 0.5);
-
   nh->get_parameter("keypose_graph/kAddNodeMinDist", kAddNodeMinDist);
   nh->get_parameter("keypose_graph/kAddNonKeyposeNodeMinDist", kAddNonKeyposeNodeMinDist);
   nh->get_parameter("keypose_graph/kAddEdgeConnectDistThr", kAddEdgeConnectDistThr);

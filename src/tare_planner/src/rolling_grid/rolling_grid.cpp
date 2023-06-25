@@ -69,8 +69,8 @@ void RollingGrid::Roll(const Eigen::Vector3i& roll_dir)
   }
 }
 
-void RollingGrid::RollHelper(const std::unique_ptr<grid_ns::Grid<int>>& grid_in,
-                             const std::unique_ptr<grid_ns::Grid<int>>& grid_out, Eigen::Vector3i roll_dir)
+void RollingGrid::RollHelper(const std::shared_ptr<grid_ns::Grid<int>>& grid_in,
+                             const std::shared_ptr<grid_ns::Grid<int>>& grid_out, Eigen::Vector3i roll_dir)
 {
   Eigen::Vector3i grid_in_size = grid_in->GetSize();
   Eigen::Vector3i grid_out_size = grid_out->GetSize();

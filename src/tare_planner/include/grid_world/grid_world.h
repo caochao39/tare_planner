@@ -218,7 +218,7 @@ public:
   void ReadParameters(rclcpp::Node::SharedPtr nh);
   void UpdateNeighborCells(const geometry_msgs::msg::Point& robot_position);
   void UpdateRobotPosition(const geometry_msgs::msg::Point& robot_position);
-  void UpdateCellKeyposeGraphNodes(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph);
+  void UpdateCellKeyposeGraphNodes(const std::shared_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph);
   int GetMinAddPointNum()
   {
     return kMinAddPointNumSmall;
@@ -318,7 +318,7 @@ public:
   exploration_path_ns::ExplorationPath
   SolveGlobalTSP(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
                  std::vector<int>& ordered_cell_indices,
-                 const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph = nullptr);
+                 const std::shared_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph = nullptr);
 
   inline void SetCurKeyposeGraphNodeInd(int node_ind)
   {
@@ -353,9 +353,9 @@ public:
   }
   void GetCellViewPointPositions(std::vector<Eigen::Vector3d>& viewpoint_positions);
   void AddPathsInBetweenCells(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
-                              const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph);
+                              const std::shared_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph);
   bool PathValid(const nav_msgs::msg::Path& path, int from_cell_ind, int to_cell_ind);
-  bool HasDirectKeyposeGraphConnection(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
+  bool HasDirectKeyposeGraphConnection(const std::shared_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
                                        const Eigen::Vector3d& start_position, const Eigen::Vector3d& goal_position);
 
 private:
@@ -375,7 +375,7 @@ private:
   int kCellUnknownToExploringThr;
 
   std::vector<Cell> cells_;
-  std::unique_ptr<grid_ns::Grid<Cell>> subspaces_;
+  std::shared_ptr<grid_ns::Grid<Cell>> subspaces_;
   bool initialized_;
   bool use_keypose_graph_;
   int cur_keypose_id_;

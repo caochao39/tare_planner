@@ -17,11 +17,6 @@ const std::string LocalCoveragePlanner::kRuntimeUnit = "us";
 
 bool LocalCoveragePlannerParameter::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
-  nh->declare_parameter<int>("kMinAddPointNumSmall", 60);
-  nh->declare_parameter<int>("kMinAddFrontierPointNum", 30);
-  nh->declare_parameter<int>("kGreedyViewPointSampleRange", 5);
-  nh->declare_parameter<int>("kLocalPathOptimizationItrMax", 10);
-
   nh->get_parameter("kMinAddPointNumSmall", kMinAddPointNum);
   nh->get_parameter("kMinAddFrontierPointNum", kMinAddFrontierPointNum);
   nh->get_parameter("kGreedyViewPointSampleRange", kGreedyViewPointSampleRange);
@@ -708,6 +703,8 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveLocalCoveragePro
   std::vector<std::pair<int, int>> frontier_queue;
   EnqueueViewpointCandidates(queue, frontier_queue, covered, frontier_covered, pre_selected_viewpoint_array_indices);
 
+  std::cout << "viewpoint candidate queue size: " << queue.size() << std::endl;
+
   viewpoint_sampling_timer.Stop(false, kRuntimeUnit);
   viewpoint_sampling_runtime_ += viewpoint_sampling_timer.GetDuration(kRuntimeUnit);
 
@@ -735,6 +732,8 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveLocalCoveragePro
       {
         selected_viewpoint_indices_itr.push_back(ind);
       }
+
+      std::cout << "dbg selected viewpoint num: " << selected_viewpoint_indices_itr.size() << std::endl;
 
       misc_utils_ns::UniquifyIntVector(selected_viewpoint_indices_itr);
 

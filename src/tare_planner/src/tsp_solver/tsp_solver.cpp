@@ -9,10 +9,10 @@ namespace tsp_solver_ns
 TSPSolver::TSPSolver(tsp_solver_ns::DataModel data) : data_(std::move(data))
 {
   // Create Routing Index Manager
-  manager_ = std::make_unique<RoutingIndexManager>(data_.distance_matrix.size(), data_.num_vehicles, data_.depot);
+  manager_ = std::make_shared<RoutingIndexManager>(data_.distance_matrix.size(), data_.num_vehicles, data_.depot);
 
   // Create Routing Model.
-  routing_ = std::make_unique<RoutingModel>(*manager_);
+  routing_ = std::make_shared<RoutingModel>(*manager_);
 }
 
 void TSPSolver::Solve()

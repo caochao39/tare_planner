@@ -31,8 +31,8 @@ class tsp_solver_ns::TSPSolver
 {
 private:
   DataModel data_;
-  std::unique_ptr<RoutingIndexManager> manager_;
-  std::unique_ptr<RoutingModel> routing_;
+  std::shared_ptr<RoutingIndexManager> manager_;
+  std::shared_ptr<RoutingModel> routing_;
   const Assignment* solution_;
 
 public:

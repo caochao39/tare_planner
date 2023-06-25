@@ -317,46 +317,46 @@ private:
   Eigen::Vector3d robot_position_;
   Eigen::Vector3d prev_robot_position_;
   bool robot_position_update_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> keypose_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> stacked_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> stacked_vertical_surface_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> keypose_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> stacked_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> stacked_vertical_surface_cloud_;
   pcl::KdTreeFLANN<PlannerCloudPointType>::Ptr stacked_vertical_surface_cloud_kdtree_;
   pointcloud_utils_ns::PointCloudDownsizer<PlannerCloudPointType> stacked_cloud_downsizer_;
   pointcloud_utils_ns::PointCloudDownsizer<pcl::PointXYZI> collision_cloud_downsizer_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> vertical_surface_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> vertical_surface_cloud_;
   pointcloud_utils_ns::VerticalSurfaceExtractor vertical_surface_extractor_;
   pointcloud_utils_ns::VerticalSurfaceExtractor vertical_frontier_extractor_;
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr collision_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> diff_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> terrain_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> diff_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> terrain_cloud_;
 
   geometry_msgs::msg::Polygon coverage_boundary_;
 
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> planner_cloud_;
-  std::unique_ptr<pointcloud_manager_ns::PointCloudManager> pointcloud_manager_;
-  std::unique_ptr<rolling_occupancy_grid_ns::RollingOccupancyGrid> rolling_occupancy_grid_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolling_occupancy_grid_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolling_frontier_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolling_filtered_frontier_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> planner_cloud_;
+  std::shared_ptr<pointcloud_manager_ns::PointCloudManager> pointcloud_manager_;
+  std::shared_ptr<rolling_occupancy_grid_ns::RollingOccupancyGrid> rolling_occupancy_grid_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolling_occupancy_grid_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolling_frontier_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolling_filtered_frontier_cloud_;
 
   // For debug
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolled_in_occupancy_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolled_out_occupancy_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> pointcloud_manager_occupancy_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolled_in_occupancy_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> rolled_out_occupancy_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> pointcloud_manager_occupancy_cloud_;
 
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> squeezed_planner_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<PlannerCloudPointType>> squeezed_planner_cloud_;
   pcl::KdTreeFLANN<PlannerCloudPointType>::Ptr squeezed_planner_cloud_kdtree_;
 
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> uncovered_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> uncovered_frontier_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> frontier_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> filtered_frontier_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> occupied_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> free_cloud_;
-  std::unique_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> unknown_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> uncovered_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> uncovered_frontier_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> frontier_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> filtered_frontier_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> occupied_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> free_cloud_;
+  std::shared_ptr<pointcloud_utils_ns::PCLCloud<pcl::PointXYZI>> unknown_cloud_;
 
-  // std::unique_ptr<occupancy_grid_ns::OccupancyGrid> occupancy_grid_;
+  // std::shared_ptr<occupancy_grid_ns::OccupancyGrid> occupancy_grid_;
 
   pcl::search::KdTree<pcl::PointXYZI>::Ptr kdtree_frontier_cloud_;
   pcl::search::KdTree<pcl::PointXYZI>::Ptr kdtree_rolling_frontier_cloud_;

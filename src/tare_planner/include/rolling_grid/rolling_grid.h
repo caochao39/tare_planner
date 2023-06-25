@@ -44,6 +44,10 @@ public:
   }
   int GetArrayInd(Eigen::Vector3i sub) const
   {
+    if (!InRange(sub))
+    {
+      std::cout << "out of range sub: " << sub.transpose() << std::endl;
+    }
     MY_ASSERT(InRange(sub));
     if (which_grid_)
     {
@@ -56,6 +60,10 @@ public:
   }
   int GetArrayInd(int ind) const
   {
+    if (!InRange(ind))
+    {
+      std::cout << "out of range ind: " << ind << std::endl;
+    }
     MY_ASSERT(InRange(ind));
     Eigen::Vector3i sub = grid0_->Ind2Sub(ind);
     return GetArrayInd(sub);
@@ -73,8 +81,8 @@ public:
 
 private:
   Eigen::Vector3i size_;
-  std::unique_ptr<grid_ns::Grid<int>> grid0_;
-  std::unique_ptr<grid_ns::Grid<int>> grid1_;
+  std::shared_ptr<grid_ns::Grid<int>> grid0_;
+  std::shared_ptr<grid_ns::Grid<int>> grid1_;
   std::vector<int> updated_indices_;
   std::vector<int> array_ind_to_ind_;
   bool which_grid_;
@@ -83,8 +91,8 @@ private:
   {
     return cur_idx <= roll_step - 1 ? max_idx - roll_step + cur_idx : cur_idx - roll_step;
   }
-  void RollHelper(const std::unique_ptr<grid_ns::Grid<int>>& grid_in,
-                  const std::unique_ptr<grid_ns::Grid<int>>& grid_out, Eigen::Vector3i roll_dir);
+  void RollHelper(const std::shared_ptr<grid_ns::Grid<int>>& grid_in,
+                  const std::shared_ptr<grid_ns::Grid<int>>& grid_out, Eigen::Vector3i roll_dir);
 
   void GetRolledInIndices(const Eigen::Vector3i& roll_dir);
   void GetRolledOutIndices(const Eigen::Vector3i& roll_dir);

@@ -81,7 +81,7 @@ GridWorld::GridWorld(rclcpp::Node::SharedPtr nh) : initialized_(false), use_keyp
   Eigen::Vector3d grid_origin(0.0, 0.0, 0.0);
   Eigen::Vector3d grid_resolution(kCellSize, kCellSize, kCellHeight);
   Cell cell_tmp;
-  subspaces_ = std::make_unique<grid_ns::Grid<Cell>>(grid_size, cell_tmp, grid_origin, grid_resolution);
+  subspaces_ = std::make_shared<grid_ns::Grid<Cell>>(grid_size, cell_tmp, grid_origin, grid_resolution);
   for (int i = 0; i < subspaces_->GetCellNumber(); ++i)
   {
     subspaces_->GetCell(i) = grid_world_ns::Cell();
@@ -137,7 +137,7 @@ GridWorld::GridWorld(int row_num, int col_num, int level_num, double cell_size, 
   Eigen::Vector3d grid_origin(0.0, 0.0, 0.0);
   Eigen::Vector3d grid_resolution(kCellSize, kCellSize, kCellHeight);
   Cell cell_tmp;
-  subspaces_ = std::make_unique<grid_ns::Grid<Cell>>(grid_size, cell_tmp, grid_origin, grid_resolution);
+  subspaces_ = std::make_shared<grid_ns::Grid<Cell>>(grid_size, cell_tmp, grid_origin, grid_resolution);
   for (int i = 0; i < subspaces_->GetCellNumber(); ++i)
   {
     subspaces_->GetCell(i) = grid_world_ns::Cell();
@@ -157,22 +157,6 @@ GridWorld::GridWorld(int row_num, int col_num, int level_num, double cell_size, 
 
 void GridWorld::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
-  nh->declare_parameter<int>("kGridWorldXNum", 121);
-  nh->declare_parameter<int>("kGridWorldYNum", 121);
-  nh->declare_parameter<int>("kGridWorldZNum", 12);
-  nh->declare_parameter<int>("viewpoint_manager/number_x", 40);
-  nh->declare_parameter<double>("viewpoint_manager/resolution_x", 1.0);
-  nh->declare_parameter<double>("kGridWorldCellHeight", 8.0);
-  nh->declare_parameter<int>("kGridWorldNearbyGridNum", 5);
-  nh->declare_parameter<int>("kMinAddPointNumSmall", 60);
-  nh->declare_parameter<int>("kMinAddPointNumBig", 100);
-  nh->declare_parameter<int>("kMinAddFrontierPointNum", 30);
-  nh->declare_parameter<int>("kCellExploringToCoveredThr", 1);
-  nh->declare_parameter<int>("kCellCoveredToExploringThr", 10);
-  nh->declare_parameter<int>("kCellExploringToAlmostCoveredThr", 10);
-  nh->declare_parameter<int>("kCellAlmostCoveredToExploringThr", 20);
-  nh->declare_parameter<int>("kCellUnknownToExploringThr", 1);
-
   nh->get_parameter("kGridWorldXNum", kRowNum);
   nh->get_parameter("kGridWorldYNum", kColNum);
   nh->get_parameter("kGridWorldZNum", kLevelNum);
@@ -248,7 +232,7 @@ void GridWorld::UpdateRobotPosition(const geometry_msgs::msg::Point& robot_posit
   }
 }
 
-void GridWorld::UpdateCellKeyposeGraphNodes(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph)
+void GridWorld::UpdateCellKeyposeGraphNodes(const std::shared_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph)
 {
   std::vector<int> keypose_graph_connected_node_indices = keypose_graph->GetConnectedGraphNodeIndices();
 
@@ -707,7 +691,7 @@ void GridWorld::UpdateCellStatus(const std::shared_ptr<viewpoint_manager_ns::Vie
 
 exploration_path_ns::ExplorationPath GridWorld::SolveGlobalTSP(
     const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
-    std::vector<int>& ordered_cell_indices, const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph)
+    std::vector<int>& ordered_cell_indices, const std::shared_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph)
 {
   /****** Get the node on keypose graph associated with the robot position *****/
   double min_dist_to_robot = DBL_MAX;
@@ -1018,7 +1002,7 @@ void GridWorld::GetCellViewPointPositions(std::vector<Eigen::Vector3d>& viewpoin
 }
 
 void GridWorld::AddPathsInBetweenCells(const std::shared_ptr<viewpoint_manager_ns::ViewPointManager>& viewpoint_manager,
-                                       const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph)
+                                       const std::shared_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph)
 {
   // Determine the connection point in each cell
   for (int i = 0; i < neighbor_cell_indices_.size(); i++)
@@ -1192,7 +1176,7 @@ bool GridWorld::PathValid(const nav_msgs::msg::Path& path, int from_cell_ind, in
   }
 }
 
-bool GridWorld::HasDirectKeyposeGraphConnection(const std::unique_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
+bool GridWorld::HasDirectKeyposeGraphConnection(const std::shared_ptr<keypose_graph_ns::KeyposeGraph>& keypose_graph,
                                                 const Eigen::Vector3d& start_position,
                                                 const Eigen::Vector3d& goal_position)
 {

@@ -36,24 +36,6 @@ TAREVisualizer::TAREVisualizer(rclcpp::Node::SharedPtr nh)
 }
 bool TAREVisualizer::ReadParameters(rclcpp::Node::SharedPtr nh)
 {
-  nh->declare_parameter<bool>("kExploringSubspaceMarkerColorGradientAlpha", true);
-  nh->declare_parameter<double>("kExploringSubspaceMarkerColorMaxAlpha", 1.0);
-  nh->declare_parameter<double>("kExploringSubspaceMarkerColorR", 0.0);
-  nh->declare_parameter<double>("kExploringSubspaceMarkerColorG", 1.0);
-  nh->declare_parameter<double>("kExploringSubspaceMarkerColorB", 0.0);
-  nh->declare_parameter<double>("kExploringSubspaceMarkerColorA", 1.0);
-  nh->declare_parameter<double>("kLocalPlanningHorizonMarkerColorR", 0.0);
-  nh->declare_parameter<double>("kLocalPlanningHorizonMarkerColorG", 1.0);
-  nh->declare_parameter<double>("kLocalPlanningHorizonMarkerColorB", 0.0);
-  nh->declare_parameter<double>("kLocalPlanningHorizonMarkerColorA", 1.0);
-  nh->declare_parameter<double>("kLocalPlanningHorizonMarkerWidth", 0.3);
-  nh->declare_parameter<int>("viewpoint_manager/number_x", 40);
-  nh->declare_parameter<int>("viewpoint_manager/number_y", 40);
-  nh->declare_parameter<double>("viewpoint_manager/resolution_x", 1.1);
-  nh->declare_parameter<double>("viewpoint_manager/resolution_y", 1.1);
-  nh->declare_parameter<double>("kGridWorldCellHeight", 3.0);
-  nh->declare_parameter<double>("kLocalPlanningHorizonHeight", 3.0);
-
   nh->get_parameter("kExploringSubspaceMarkerColorGradientAlpha", kExploringSubspaceMarkerColorGradientAlpha);
   nh->get_parameter("kExploringSubspaceMarkerColorMaxAlpha", kExploringSubspaceMarkerColorMaxAlpha);
   kExploringSubspaceMarkerColor.r = nh->get_parameter("kExploringSubspaceMarkerColorR").as_double();
@@ -165,7 +147,7 @@ void TAREVisualizer::GetLocalPlanningHorizonMarker(double x, double y, double z)
   local_planning_horizon_marker_->marker_.points.push_back(upper_right2);
 }
 
-void TAREVisualizer::GetGlobalSubspaceMarker(const std::unique_ptr<grid_world_ns::GridWorld>& grid_world,
+void TAREVisualizer::GetGlobalSubspaceMarker(const std::shared_ptr<grid_world_ns::GridWorld>& grid_world,
                                              const std::vector<int>& ordered_cell_indices)
 {
   global_subspaces_marker_->marker_.points.clear();
