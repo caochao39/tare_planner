@@ -7,7 +7,7 @@ Panels:
         - /Global1
         - /Local1
       Splitter Ratio: 0.42941176891326904
-    Tree Height: 706
+    Tree Height: 441
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -598,7 +598,7 @@ Visualization Manager:
       Near Clip Distance: 0.009999999776482582
       Pitch: 1.5697963237762451
       Target Frame: map
-      Value: Orbit (rviz)
+      Value: XYOrbit (rviz)
       Yaw: 3.140395164489746
     Saved: ~
 Window Geometry:
@@ -617,5 +617,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1447
-  X: 74
+  X: 58
   Y: 27
