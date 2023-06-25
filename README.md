@@ -43,32 +43,13 @@ roslaunch tare_planner explore_matterport.launch
 
 ## Publications
 
-- C. Cao, H. Zhu, H. Choset, and J. Zhang. TARE: A Hierarchical Framework for Efficiently Exploring Complex 3D Environments. Robotics: Science and Systems Conference (RSS). Virtual, July 2021. **Best Paper Award and Best System Paper Award**.
+- C. Cao, H. Zhu, Z. Ren, H. Choset, and J. Zhang. Representation Granularity Enables Time-Efficient Autonomous Exploration in Large, Complex Worlds. Science Robotics. vol. 8, no. 80, 2023.
 
-```
-@inproceedings{cao2021tare,
-  title={TARE: A Hierarchical Framework for Efficiently Exploring Complex 3D Environments},
-  author={Chao, Cao and Hongbiao, Zhu and Howie, Choset and Ji, Zhang},
-  booktitle={Robotics: Science and Systems Conference (RSS)},
-  year={2021},
-  month={July},
-  address={Virtual}
-}
-```
+- C. Cao, H. Zhu, H. Choset, and J. Zhang. TARE: A Hierarchical Framework for Efficiently Exploring Complex 3D Environments. Robotics: Science and Systems Conference (RSS). Virtual, July 2021. **Best Paper Award and Best System Paper Award**.
 
 - C. Cao, H. Zhu, H. Choset, and J. Zhang: Exploring Large and Complex Environments
 Fast and Efficiently. International Conference on Robotics and Automation (ICRA), Xi'an, China, June 2021.
 
-```
-@inproceedings{cao2021exploring,
-  title={Exploring Large and Complex Environments Fast and Efficiently},
-  author={Chao, Cao and Hongbiao, Zhu and Howie, Choset and Ji, Zhang},
-  booktitle={IEEE International Conference on Robotics and Automation (ICRA)},
-  year={2021},
-  month={June},
-  address={Xi'an, China}
-}
-```
 
 ## Application
 
