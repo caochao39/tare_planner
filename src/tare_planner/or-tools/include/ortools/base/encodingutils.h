@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -18,7 +18,7 @@
 
 namespace EncodingUtils {
 
-// Returns the number of characters of a UTF8-encoded std::string.
+// Returns the number of characters of a UTF8-encoded string.
 inline int UTF8StrLen(const std::string& utf8_str) {
   if (utf8_str.empty()) return 0;
   const char* c = utf8_str.c_str();

@@ -1,0 +1,12 @@
+prefix=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534
+exec_prefix=${prefix}
+libdir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/lib
+includedir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/include
+
+Name: absl_hash
+Description: Abseil hash library
+URL: https://abseil.io/
+Version: 20230125
+Requires: absl_bits = 20230125, absl_city = 20230125, absl_config = 20230125, absl_core_headers = 20230125, absl_endian = 20230125, absl_fixed_array = 20230125, absl_function_ref = 20230125, absl_meta = 20230125, absl_int128 = 20230125, absl_strings = 20230125, absl_optional = 20230125, absl_variant = 20230125, absl_utility = 20230125, absl_low_level_hash = 20230125
+Libs: -L${libdir}   -labsl_hash
+Cflags: -I${includedir} -DNOMINMAX

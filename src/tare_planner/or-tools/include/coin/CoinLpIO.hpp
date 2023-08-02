@@ -284,6 +284,11 @@ public:
   {
     objectiveOffset_[0] = value;
   }
+  /// Return true if maximization problem reformulated as minimization
+  inline bool wasMaximization() const
+  {
+    return wasMaximization_;
+  }
 
   /// Set objective offset
   inline void setObjectiveOffset(double value, int j)
@@ -629,6 +634,9 @@ protected:
 
   /// Objective function name
   char *objName_[MAX_OBJECTIVES];
+
+  /// Maximization reformulation flag
+  bool wasMaximization_;
 
   /** Row names (including objective function name) 
       and column names when stopHash() for the corresponding 

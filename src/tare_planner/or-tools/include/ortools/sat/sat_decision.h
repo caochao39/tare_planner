@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -14,16 +14,19 @@
 #ifndef OR_TOOLS_SAT_SAT_DECISION_H_
 #define OR_TOOLS_SAT_SAT_DECISION_H_
 
+#include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "ortools/base/integral_types.h"
+#include "ortools/base/strong_vector.h"
 #include "ortools/sat/model.h"
 #include "ortools/sat/pb_constraint.h"
 #include "ortools/sat/sat_base.h"
 #include "ortools/sat/sat_parameters.pb.h"
+#include "ortools/sat/util.h"
 #include "ortools/util/bitset.h"
 #include "ortools/util/integer_pq.h"
-#include "ortools/util/random_engine.h"
 
 namespace operations_research {
 namespace sat {
@@ -50,7 +53,7 @@ class SatDecisionPolicy {
   // variables are assigned.
   Literal NextBranch();
 
-  // Updates statistics about literal occurences in constraints.
+  // Updates statistics about literal occurrences in constraints.
   // Input is a canonical linear constraint of the form (terms <= rhs).
   void UpdateWeightedSign(const std::vector<LiteralWithCoeff>& terms,
                           Coefficient rhs);
@@ -68,12 +71,21 @@ class SatDecisionPolicy {
   // Called on Untrail() so that we can update the set of possible decisions.
   void Untrail(int target_trail_index);
 
-  // Called on a new conflict.
-  void OnConflict() {
-    if (parameters_.use_erwa_heuristic()) {
-      ++num_conflicts_;
-      num_conflicts_stack_.push_back({trail_->Index(), 1});
-    }
+  // Called on a new conflict before Untrail(). The trail before the given index
+  // is used in the phase saving heuristic as a partial assignment.
+  void BeforeConflict(int trail_index);
+
+  // By default, we alternate between a stable phase (better suited for finding
+  // SAT solution) and a more restart heavy phase more suited for proving UNSAT.
+  // This changes a bit the polarity heuristics and is controlled from within
+  // SatRestartPolicy.
+  void SetStablePhase(bool is_stable) { in_stable_phase_ = is_stable; }
+  bool InStablePhase() const { return in_stable_phase_; }
+
+  // This is used to temporarily disable phase_saving when we do some probing
+  // during search for instance.
+  void MaybeEnablePhaseSaving(bool save_phase) {
+    maybe_enable_phase_saving_ = save_phase;
   }
 
   // Gives a hint so the solver tries to find a solution with the given literal
@@ -92,6 +104,12 @@ class SatDecisionPolicy {
   // Returns the vector of the current assignment preferences.
   std::vector<std::pair<Literal, double>> AllPreferences() const;
 
+  // Returns the current activity of a BooleanVariable.
+  double Activity(Literal l) const {
+    if (l.Variable() < activities_.size()) return activities_[l.Variable()];
+    return 0.0;
+  }
+
  private:
   // Computes an initial variable ordering.
   void InitializeVariableOrdering();
@@ -99,9 +117,16 @@ class SatDecisionPolicy {
   // Rescales activity value of all variables when one of them reached the max.
   void RescaleVariableActivities(double scaling_factor);
 
-  // Reinitializes the inital polarity of all the variables with an index
+  // Reinitializes the initial polarity of all the variables with an index
   // greater than or equal to the given one.
-  void ResetInitialPolarity(int from);
+  void ResetInitialPolarity(int from, bool inverted = false);
+
+  // Code used for resetting the initial polarity at the beginning of each
+  // phase.
+  void RephaseIfNeeded();
+  void UseLongestAssignmentAsInitialPolarity();
+  void FlipCurrentPolarity();
+  void RandomizeCurrentPolarity();
 
   // Adds the given variable to var_ordering_ or updates its priority if it is
   // already present.
@@ -109,8 +134,8 @@ class SatDecisionPolicy {
 
   // Singleton model objects.
   const SatParameters& parameters_;
-  Trail* trail_;
-  random_engine_t* random_;
+  const Trail& trail_;
+  ModelRandomGenerator* random_;
 
   // Variable ordering (priority will be adjusted dynamically). queue_elements_
   // holds the elements used by var_ordering_ (it uses pointers).
@@ -150,8 +175,8 @@ class SatDecisionPolicy {
     // save memory and make the PQ operations faster.
     double weight;
   };
-  COMPILE_ASSERT(sizeof(WeightedVarQueueElement) == 16,
-                 ERROR_WeightedVarQueueElement_is_not_well_compacted);
+  static_assert(sizeof(WeightedVarQueueElement) == 16,
+                "ERROR_WeightedVarQueueElement_is_not_well_compacted");
 
   bool var_ordering_is_initialized_ = false;
   IntegerPriorityQueue<WeightedVarQueueElement> var_ordering_;
@@ -165,9 +190,9 @@ class SatDecisionPolicy {
   // summing the entry.count for all entries with a trail index greater than i.
   struct NumConflictsStackEntry {
     int trail_index;
-    int64 count;
+    int64_t count;
   };
-  int64 num_conflicts_ = 0;
+  int64_t num_conflicts_ = 0;
   std::vector<NumConflictsStackEntry> num_conflicts_stack_;
 
   // Whether the priority of the given variable needs to be updated in
@@ -183,17 +208,36 @@ class SatDecisionPolicy {
 
   // Stores variable activity and the number of time each variable was "bumped".
   // The later is only used with the ERWA heuristic.
-  gtl::ITIVector<BooleanVariable, double> activities_;
-  gtl::ITIVector<BooleanVariable, double> tie_breakers_;
-  gtl::ITIVector<BooleanVariable, int64> num_bumps_;
+  absl::StrongVector<BooleanVariable, double> activities_;
+  absl::StrongVector<BooleanVariable, double> tie_breakers_;
+  absl::StrongVector<BooleanVariable, int64_t> num_bumps_;
 
-  // Used by NextBranch() to choose the polarity of the next decision. For the
-  // phase saving, the last polarity is stored in trail_->Info(var).
-  gtl::ITIVector<BooleanVariable, bool> var_use_phase_saving_;
-  gtl::ITIVector<BooleanVariable, bool> var_polarity_;
+  // If the polarity if forced (externally) we always use this first.
+  absl::StrongVector<BooleanVariable, bool> has_forced_polarity_;
+  absl::StrongVector<BooleanVariable, bool> forced_polarity_;
+
+  // If we are in a stable phase, we follow the current target.
+  bool in_stable_phase_ = false;
+  int target_length_ = 0;
+  absl::StrongVector<BooleanVariable, bool> has_target_polarity_;
+  absl::StrongVector<BooleanVariable, bool> target_polarity_;
+
+  // Otherwise we follow var_polarity_ which is reset at the beginning of
+  // each new polarity phase. This is also overwritten by phase saving.
+  // Each phase last for an arithmetically increasing number of conflicts.
+  absl::StrongVector<BooleanVariable, bool> var_polarity_;
+  bool maybe_enable_phase_saving_ = true;
+  int64_t polarity_phase_ = 0;
+  int64_t num_conflicts_until_rephase_ = 1000;
+
+  // The longest partial assignment since the last reset.
+  std::vector<Literal> best_partial_assignment_;
 
   // Used in initial polarity computation.
-  gtl::ITIVector<BooleanVariable, double> weighted_sign_;
+  absl::StrongVector<BooleanVariable, double> weighted_sign_;
+
+  // Used in InitializeVariableOrdering().
+  std::vector<BooleanVariable> tmp_variables_;
 };
 
 }  // namespace sat

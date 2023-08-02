@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/io/tokenizer.h"
@@ -25,7 +26,7 @@
 #include "google/protobuf/text_format.h"
 #include "ortools/base/integral_types.h"
 #include "ortools/base/logging.h"
-#include "ortools/base/status.h"
+#include "ortools/base/status_macros.h"
 
 // This file defines some IO interfaces for compatibility with Google
 // IO specifications.
@@ -60,13 +61,13 @@ class File {
   // If read failed, program will exit.
   void ReadOrDie(void* const buff, size_t size);
 
-  // Reads a line from file to a std::string.
+  // Reads a line from file to a string.
   // Each line must be no more than max_length bytes.
-  char* ReadLine(char* const output, uint64 max_length);
+  char* ReadLine(char* const output, uint64_t max_length);
 
-  // Reads the whole file to a std::string, with a maximum length of
-  // 'max_length'. Returns the number of bytes read.
-  int64 ReadToString(std::string* const line, uint64 max_length);
+  // Reads the whole file to a string, with a maximum length of 'max_length'.
+  // Returns the number of bytes read.
+  int64_t ReadToString(std::string* const line, uint64_t max_length);
 
   // Writes "size" bytes of buff to file, buff should be pre-allocated.
   size_t Write(const void* const buff, size_t size);
@@ -75,15 +76,15 @@ class File {
   // If write failed, program will exit.
   void WriteOrDie(const void* const buff, size_t size);
 
-  // Writes a std::string to file.
+  // Writes a string to file.
   size_t WriteString(const std::string& line);
 
-  // Writes a std::string to file and append a "\n".
+  // Writes a string to file and append a "\n".
   bool WriteLine(const std::string& line);
 
   // Closes the file.
   bool Close();
-  util::Status Close(int flags);
+  absl::Status Close(int flags);
 
   // Flushes buffer.
   bool Flush();
@@ -116,22 +117,41 @@ class File {
 };
 
 namespace file {
-inline int Defaults() { return 0xBABA; }
+
+using Options = int;
+
+inline Options Defaults() { return 0xBABA; }
 
 // As of 2016-01, these methods can only be used with flags = file::Defaults().
-util::Status Open(const absl::string_view& filename,
+absl::Status Open(const absl::string_view& filename,
                   const absl::string_view& mode, File** f, int flags);
 File* OpenOrDie(const absl::string_view& filename,
                 const absl::string_view& mode, int flags);
-util::Status SetTextProto(const absl::string_view& filename,
+absl::Status GetTextProto(const absl::string_view& filename,
+                          google::protobuf::Message* proto, int flags);
+template <typename T>
+absl::StatusOr<T> GetTextProto(absl::string_view filename, int flags) {
+  T proto;
+  RETURN_IF_ERROR(GetTextProto(filename, &proto, flags));
+  return proto;
+}
+absl::Status SetTextProto(const absl::string_view& filename,
                           const google::protobuf::Message& proto, int flags);
-util::Status SetBinaryProto(const absl::string_view& filename,
+absl::Status GetBinaryProto(absl::string_view filename,
+                            google::protobuf::Message* proto, int flags);
+template <typename T>
+absl::StatusOr<T> GetBinaryProto(absl::string_view filename, int flags) {
+  T proto;
+  RETURN_IF_ERROR(GetBinaryProto(filename, &proto, flags));
+  return proto;
+}
+absl::Status SetBinaryProto(const absl::string_view& filename,
                             const google::protobuf::Message& proto, int flags);
-util::Status SetContents(const absl::string_view& filename,
+absl::Status SetContents(const absl::string_view& filename,
                          const absl::string_view& contents, int flags);
-util::Status GetContents(const absl::string_view& filename, std::string* output,
+absl::Status GetContents(const absl::string_view& filename, std::string* output,
                          int flags);
-util::Status WriteString(File* file, const absl::string_view& contents,
+absl::Status WriteString(File* file, const absl::string_view& contents,
                          int flags);
 
 bool ReadFileToString(const absl::string_view& file_name, std::string* output);
@@ -150,8 +170,8 @@ bool WriteProtoToFile(const google::protobuf::Message& proto,
 void WriteProtoToFileOrDie(const google::protobuf::Message& proto,
                            const absl::string_view& file_name);
 
-util::Status Delete(const absl::string_view& path, int flags);
-util::Status Exists(const absl::string_view& path, int flags);
+absl::Status Delete(const absl::string_view& path, int flags);
+absl::Status Exists(const absl::string_view& path, int flags);
 
 }  // namespace file
 

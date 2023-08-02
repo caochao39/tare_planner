@@ -1,0 +1,13 @@
+#ifndef __CONFIG_CBC_H__
+#define __CONFIG_CBC_H__
+
+/* CBC_VERSION */
+#define CBC_VERSION "2.10.7"
+/* CBC_VERSION_MAJOR */
+#define CBC_VERSION_MAJOR 2
+/* CBC_VERSION_MINOR */
+#define CBC_VERSION_MINOR 10
+/* CBC_VERSION_RELEASE */
+#define CBC_VERSION_RELEASE 7
+
+#endif

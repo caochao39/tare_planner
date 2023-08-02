@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(tare_planner)
 
 # add_compile_options(-std=c++11)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -68,7 +68,7 @@ target_link_libraries(pointcloud_utils ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 add_library(tsp_solver src/tsp_solver/tsp_solver.cpp)
 add_dependencies(tsp_solver ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(tsp_solver ${catkin_LIBRARIES} ${CMAKE_CURRENT_SOURCE_DIR}/or-tools/lib/libortools.so ${CMAKE_CURRENT_SOURCE_DIR}/or-tools/lib/libglog.so)
+target_link_libraries(tsp_solver ${catkin_LIBRARIES} ${CMAKE_CURRENT_SOURCE_DIR}/or-tools/lib/libortools.so)
 
 add_library(viewpoint src/viewpoint/viewpoint.cpp)
 add_dependencies(viewpoint ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -124,6 +124,7 @@ target_link_libraries(navigationBoundary ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 add_executable(tare_planner_node src/tare_planner_node/tare_planner_node.cpp)
 add_dependencies(tare_planner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 target_link_libraries(tare_planner_node ${catkin_LIBRARIES} sensor_coverage_planner_ground)
+
 
 #############
 ## Install ##

@@ -1,0 +1,13 @@
+#ifndef __CONFIG_OSI_H__
+#define __CONFIG_OSI_H__
+
+/* OSI_VERSION */
+#define OSI_VERSION "0.108.7"
+/* OSI_VERSION_MAJOR */
+#define OSI_VERSION_MAJOR 0
+/* OSI_VERSION_MINOR */
+#define OSI_VERSION_MINOR 108
+/* OSI_VERSION_RELEASE */
+#define OSI_VERSION_RELEASE 7
+
+#endif

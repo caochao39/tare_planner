@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -73,14 +73,20 @@
 #ifndef OR_TOOLS_GLOP_MARKOWITZ_H_
 #define OR_TOOLS_GLOP_MARKOWITZ_H_
 
+#include <cstdint>
 #include <queue>
+#include <string>
+#include <vector>
 
 #include "absl/container/inlined_vector.h"
 #include "ortools/base/logging.h"
+#include "ortools/base/strong_vector.h"
 #include "ortools/glop/parameters.pb.h"
 #include "ortools/glop/status.h"
 #include "ortools/lp_data/lp_types.h"
+#include "ortools/lp_data/permutation.h"
 #include "ortools/lp_data/sparse.h"
+#include "ortools/lp_data/sparse_column.h"
 #include "ortools/util/stats.h"
 
 namespace operations_research {
@@ -106,7 +112,7 @@ class MatrixNonZeroPattern {
   // Resets the pattern to the one of the given matrix but only for the
   // rows/columns whose given permutation is kInvalidRow or kInvalidCol.
   // This also fills the singleton columns/rows with the corresponding entries.
-  void InitializeFromMatrixSubset(const MatrixView& basis_matrix,
+  void InitializeFromMatrixSubset(const CompactSparseMatrixView& basis_matrix,
                                   const RowPermutation& row_perm,
                                   const ColumnPermutation& col_perm,
                                   std::vector<ColIndex>* singleton_columns,
@@ -122,8 +128,8 @@ class MatrixNonZeroPattern {
   // Decreases the degree of a row/column. This is the basic operation used to
   // keep the correct degree after a call to DeleteRowAndColumn(). This is
   // because row_non_zero_[row] is only lazily cleaned.
-  int32 DecreaseRowDegree(RowIndex row);
-  int32 DecreaseColDegree(ColIndex col);
+  int32_t DecreaseRowDegree(RowIndex row);
+  int32_t DecreaseColDegree(ColIndex col);
 
   // Returns true if the column has been deleted by DeleteRowAndColumn().
   bool IsColumnDeleted(ColIndex col) const;
@@ -149,14 +155,14 @@ class MatrixNonZeroPattern {
 
   // Returns the degree (i.e. the number of non-zeros) of the given column.
   // This is only valid for the column indices still in the residual matrix.
-  int32 ColDegree(ColIndex col) const {
+  int32_t ColDegree(ColIndex col) const {
     DCHECK(!deleted_columns_[col]);
     return col_degree_[col];
   }
 
   // Returns the degree (i.e. the number of non-zeros) of the given row.
   // This is only valid for the row indices still in the residual matrix.
-  int32 RowDegree(RowIndex row) const { return row_degree_[row]; }
+  int32_t RowDegree(RowIndex row) const { return row_degree_[row]; }
 
   // Returns the set of non-zeros of the given row (unsorted).
   // Call RemoveDeletedColumnsFromRow(row) to clean the row first.
@@ -178,15 +184,15 @@ class MatrixNonZeroPattern {
   void MergeIntoSorted(RowIndex pivot_row, RowIndex row);
 
   // Using InlinedVector helps because we usually have many rows with just a few
-  // non-zeros. Note that on a 64 bits computer we get exactly 6 inlined int32
+  // non-zeros. Note that on a 64 bits computer we get exactly 6 inlined int32_t
   // elements without extra space, and the size of the inlined vector is 4 times
   // 64 bits.
   //
-  // TODO(user): We could be even more efficient since a size of int32 is enough
-  // for us and we could store in common the inlined/not-inlined size.
-  gtl::ITIVector<RowIndex, absl::InlinedVector<ColIndex, 6>> row_non_zero_;
-  StrictITIVector<RowIndex, int32> row_degree_;
-  StrictITIVector<ColIndex, int32> col_degree_;
+  // TODO(user): We could be even more efficient since a size of int32_t is
+  // enough for us and we could store in common the inlined/not-inlined size.
+  absl::StrongVector<RowIndex, absl::InlinedVector<ColIndex, 6>> row_non_zero_;
+  StrictITIVector<RowIndex, int32_t> row_degree_;
+  StrictITIVector<ColIndex, int32_t> col_degree_;
   DenseBooleanRow deleted_columns_;
   DenseBooleanRow bool_scratchpad_;
   std::vector<ColIndex> col_scratchpad_;
@@ -207,22 +213,22 @@ class ColumnPriorityQueue {
 
   // Clears the queue and prepares it to store up to num_cols column indices
   // with a degree from 1 to max_degree included.
-  void Reset(int32 max_degree, ColIndex num_cols);
+  void Reset(int32_t max_degree, ColIndex num_cols);
 
   // Changes the degree of a column and make sure it is in the queue. The degree
   // must be non-negative (>= 0) and at most equal to the value of num_cols used
   // in Reset(). A degree of zero will remove the column from the queue.
-  void PushOrAdjust(ColIndex col, int32 degree);
+  void PushOrAdjust(ColIndex col, int32_t degree);
 
   // Removes the column index with higher priority from the queue and returns
   // it. Returns kInvalidCol if the queue is empty.
   ColIndex Pop();
 
  private:
-  StrictITIVector<ColIndex, int32> col_index_;
-  StrictITIVector<ColIndex, int32> col_degree_;
+  StrictITIVector<ColIndex, int32_t> col_index_;
+  StrictITIVector<ColIndex, int32_t> col_degree_;
   std::vector<std::vector<ColIndex>> col_by_degree_;
-  int32 min_degree_;
+  int32_t min_degree_;
   DISALLOW_COPY_AND_ASSIGN(ColumnPriorityQueue);
 };
 
@@ -257,7 +263,7 @@ class SparseMatrixWithReusableColumnMemory {
   // mutable_column(col) is stored in columns_[mapping_[col]].
   // The columns_ that can be reused have their index stored in free_columns_.
   const SparseColumn empty_column_;
-  gtl::ITIVector<ColIndex, int> mapping_;
+  absl::StrongVector<ColIndex, int> mapping_;
   std::vector<int> free_columns_;
   std::vector<SparseColumn> columns_;
   DISALLOW_COPY_AND_ASSIGN(SparseMatrixWithReusableColumnMemory);
@@ -277,11 +283,10 @@ class Markowitz {
   // of the matrix. Moreover, by adding singleton columns with a one at the rows
   // such that 'row_perm[row] == kInvalidRow', then the matrix will be
   // non-singular.
-  ABSL_MUST_USE_RESULT Status ComputeLU(const MatrixView& basis_matrix,
-                                        RowPermutation* row_perm,
-                                        ColumnPermutation* col_perm,
-                                        TriangularMatrix* lower,
-                                        TriangularMatrix* upper);
+  ABSL_MUST_USE_RESULT Status
+  ComputeLU(const CompactSparseMatrixView& basis_matrix,
+            RowPermutation* row_perm, ColumnPermutation* col_perm,
+            TriangularMatrix* lower, TriangularMatrix* upper);
 
   // Only computes P and Q^{-1}, L and U can be computed later from these
   // permutations using another algorithm (for instance left-looking L.U). This
@@ -294,13 +299,16 @@ class Markowitz {
   // independent columns of maximum size. If all the given columns are
   // independent, the returned Status will be OK.
   ABSL_MUST_USE_RESULT Status ComputeRowAndColumnPermutation(
-      const MatrixView& basis_matrix, RowPermutation* row_perm,
+      const CompactSparseMatrixView& basis_matrix, RowPermutation* row_perm,
       ColumnPermutation* col_perm);
 
   // Releases the memory used by this class.
   void Clear();
 
-  // Returns a std::string containing the statistics for this class.
+  // Returns an estimate of the time spent in the last factorization.
+  double DeterministicTimeOfLastFactorization() const;
+
+  // Returns a string containing the statistics for this class.
   std::string StatString() const { return stats_.StatString(); }
 
   // Sets the current parameters.
@@ -331,7 +339,7 @@ class Markowitz {
   //
   // Note(user): Linear programming bases usually have a resonable percentage of
   // slack columns in them, so this gives a big speedup.
-  void ExtractSingletonColumns(const MatrixView& basis_matrix,
+  void ExtractSingletonColumns(const CompactSparseMatrixView& basis_matrix,
                                RowPermutation* row_perm,
                                ColumnPermutation* col_perm, int* index);
 
@@ -342,9 +350,14 @@ class Markowitz {
   //
   // The main gain here is that it avoids taking these columns into account in
   // InitializeResidualMatrix() and later in RemoveRowFromResidualMatrix().
-  void ExtractResidualSingletonColumns(const MatrixView& basis_matrix,
-                                       RowPermutation* row_perm,
-                                       ColumnPermutation* col_perm, int* index);
+  void ExtractResidualSingletonColumns(
+      const CompactSparseMatrixView& basis_matrix, RowPermutation* row_perm,
+      ColumnPermutation* col_perm, int* index);
+
+  // Helper function for determining if a column is a residual singleton column.
+  // If it is, RowIndex* row contains the index of the single residual edge.
+  bool IsResidualSingletonColumn(const ColumnView& column,
+                                 const RowPermutation& row_perm, RowIndex* row);
 
   // Returns the column of the current residual matrix with an index 'col' in
   // the initial matrix. We compute it by solving a linear system with the
@@ -366,9 +379,9 @@ class Markowitz {
   // Amongst the pivots with a minimum Markowitz number, we choose the one
   // with highest magnitude. This doesn't apply to pivots with a 0 Markowitz
   // number because all such pivots will have to be taken at some point anyway.
-  int64 FindPivot(const RowPermutation& row_perm,
-                  const ColumnPermutation& col_perm, RowIndex* pivot_row,
-                  ColIndex* pivot_col, Fractional* pivot_coefficient);
+  int64_t FindPivot(const RowPermutation& row_perm,
+                    const ColumnPermutation& col_perm, RowIndex* pivot_row,
+                    ColIndex* pivot_col, Fractional* pivot_coefficient);
 
   // Updates the degree of a given column in the internal structure of the
   // class.
@@ -386,7 +399,7 @@ class Markowitz {
   void UpdateResidualMatrix(RowIndex pivot_row, ColIndex pivot_col);
 
   // Pointer to the matrix to factorize.
-  MatrixView const* basis_matrix_;
+  CompactSparseMatrixView const* basis_matrix_;
 
   // These matrices are transformed during the algorithm into the final L and U
   // matrices modulo some row and column permutations. Note that the columns of
@@ -432,6 +445,9 @@ class Markowitz {
 
   // Proto holding all the parameters of this algorithm.
   GlopParameters parameters_;
+
+  // Number of floating point operations of the last factorization.
+  int64_t num_fp_operations_;
 
   DISALLOW_COPY_AND_ASSIGN(Markowitz);
 };

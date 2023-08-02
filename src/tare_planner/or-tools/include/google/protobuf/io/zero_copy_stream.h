@@ -107,11 +107,12 @@
 #ifndef GOOGLE_PROTOBUF_IO_ZERO_COPY_STREAM_H__
 #define GOOGLE_PROTOBUF_IO_ZERO_COPY_STREAM_H__
 
-#include <string>
+
 #include <google/protobuf/stubs/common.h>
 
-#include <google/protobuf/port_def.inc>
 
+// Must be included last.
+#include <google/protobuf/port_def.inc>
 
 namespace google {
 namespace protobuf {
@@ -153,6 +154,13 @@ class PROTOBUF_EXPORT ZeroCopyInputStream {
   // buffer that goes beyond what you wanted to read, you can use BackUp()
   // to return to the point where you intended to finish.
   //
+  // This method can be called with `count = 0` to finalize (flush) any
+  // previously returned buffer. For example, a file output stream can
+  // flush buffers returned from a previous call to Next() upon such
+  // BackUp(0) invocations. ZeroCopyOutputStream callers should always
+  // invoke BackUp() after a final Next() call, even if there is no
+  // excess buffer data to be backed up to indicate a flush point.
+  //
   // Preconditions:
   // * The last method called must have been Next().
   // * count must be less than or equal to the size of the last buffer
@@ -171,7 +179,7 @@ class PROTOBUF_EXPORT ZeroCopyInputStream {
   virtual bool Skip(int count) = 0;
 
   // Returns the total number of bytes read since this object was created.
-  virtual int64 ByteCount() const = 0;
+  virtual int64_t ByteCount() const = 0;
 
 
  private:
@@ -226,7 +234,7 @@ class PROTOBUF_EXPORT ZeroCopyOutputStream {
   virtual void BackUp(int count) = 0;
 
   // Returns the total number of bytes written since this object was created.
-  virtual int64 ByteCount() const = 0;
+  virtual int64_t ByteCount() const = 0;
 
   // Write a given chunk of data to the output.  Some output streams may
   // implement this in a way that avoids copying. Check AllowsAliasing() before

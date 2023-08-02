@@ -49,7 +49,7 @@ static char coin_prompt[] = "Clp:";
 #endif
 static bool doPrinting = true;
 static std::string afterEquals = "";
-static char printArray[200];
+static char printArray[250];
 #if COIN_INT_MAX == 0
 #undef COIN_INT_MAX
 #define COIN_INT_MAX 2147483647
@@ -457,7 +457,8 @@ void CbcOrClpParam::printString() const
 void CoinReadPrintit(const char *input)
 {
   int length = static_cast< int >(strlen(input));
-  char temp[101];
+  assert(length <= 1000);
+  char temp[1001];
   int i;
   int n = 0;
   for (i = 0; i < length; i++) {
@@ -481,7 +482,7 @@ void CoinReadPrintit(const char *input)
 // Print Long help
 void CbcOrClpParam::printLongHelp() const
 {
-  if (type_ >= 1 && type_ < 400) {
+  if (type_ >= 1 && type_ < 600) {
     CoinReadPrintit(longHelp_.c_str());
     if (type_ < CLP_PARAM_INT_SOLVERLOGLEVEL) {
       printf("<Range of values is %g to %g;\n\tcurrent %g>\n", lowerDoubleValue_, upperDoubleValue_, doubleValue_);
@@ -626,6 +627,9 @@ CbcOrClpParam::doubleParameter(ClpSimplex *model) const
   case CLP_PARAM_DBL_RHSSCALE:
     value = model->rhsScale();
     break;
+  case CLP_PARAM_DBL_PRESOLVETOLERANCE:
+    value = model->presolveTolerance();
+    break;
   default:
     value = doubleValue_;
     break;
@@ -760,19 +764,15 @@ int CbcOrClpParam::checkDoubleParameter(double value) const
 }
 #ifdef COIN_HAS_CBC
 double
-CbcOrClpParam::doubleParameter(OsiSolverInterface *
-#ifndef NDEBUG
-    model
-#endif
-  ) const
+CbcOrClpParam::doubleParameter(OsiSolverInterface *model) const
 {
   double value = 0.0;
   switch (type_) {
   case CLP_PARAM_DBL_DUALTOLERANCE:
-    assert(model->getDblParam(OsiDualTolerance, value));
+    model->getDblParam(OsiDualTolerance, value);
     break;
   case CLP_PARAM_DBL_PRIMALTOLERANCE:
-    assert(model->getDblParam(OsiPrimalTolerance, value));
+    model->getDblParam(OsiPrimalTolerance, value);
     break;
   default:
     return doubleValue_;
@@ -1048,6 +1048,7 @@ int CbcOrClpParam::intParameter(CbcModel &model) const
 #ifdef CBC_THREAD
   case CBC_PARAM_INT_THREADS:
     value = model.getNumberThreads();
+	break;
 #endif
   case CBC_PARAM_INT_RANDOMSEED:
     value = model.getRandomSeed();
@@ -1382,13 +1383,22 @@ CoinReadGetString(int argc, const char *argv[])
     if (CbcOrClpRead_mode > 0) {
       if (CbcOrClpRead_mode < argc || CbcOrClpEnvironmentIndex >= 0) {
         if (CbcOrClpEnvironmentIndex < 0) {
-          if (argv[CbcOrClpRead_mode][0] != '-') {
+	  const char * input = argv[CbcOrClpRead_mode];
+	  if (strcmp(input,"--")&&strcmp(input,"stdin")&&
+	      strcmp(input,"stdin_lp")) {
             field = argv[CbcOrClpRead_mode++];
-          } else if (!strcmp(argv[CbcOrClpRead_mode], "--")) {
+          } else {
             CbcOrClpRead_mode++;
             // -- means import from stdin
-            field = "-";
-          }
+	    // but allow for other than mps files
+	    // Clp does things in different way !!
+	    if (!strcmp(input,"--"))
+	      field = "-";
+	    else if (!strcmp(input,"stdin"))
+	      field = "-";
+	    else if (!strcmp(input,"stdin_lp"))
+	      field = "-lp";
+	  }
         } else {
           fillEnv();
           field = line;
@@ -1495,6 +1505,17 @@ void establishParams(std::vector< CbcOrClpParam > &parameters)
   parameters.push_back(CbcOrClpParam("???", "For help", CBC_PARAM_FULLGENERALQUERY, 7, 0));
   parameters.push_back(CbcOrClpParam("-", "From stdin", CLP_PARAM_ACTION_STDIN, 3, 0));
 
+// some help strings that repeat for many options
+#define CUTS_LONGHELP \
+  "Value 'on' enables the cut generator and CBC will try it in the branch and cut tree (see cutDepth on how to fine tune the behavior). " \
+  "Value 'root' lets CBC run the cut generator generate only at the root node. " \
+  "Value 'ifmove' lets CBC use the cut generator in the tree if it looks as if it is doing some good and moves the objective value. " \
+  "Value 'forceon' turns on the cut generator and forces CBC to use it at every node."
+#define HEURISTICS_LONGHELP \
+  "Value 'on' means to use the heuristic in each node of the tree, i.e. after preprocessing. " \
+  "Value 'before' means use the heuristic only if option doHeuristics is used. " \
+  "Value 'both' means to use the heuristic if option doHeuristics is used and during solve."
+
 #if defined(ABC_INHERIT) || ABOCA_LITE
   CbcOrClpParam paramAboca("abc", "Whether to visit Aboca", "off", CLP_PARAM_STR_ABCWANTED, 7, 0);
   paramAboca.append("one");
@@ -1528,11 +1549,11 @@ are printed out on ?.");
   {
     CbcOrClpParam p("allow!ableGap", "Stop when gap between best possible and \
 best less than this",
-      0.0, 1.0e20, CBC_PARAM_DBL_ALLOWABLEGAP);
+      0.0, COIN_DBL_MAX, CBC_PARAM_DBL_ALLOWABLEGAP);
     p.setDoubleValue(0.0);
     p.setLonghelp(
-      "If the gap between best solution and best possible solution is less than this \
-then the search will be terminated.  Also see ratioGap.");
+      "If the gap between best known solution and the best possible solution is less than this \
+value, then the search will be terminated.  Also see ratioGap.");
     parameters.push_back(p);
   }
 #endif
@@ -1549,10 +1570,10 @@ basis anyway.");
 #ifdef COIN_HAS_CBC
   {
     CbcOrClpParam p("artif!icialCost", "Costs >= this treated as artificials in feasibility pump",
-      0.0, 1.0e100, CBC_PARAM_DBL_ARTIFICIALCOST, 1);
+      0.0, COIN_DBL_MAX, CBC_PARAM_DBL_ARTIFICIALCOST, 1);
     p.setDoubleValue(0.0);
     p.setLonghelp(
-      "0.0 off - otherwise variables with costs >= this are treated as artificials and fixed to lower bound in feasibility pump");
+      "A value of 0.0 means off. Otherwise, variables with costs >= this are treated as artificial variables and fixed to lower bound in feasibility pump.");
     parameters.push_back(p);
   }
 #endif
@@ -1617,10 +1638,7 @@ with quadratic objectives.");
 First just try with default settings and look carefully at the log file.  Did cuts help?  Did they take too long?  \
 Look at output to see which cuts were effective and then do some tuning.  You will see that the \
 options for cuts are off, on, root and ifmove, forceon.  Off is \
-obvious, on means that this cut generator will be tried in the branch and cut tree (you can fine tune using \
-'depth').  Root means just at the root node while 'ifmove' means that cuts will be used in the tree if they \
-look as if they are doing some good and moving the objective value.  Forceon is same as on but forces code to use \
-cut generator at every node.  For probing forceonbut just does fixing probing in tree - not strengthening etc.  \
+obvious. " CUTS_LONGHELP " For probing, forceonbut just does fixing probing in tree - not strengthening etc.  \
 If pre-processing reduced the size of the \
 problem or strengthened many coefficients then it is probably wise to leave it on.  Switch off heuristics \
 which did not provide solutions.  The other major area to look at is the search.  Hopefully good solutions \
@@ -1703,9 +1721,8 @@ possibilities.");
     p.append("ifmove");
     p.append("forceOn");
     p.append("onglobal");
-    p.setLonghelp(
-      "This switches on clique cuts (either at root or in entire tree) \
-See branchAndCut for information on options.");
+    p.setLonghelp(CUTS_LONGHELP
+     " Reference: https://github.com/coin-or/Cgl/wiki/CglClique");
 
     parameters.push_back(p);
   }
@@ -1720,10 +1737,10 @@ See branchAndCut for information on options.");
     p.append("bothquick");
     p.append("beforequick");
     p.setLonghelp(
-      "This switches on a heuristic which does branch and cut on the problem given by just \
+      "This heuristic does branch and cut on given problem by just \
 using variables which have appeared in one or more solutions. \
-It obviously only tries after two or more solutions. \
-See Rounding for meaning of on,both,before");
+It is obviously only tried after two or more solutions have been found. "
+      HEURISTICS_LONGHELP);
 
     parameters.push_back(p);
   }
@@ -1734,10 +1751,10 @@ See Rounding for meaning of on,both,before");
     p.append("both");
     p.append("before");
     p.setLonghelp(
-      "This switches on a heuristic which does branch and cut on the problem given by \
-fixing variables which have same value in two or more solutions. \
-It obviously only tries after two or more solutions. \
-See Rounding for meaning of on,both,before");
+      "This heuristic does branch and cut on the problem given by \
+fixing variables which have the same value in two or more solutions. \
+It obviously only tries after two or more solutions. "
+      HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
   {
@@ -1749,11 +1766,12 @@ See Rounding for meaning of on,both,before");
     p.append("forcevariable");
     p.append("conflict");
     p.setLonghelp(
-      "This adds the objective as a constraint with best solution as RHS");
+      "For some problems, cut generators and general branching work better if the problem would be infeasible if the cost is too high. "
+      "If this option is enabled, the objective function is added as a constraint which right hand side is set to the current cutoff value (objective value of best known solution)");
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("cost!Strategy", "How to use costs as priorities",
+    CbcOrClpParam p("cost!Strategy", "How to use costs for branching priorities",
       "off", CBC_PARAM_STR_COSTSTRATEGY);
 
     p.append("pri!orities");
@@ -1765,9 +1783,10 @@ See Rounding for meaning of on,both,before");
     p.append("nonzero");
     p.append("general!Force?");
     p.setLonghelp(
-      "This orders the variables in order of their absolute costs - with largest cost ones being branched on \
-first.  This primitive strategy can be surprsingly effective.  The column order\
- option is obviously not on costs but easy to code here.");
+      "Value 'priorities' assigns highest priority to variables with largest absolute cost. This primitive strategy can be surprisingly effective. "
+      "Value 'columnorder' assigns the priorities 1, 2, 3, ... with respect to the column ordering. "
+      "Value '01first' ('01last') assignes two sets of priorities such that binary variables get high (low) priority. "
+      "Value 'length' assigns high priority to variables that occur in many equations. ");
 
     parameters.push_back(p);
   }
@@ -1821,25 +1840,24 @@ Cbc/examples/driver4.cpp.");
     p.append("idiot7");
 #endif
     p.setLonghelp(
-      "If crash is set on and there is an all slack basis then Clp will flip or put structural\
-     variables into basis with the aim of getting dual feasible.  On the whole dual seems to be\
-     better without it and there are alternative types of 'crash' for primal e.g. 'idiot' or 'sprint'. \
-    I have also added a variant due to Solow and Halim which is as on but just flip.");
+      "If crash is set to 'on' and there is an all slack basis then Clp will flip or put structural\
+     variables into the basis with the aim of getting dual feasible.  On average, dual simplex seems to perform\
+     better without it and there are alternative types of 'crash' for primal simplex, e.g. 'idiot' or 'sprint'. \
+    A variant due to Solow and Halim which is as 'on' but just flips is also available.");
 
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("cross!over", "Whether to get a basic solution after barrier",
+    CbcOrClpParam p("cross!over", "Whether to get a basic solution with the simplex algorithm after the barrier algorithm finished",
       "on", CLP_PARAM_STR_CROSSOVER);
     p.append("off");
     p.append("maybe");
     p.append("presolve");
     p.setLonghelp(
-      "Interior point algorithms do not obtain a basic solution (and \
-the feasibility criterion is a bit suspect (JJF)).  This option will crossover \
-to a basic solution suitable for ranging or branch and cut.  With the current state \
-of quadratic it may be a good idea to switch off crossover for quadratic (and maybe \
-presolve as well) - the option maybe does this.");
+      "Interior point algorithms do not obtain a basic solution.\
+ This option will crossover to a basic solution suitable for ranging or branch and cut.  With the current state \
+of the solver for quadratic programs it may be a good idea to switch off crossover for this case (and maybe \
+presolve as well) - the option 'maybe' does this.");
     parameters.push_back(p);
   }
 #endif
@@ -1855,13 +1873,11 @@ presolve as well) - the option maybe does this.");
   }
   {
     CbcOrClpParam p("cutD!epth", "Depth in tree at which to do cuts",
-      -1, 999999, CBC_PARAM_INT_CUTDEPTH);
+      -1, COIN_INT_MAX, CBC_PARAM_INT_CUTDEPTH);
     p.setLonghelp(
-      "Cut generators may be - off, on only at root, on if they look possible \
-and on.  If they are done every node then that is that, but it may be worth doing them \
-every so often.  The original method was every so many nodes but it is more logical \
-to do it whenever depth in tree is a multiple of K.  This option does that and defaults \
-to -1 (off -> code decides).");
+      "Cut generators may be off, on, on only at the root node, or on if they look useful. \
+      Setting this option to a positive value K let CBC call a cutgenerator on a node whenever the depth in the tree is a multiple of K. \
+      The default of -1 lets CBC decide.");
     p.setIntValue(-1);
     parameters.push_back(p);
   }
@@ -1877,26 +1893,26 @@ at root and 100 in tree.");
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("cuto!ff", "All solutions must be better than this",
-      -1.0e60, 1.0e60, CBC_PARAM_DBL_CUTOFF);
+    CbcOrClpParam p("cuto!ff", "Bound on the objective value for all solutions",
+      -COIN_DBL_MAX, COIN_DBL_MAX, CBC_PARAM_DBL_CUTOFF);
     p.setDoubleValue(1.0e50);
     p.setLonghelp(
-      "All solutions must be better than this value (in a minimization sense).  \
-This is also set by code whenever it obtains a solution and is set to value of \
-objective for solution minus cutoff increment.");
+      "All solutions must have a better objective value (in a minimization sense) than the value of this option.  \
+CBC also updates this value whenever it obtains a solution to the value of \
+the objective function of the solution minus the cutoff increment.");
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("cuts!OnOff", "Switches all cuts on or off",
+    CbcOrClpParam p("cuts!OnOff", "Switches all cut generators on or off",
       "off", CBC_PARAM_STR_CUTSSTRATEGY);
     p.append("on");
     p.append("root");
     p.append("ifmove");
     p.append("forceOn");
     p.setLonghelp(
-      "This can be used to switch on or off all cuts (apart from Reduce and Split).  Then you can do \
-individual ones off or on \
-See branchAndCut for information on options.");
+      "This can be used to switch on or off all cut generators (apart from Reduce and Split). "
+      "Then one can turn individual ones off or on. "
+      CUTS_LONGHELP);
     parameters.push_back(p);
   }
   {
@@ -1927,7 +1943,7 @@ Dantzig Wolfe if primal, Benders if dual \
   }
 #if CLP_MULTIPLE_FACTORIZATIONS > 0
   {
-    CbcOrClpParam p("dense!Threshold", "Whether to use dense factorization",
+    CbcOrClpParam p("dense!Threshold", "Threshold for using dense factorization",
       -1, 10000, CBC_PARAM_INT_DENSE, 1);
     p.setLonghelp(
       "If processed problem <= this use dense factorization");
@@ -1938,7 +1954,7 @@ Dantzig Wolfe if primal, Benders if dual \
 #endif
 #ifdef COIN_HAS_CBC
   {
-    CbcOrClpParam p("depth!MiniBab", "Depth at which to try mini BAB",
+    CbcOrClpParam p("depth!MiniBab", "Depth at which to try mini branch-and-bound",
       -COIN_INT_MAX, COIN_INT_MAX, CBC_PARAM_INT_DEPTHMINIBAB);
 
     p.setIntValue(-1);
@@ -1952,19 +1968,19 @@ The actual logic is too twisted to describe here.");
   }
   {
     CbcOrClpParam p("dextra3", "Extra double parameter 3",
-      -1.0e100, 1.0e100, CBC_PARAM_DBL_DEXTRA3, 0);
+      -COIN_DBL_MAX, COIN_DBL_MAX, CBC_PARAM_DBL_DEXTRA3, 0);
     p.setDoubleValue(0.0);
     parameters.push_back(p);
   }
   {
     CbcOrClpParam p("dextra4", "Extra double parameter 4",
-      -1.0e100, 1.0e100, CBC_PARAM_DBL_DEXTRA4, 0);
+      -COIN_DBL_MAX, COIN_DBL_MAX, CBC_PARAM_DBL_DEXTRA4, 0);
     p.setDoubleValue(0.0);
     parameters.push_back(p);
   }
   {
     CbcOrClpParam p("dextra4", "Extra double parameter 5",
-      -1.0e100, 1.0e100, CBC_PARAM_DBL_DEXTRA5, 0);
+      -COIN_DBL_MAX, COIN_DBL_MAX, CBC_PARAM_DBL_DEXTRA5, 0);
     p.setDoubleValue(0.0);
     parameters.push_back(p);
   }
@@ -1976,9 +1992,7 @@ The actual logic is too twisted to describe here.");
     p.append("both");
     p.append("before");
     p.append("often");
-    p.setLonghelp(
-      "This switches on Distance induced neighborhood Search. \
-See Rounding for meaning of on,both,before");
+    p.setLonghelp(HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
 #endif
@@ -2058,11 +2072,11 @@ You can also use the parameters 'maximize' or 'minimize'.");
       -1, 200000, CBC_PARAM_INT_DIVEOPTSOLVES, 1);
 
     p.setLonghelp(
-      "If >0 then do up to this many solves.  Last digit is ignored \
-and used for extra options - \
-	 \n\t1-3 allow fixing of satisfied integers (but not at bound) \
-	 \n\t1 switch off above for that dive if goes infeasible \
-	 \n\t2 switch off above permanently if goes infeasible");
+      "If >0 then do up to this many solves. However, the last digit is ignored \
+and used for extra options: \
+      1-3 enables fixing of satisfied integer variables (but not at bound), \
+      where 1 switches this off for that dive if the dive goes infeasible, \
+      and 2 switches it off permanently if the dive goes infeasible.");
     p.setIntValue(100);
     parameters.push_back(p);
   }
@@ -2075,57 +2089,63 @@ and used for extra options - \
     p.append("before");
     p.setLonghelp(
       "This switches on a random diving heuristic at various times. \
-C - Coefficient, F - Fractional, G - Guided, L - LineSearch, P - PseudoCost, V - VectorLength. \
-You may prefer to use individual on/off \
-See Rounding for meaning of on,both,before");
+One may prefer to individually turn diving heuristics on or off. "
+      HEURISTICS_LONGHELP);
+// C - Coefficient, F - Fractional, G - Guided, L - LineSearch, P - PseudoCost, V - VectorLength.
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("DivingC!oefficient", "Whether to try DiveCoefficient",
+    CbcOrClpParam p("DivingC!oefficient", "Whether to try Coefficient diving heuristic",
       "off", CBC_PARAM_STR_DIVINGC);
     p.append("on");
     p.append("both");
     p.append("before");
+    p.setLonghelp(HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("DivingF!ractional", "Whether to try DiveFractional",
+    CbcOrClpParam p("DivingF!ractional", "Whether to try Fractional diving heuristic",
       "off", CBC_PARAM_STR_DIVINGF);
     p.append("on");
     p.append("both");
     p.append("before");
+    p.setLonghelp(HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("DivingG!uided", "Whether to try DiveGuided",
+    CbcOrClpParam p("DivingG!uided", "Whether to try Guided diving heuristic",
       "off", CBC_PARAM_STR_DIVINGG);
     p.append("on");
     p.append("both");
     p.append("before");
+    p.setLonghelp(HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("DivingL!ineSearch", "Whether to try DiveLineSearch",
+    CbcOrClpParam p("DivingL!ineSearch", "Whether to try Linesearch diving heuristic",
       "off", CBC_PARAM_STR_DIVINGL);
     p.append("on");
     p.append("both");
     p.append("before");
+    p.setLonghelp(HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("DivingP!seudoCost", "Whether to try DivePseudoCost",
+    CbcOrClpParam p("DivingP!seudoCost", "Whether to try Pseudocost diving heuristic",
       "off", CBC_PARAM_STR_DIVINGP);
     p.append("on");
     p.append("both");
     p.append("before");
+    p.setLonghelp(HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("DivingV!ectorLength", "Whether to try DiveVectorLength",
+    CbcOrClpParam p("DivingV!ectorLength", "Whether to try Vectorlength diving heuristic",
       "off", CBC_PARAM_STR_DIVINGV);
     p.append("on");
     p.append("both");
     p.append("before");
+    p.setLonghelp(HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
   {
@@ -2173,14 +2193,12 @@ gap between bounds exceeds this value",
     p.append("PEsteep!est");
     p.append("PEdantzig");
     p.setLonghelp(
-      "Clp can use any pivot selection algorithm which the user codes as long as it\
- implements the features in the abstract pivot base class.  The Dantzig method is implemented\
- to show a simple method but its use is deprecated.  Steepest is the method of choice and there\
+      "The Dantzig method is simple but its use is deprecated.  Steepest is the method of choice and there\
  are two variants which keep all weights updated but only scan a subset each iteration.\
  Partial switches this on while automatic decides at each iteration based on information\
- about the factorization. \n\
-** NEWS - the Positive Edge criterion has been added. \
-This selects incoming variables to try and avoid degenerate moves. See definition of psi.");
+ about the factorization.\
+ The PE variants add the Positive Edge criterion. \
+ This selects incoming variables to try to avoid degenerate moves. See also option psi.");
     parameters.push_back(p);
   }
   {
@@ -2196,23 +2214,24 @@ The time and iterations may be affected by settings such as presolve, scaling, c
   {
     CbcOrClpParam p("dualT!olerance", "For an optimal solution \
 no dual infeasibility may exceed this value",
-      1.0e-20, 1.0e12, CLP_PARAM_DBL_DUALTOLERANCE);
+      1.0e-20, COIN_DBL_MAX, CLP_PARAM_DBL_DUALTOLERANCE);
     p.setLonghelp(
-      "Normally the default tolerance is fine, but you may want to increase it a\
- bit if a dual run seems to be having a hard time.  One method which can be faster is \
-to use a large tolerance e.g. 1.0e-4 and dual and then clean up problem using primal and the \
+      "Normally the default tolerance is fine, but one may want to increase it a\
+ bit if the dual simplex algorithm seems to be having a hard time.  One method which can be faster is \
+to use a large tolerance e.g. 1.0e-4 and the dual simplex algorithm and then to clean up the problem using the primal simplex algorithm with the \
 correct tolerance (remembering to switch off presolve for this final short clean up phase).");
     parameters.push_back(p);
   }
 #ifdef COIN_HAS_CBC
   {
-    CbcOrClpParam p("dw!Heuristic", "Whether to try DW heuristic",
+    CbcOrClpParam p("dw!Heuristic", "Whether to try Dantzig Wolfe heuristic",
       "off", CBC_PARAM_STR_DW);
     p.append("on");
     p.append("both");
     p.append("before");
     p.setLonghelp(
-      "See Rounding for meaning of on,both,before");
+      "This heuristic is very very compute intensive. It tries to find a Dantzig Wolfe structure and use that. "
+      HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
 #endif
@@ -2275,16 +2294,16 @@ e.g. no ENDATA.  This has to be set before import i.e. -errorsAllowed on -import
       0, COIN_INT_MAX, CBC_PARAM_INT_STRONG_STRATEGY, 0);
 
     p.setLonghelp(
-      "Strategy for extra strong branching \n\
-\n\t0 - normal\n\
-\n\twhen to do all fractional\n\
-\n\t1 - root node\n\
-\n\t2 - depth less than modifier\n\
-\n\t4 - if objective == best possible\n\
-\n\t6 - as 2+4\n\
-\n\twhen to do all including satisfied\n\
-\n\t10 - root node etc.\n\
-\n\tIf >=100 then do when depth <= strategy/100 (otherwise 5)");
+      "Strategy for extra strong branching. \
+0 is normal strong branching. \
+1, 2, 4, and 6 does strong branching on all fractional variables if \
+at the root node (1), \
+at depth less than modifier (2), \
+objective equals best possible (4), or \
+at depth less than modifier and objective equals best possible (6). \
+11, 12, 14, and 16 are like 1, 2, 4, and 6, respecitively, but do strong branching on all integer (incl. non-fractional) variables. \
+Values >= 100 are used to specify a depth limit (value/100), otherwise 5 is used. \
+If the values >= 100, then above rules are applied to value%100.");
     p.setIntValue(0);
     parameters.push_back(p);
   }
@@ -2340,8 +2359,7 @@ of dual information to use.  After that it goes back to powers of 2 so -\n\
       -COIN_INT_MAX, COIN_INT_MAX, CBC_PARAM_INT_EXTRA_VARIABLES, 0);
     p.setIntValue(0);
     p.setLonghelp(
-      "This switches on creation of extra integer variables \
-to gather all variables with same cost.");
+      "Switches on a trivial re-formulation that introduces extra integer variables to group together variables with same cost.");
     parameters.push_back(p);
   }
 #endif
@@ -2355,10 +2373,10 @@ to gather all variables with same cost.");
     p.setLonghelp(
 #ifndef ABC_INHERIT
       "The default is to use the normal CoinFactorization, but \
-other choices are a dense one, osl's or one designed for small problems."
+other choices are a dense one, OSL's, or one designed for small problems."
 #else
       "Normally the default is to use the normal CoinFactorization, but \
-other choices are a dense one, osl's or one designed for small problems. \
+other choices are a dense one, OSL's, or one designed for small problems. \
 However if at Aboca then the default is CoinAbcFactorization and other choices are \
 a dense one, one designed for small problems or if enabled a long factorization."
 #endif
@@ -2372,23 +2390,23 @@ a dense one, one designed for small problems or if enabled a long factorization.
   }
 #ifdef COIN_HAS_CBC
   {
-    CbcOrClpParam p("feas!ibilityPump", "Whether to try Feasibility Pump",
+    CbcOrClpParam p("feas!ibilityPump", "Whether to try the Feasibility Pump heuristic",
       "off", CBC_PARAM_STR_FPUMP);
 
     p.append("on");
     p.append("both");
     p.append("before");
     p.setLonghelp(
-      "This switches on feasibility pump heuristic at root. This is due to Fischetti, Lodi and Glover \
-and uses a sequence of Lps to try and get an integer feasible solution. \
-Some fine tuning is available by passFeasibilityPump and also pumpTune. \
-See Rounding for meaning of on,both,before");
+      "This heuristic is due to Fischetti, Glover, and Lodi \
+and uses a sequence of LPs to try and get an integer feasible solution. \
+Some fine tuning is available by options passFeasibilityPump and pumpTune. "
+      HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
   {
     CbcOrClpParam p("fix!OnDj", "Try heuristic based on fixing variables with \
 reduced costs greater than this",
-      -1.0e20, 1.0e20, CBC_PARAM_DBL_DJFIX, 1);
+      -COIN_DBL_MAX, COIN_DBL_MAX, CBC_PARAM_DBL_DJFIX, 1);
     p.setLonghelp(
       "If this is set integer variables with reduced costs greater than this will be fixed \
 before branch and bound - use with extreme caution!");
@@ -2403,10 +2421,8 @@ before branch and bound - use with extreme caution!");
     p.append("forceOn");
     p.append("onglobal");
     p.setFakeKeyWord(3);
-    p.setLonghelp(
-      "This switches on flow cover cuts (either at root or in entire tree) \
-See branchAndCut for information on options. \
-Can also enter testing values by plusnn (==ifmove)");
+    p.setLonghelp(CUTS_LONGHELP
+      " Reference: https://github.com/coin-or/Cgl/wiki/CglFlowCover"); // Can also enter testing values by plusnn (==ifmove)
     parameters.push_back(p);
   }
   {
@@ -2424,10 +2440,9 @@ If >1 then also does that many nodes on fixed problem.");
       1.0e-5, 1.1, CBC_PARAM_DBL_SMALLBAB, 1);
     p.setDoubleValue(0.5);
     p.setLonghelp(
-      "After a pass in feasibility pump, variables which have not moved \
-about are fixed and if the preprocessed model is small enough a few nodes \
-of branch and bound are done on reduced problem.  Small problem has to be \
-less than this fraction of original.");
+      "After a pass in the feasibility pump, variables which have not moved \
+about are fixed and if the preprocessed model is smaller than this fraction of the original problem, \
+a few nodes of branch and bound are done on the reduced problem.");
     parameters.push_back(p);
   }
 #endif
@@ -2458,11 +2473,8 @@ less than this fraction of original.");
     p.append("longifmove");
     p.append("forceLongOn");
     p.append("longendonly");
-    p.setLonghelp(
-      "This switches on an alternative Gomory cut generator \
-(either at root or in entire tree) \
-This version is by Giacomo Nannicini and may be more robust \
-See branchAndCut for information on options.");
+    p.setLonghelp(CUTS_LONGHELP
+      " This version is by Giacomo Nannicini and may be more robust than gomoryCuts.");
     parameters.push_back(p);
   }
   {
@@ -2482,8 +2494,9 @@ See branchAndCut for information on options.");
 they are now more fashionable as LP solvers are more robust and they interact well \
 with other cuts.  They will almost always give cuts (although in this executable \
 they are limited as to number of variables in cut).  However the cuts may be dense \
-so it is worth experimenting (Long allows any length). See branchAndCut for \
-information on options.");
+so it is worth experimenting (Long allows any length). "
+    CUTS_LONGHELP
+    " Reference: https://github.com/coin-or/Cgl/wiki/CglGomory");
     parameters.push_back(p);
   }
   {
@@ -2495,9 +2508,8 @@ information on options.");
     p.append("before");
     //p.append("root");
     p.setLonghelp(
-      "Switches on a greedy heuristic which will try and obtain a solution. \
-It may just fix a percentage of variables and then try a small branch and cut run. \
-See Rounding for meaning of on,both,before");
+      "This heuristic tries to obtain a feasible solution by just fixing a percentage of variables and then try a small branch and cut run. "
+      HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
 #endif
@@ -2521,13 +2533,13 @@ setting some parameters which may help you to think of possibilities.");
   }
 #ifdef COIN_HAS_CBC
   {
-    CbcOrClpParam p("heur!isticsOnOff", "Switches most heuristics on or off",
+    CbcOrClpParam p("heur!isticsOnOff", "Switches most primal heuristics on or off",
       "off", CBC_PARAM_STR_HEURISTICSTRATEGY);
     p.append("on");
     p.setLonghelp(
-      "This can be used to switch on or off all heuristics.  Then you can do \
-individual ones off or on.  CbcTreeLocal is not included as it dramatically \
-alters search.");
+      "This option can be used to switch on or off all heuristics that search for feasible solutions,\
+      except for the local tree search, as it dramatically alters the search.\
+      Then individual heuristics can be turned off or on.");
     parameters.push_back(p);
   }
   {
@@ -2542,14 +2554,14 @@ you should be past that stage:-)");
 #ifdef COIN_HAS_CBC
   {
     CbcOrClpParam p("hOp!tions", "Heuristic options",
-      -9999999, 9999999, CBC_PARAM_INT_HOPTIONS, 1);
+      -COIN_INT_MAX, COIN_INT_MAX, CBC_PARAM_INT_HOPTIONS, 1);
     p.setIntValue(0);
     p.setLonghelp(
-      "1 says stop heuristic immediately allowable gap reached. \
-Others are for feasibility pump - \
+      "Value 1 stops heuristics immediately if the allowable gap has been reached. \
+Other values are for the feasibility pump - \
 2 says do exact number of passes given, \
-4 only applies if initial cutoff given and says relax after 50 passes, \
-while 8 will adapt cutoff rhs after first solution if it looks as if code is stalling.");
+4 only applies if an initial cutoff has been given and says relax after 50 passes, \
+while 8 will adapt the cutoff rhs after the first solution if it looks as if the code is stalling.");
     parameters.push_back(p);
   }
   {
@@ -2561,13 +2573,13 @@ while 8 will adapt cutoff rhs after first solution if it looks as if code is sta
 #ifdef COIN_HAS_CLP
   {
     CbcOrClpParam p("idiot!Crash", "Whether to try idiot crash",
-      -1, 99999999, CLP_PARAM_INT_IDIOT);
+      -1, COIN_INT_MAX, CLP_PARAM_INT_IDIOT);
 
     p.setLonghelp(
       "This is a type of 'crash' which works well on some homogeneous problems.\
  It works best on problems with unit elements and rhs but will do something to any \
- model.  It should only be used before primal.  It can be set to -1 when the code \
- decides for itself whether to use it, 0 to switch off or n > 0 to do n passes.");
+ model.  It should only be used before the primal simplex algorithm.  It can be set to -1 when the code \
+ decides for itself whether to use it, 0 to switch off, or n > 0 to do n passes.");
     parameters.push_back(p);
   }
 #endif
@@ -2586,20 +2598,20 @@ If 'keepnames' is off, then names are dropped -> Rnnnnnnn and Cnnnnnnn.");
   {
     CbcOrClpParam p("inc!rement", "A valid solution must be at least this \
 much better than last integer solution",
-      -1.0e20, 1.0e20, CBC_PARAM_DBL_INCREMENT);
+      -COIN_DBL_MAX, COIN_DBL_MAX, CBC_PARAM_DBL_INCREMENT);
 
     p.setLonghelp(
-      "Whenever a solution is found the bound on solutions is set to solution (in a minimization\
-sense) plus this.  If it is not set then the code will try and work one out e.g. if \
+      "Whenever a solution is found the bound on the objective value for new solutions is set to the\
+      objective function of the found solution (in a minimization sense) plus this.  If it is not set then CBC will try and work one out, e.g. if \
 all objective coefficients are multiples of 0.01 and only integer variables have entries in \
-objective then this can be set to 0.01.  Be careful if you set this negative!");
+the objective function, then the increment can be set to 0.01.  Be careful if setting this to a negative value!");
 
     parameters.push_back(p);
   }
   {
     CbcOrClpParam p("inf!easibilityWeight", "Each integer infeasibility is expected \
 to cost this much",
-      0.0, 1.0e20, CBC_PARAM_DBL_INFEASIBILITYWEIGHT, 1);
+      0.0, COIN_DBL_MAX, CBC_PARAM_DBL_INFEASIBILITYWEIGHT, 1);
     p.setLonghelp(
       "A primitive way of deciding which node to explore next.  Satisfying each integer infeasibility is \
 expected to cost this much.");
@@ -2614,11 +2626,11 @@ expected to cost this much.");
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("integerT!olerance", "For an optimal solution \
-no integer variable may be this away from an integer value",
+    CbcOrClpParam p("integerT!olerance", "For a feasible solution \
+no integer variable may be more than this away from an integer value",
       1.0e-20, 0.5, CBC_PARAM_DBL_INTEGERTOLERANCE);
     p.setLonghelp(
-      "Beware of setting this smaller than the primal tolerance.");
+      "Beware of setting this smaller than the primal feasibility tolerance.");
     parameters.push_back(p);
   }
 #endif
@@ -2633,7 +2645,7 @@ This needs to be set before the import of model - so -keepnames off -import xxxx
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("KKT", "Whether to use KKT factorization",
+    CbcOrClpParam p("KKT", "Whether to use KKT factorization in barrier",
       "off", CLP_PARAM_STR_KKT, 7, 1);
     p.append("on");
     parameters.push_back(p);
@@ -2650,9 +2662,8 @@ This needs to be set before the import of model - so -keepnames off -import xxxx
     p.append("forceOn");
     p.append("onglobal");
     p.append("forceandglobal");
-    p.setLonghelp(
-      "This switches on knapsack cuts (either at root or in entire tree) \
-See branchAndCut for information on options.");
+    p.setLonghelp(CUTS_LONGHELP
+      " Reference: https://github.com/coin-or/Cgl/wiki/CglKnapsackCover");
     parameters.push_back(p);
   }
   {
@@ -2679,8 +2690,8 @@ by Matteo Fischetti & Domenico Salvagnin.  This simplification \
 just uses original constraints while modifying objective using other cuts. \
 So you don't use messy constraints generated by Gomory etc. \
 A variant is to allow non messy cuts e.g. clique cuts. \
-So 'only' does this while clean also allows integral valued cuts.  \
-'End' is recommended which waits until other cuts have finished and then \
+So 'only' does this while 'clean' also allows integral valued cuts.  \
+'End' is recommended and waits until other cuts have finished before it \
 does a few passes. \
 The length options for gomory cuts are used.");
     parameters.push_back(p);
@@ -2702,7 +2713,7 @@ The length options for gomory cuts are used.");
     p.append("cleaninstead");
     p.append("bothinstead");
     p.setLonghelp(
-      "This is a lagrangean relaxation for TwoMir cuts.  See \
+      "This is a Lagrangean relaxation for TwoMir cuts.  See \
   lagomoryCuts for description of options.");
     parameters.push_back(p);
   }
@@ -2715,27 +2726,25 @@ The length options for gomory cuts are used.");
     p.append("ifmove");
     p.append("forceOn");
     p.setLonghelp(
-      "Lift and project cuts. \
-May be slow \
-See branchAndCut for information on options.");
+      "These cuts may be expensive to compute. "
+      CUTS_LONGHELP
+      " Reference: https://github.com/coin-or/Cgl/wiki/CglLandP");
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("local!TreeSearch", "Whether to use local treesearch",
+    CbcOrClpParam p("local!TreeSearch", "Whether to use local tree search when a solution is found",
       "off", CBC_PARAM_STR_LOCALTREE);
     p.append("on");
     p.setLonghelp(
-      "This switches on a local search algorithm when a solution is found.  This is from \
-Fischetti and Lodi and is not really a heuristic although it can be used as one. \
-When used from Coin solve it has limited functionality.  It is not switched on when \
-heuristics are switched on.");
+      "The heuristic is from Fischetti and Lodi and is not really a heuristic although it can be used as one \
+(with limited functionality).  It is not switched on when heuristics are switched on.");
     parameters.push_back(p);
   }
 #endif
   {
 #ifndef COIN_HAS_CBC
     CbcOrClpParam p("log!Level", "Level of detail in Solver output",
-      -1, 999999, CLP_PARAM_INT_SOLVERLOGLEVEL);
+      -1, COIN_INT_MAX, CLP_PARAM_INT_SOLVERLOGLEVEL);
     parameters.push_back(p);
 #else
     CbcOrClpParam p("log!Level", "Level of detail in Coin branch and Cut output",
@@ -2759,17 +2768,16 @@ You can also use the parameters 'direction maximize'.");
   {
     CbcOrClpParam p("maxF!actor", "Maximum number of iterations between \
 refactorizations",
-      1, 999999, CLP_PARAM_INT_MAXFACTOR);
+      1, COIN_INT_MAX, CLP_PARAM_INT_MAXFACTOR);
     p.setLonghelp(
-      "If this is at its initial value of 200 then in this executable clp will guess at a\
- value to use.  Otherwise the user can set a value.  The code may decide to re-factorize\
- earlier for accuracy.");
+      "If this is left at its default value of 200 then CLP will guess a\
+ value to use.  CLP may decide to re-factorize earlier for accuracy.");
     parameters.push_back(p);
   }
   {
     CbcOrClpParam p("maxIt!erations", "Maximum number of iterations before \
 stopping",
-      0, 2147483647, CLP_PARAM_INT_MAXITERATION);
+      0, COIN_INT_MAX, CLP_PARAM_INT_MAXITERATION);
     p.setLonghelp(
       "This can be used for testing purposes.  The corresponding library call\n\
       \tsetMaximumIterations(value)\n can be useful.  If the code stops on\
@@ -2780,7 +2788,7 @@ stopping",
 #ifdef COIN_HAS_CBC
   {
     CbcOrClpParam p("maxN!odes", "Maximum number of nodes to do",
-      -1, 2147483647, CBC_PARAM_INT_MAXNODES);
+      -1, COIN_INT_MAX, CBC_PARAM_INT_MAXNODES);
     p.setLonghelp(
       "This is a repeatable way to limit search.  Normally using time is easier \
 but then the results may not be repeatable.");
@@ -2788,14 +2796,14 @@ but then the results may not be repeatable.");
   }
   {
     CbcOrClpParam p("maxSaved!Solutions", "Maximum number of solutions to save",
-      0, 2147483647, CBC_PARAM_INT_MAXSAVEDSOLS);
+      0, COIN_INT_MAX, CBC_PARAM_INT_MAXSAVEDSOLS);
     p.setLonghelp(
       "Number of solutions to save.");
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("maxSo!lutions", "Maximum number of solutions to get",
-      1, 2147483647, CBC_PARAM_INT_MAXSOLS);
+    CbcOrClpParam p("maxSo!lutions", "Maximum number of feasible solutions to get",
+      1, COIN_INT_MAX, CBC_PARAM_INT_MAXSOLS);
     p.setLonghelp(
       "You may want to stop after (say) two solutions or an hour.  \
 This is checked every node in tree, so it is possible to get more solutions from heuristics.");
@@ -2838,9 +2846,8 @@ You can also use the parameters 'direction minimize'.");
     p.append("ifmove");
     p.append("forceOn");
     p.append("onglobal");
-    p.setLonghelp(
-      "This switches on mixed integer rounding cuts (either at root or in entire tree) \
-See branchAndCut for information on options.");
+    p.setLonghelp(CUTS_LONGHELP
+      " Reference: https://github.com/coin-or/Cgl/wiki/CglMixedIntegerRounding2");
     parameters.push_back(p);
   }
 #endif
@@ -2898,6 +2905,11 @@ alternatives are the implementation of simple greedy heuristics or the \
 solution (by CBC for example) of a simpler model created just to find \
 a feasible solution. \
 \n\n\
+Silly options added.  If filename ends .low then integers not mentioned \
+are set low - also .high, .lowcheap, .highcheap, .lowexpensive, .highexpensive \
+where .lowexpensive sets costed ones to make expensive others low. Also if \
+filename starts empty. then no file is read at all - just actions done. \
+\n\n\
 Question and suggestions regarding MIPStart can be directed to\n\
 haroldo.santos@gmail.com. ");
     parameters.push_back(p);
@@ -2927,18 +2939,18 @@ haroldo.santos@gmail.com. ");
   }
   {
     CbcOrClpParam p("multiple!RootPasses", "Do multiple root passes to collect cuts and solutions",
-      0, 100000000, CBC_PARAM_INT_MULTIPLEROOTS, 0);
+      0, COIN_INT_MAX, CBC_PARAM_INT_MULTIPLEROOTS, 0);
     p.setIntValue(0);
     p.setLonghelp(
-      "Do (in parallel if threads enabled) the root phase this number of times \
- and collect all solutions and cuts generated.  The actual format is aabbcc \
-where aa is number of extra passes, if bb is non zero \
-then it is number of threads to use (otherwise uses threads setting) and \
-cc is number of times to do root phase.  Yet another one from the Italian idea factory \
-(This time - Andrea Lodi , Matteo Fischetti , Michele Monaci , Domenico Salvagnin , \
-and Andrea Tramontani). \
+      "Solve (in parallel, if enabled) the root phase this number of times, \
+      each with its own different seed, and collect all solutions and cuts generated. \
+      The actual format is aabbcc where aa is the number of extra passes; \
+      if bb is non zero, then it is number of threads to use (otherwise uses threads setting); \
+      and cc is the number of times to do root phase. \
 The solvers do not interact with each other.  However if extra passes are specified \
-then cuts are collected and used in later passes - so there is interaction there.");
+then cuts are collected and used in later passes - so there is interaction there. \
+Some parts of this implementation have their origin in idea of \
+Andrea Lodi, Matteo Fischetti, Michele Monaci, Domenico Salvagnin, and Andrea Tramontani.");
     parameters.push_back(p);
   }
   {
@@ -2949,8 +2961,8 @@ then cuts are collected and used in later passes - so there is interaction there
     p.append("both");
     p.append("before");
     p.setLonghelp(
-      "Really silly stuff e.g. fix all integers with costs to zero!. \
-Doh option does heuristic before preprocessing");
+      "This is naive heuristics which, e.g., fix all integers with costs to zero!. "
+      HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
 #endif
@@ -3022,7 +3034,7 @@ specialized network code.");
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("node!Strategy", "What strategy to use to select nodes",
+    CbcOrClpParam p("node!Strategy", "What strategy to use to select the next node from the branch and cut tree",
       "hybrid", CBC_PARAM_STR_NODESTRATEGY);
     p.append("fewest");
     p.append("depth");
@@ -3031,10 +3043,11 @@ specialized network code.");
     p.append("updepth");
     p.append("downdepth");
     p.setLonghelp(
-      "Normally before a solution the code will choose node with fewest infeasibilities. \
-You can choose depth as the criterion.  You can also say if up or down branch must \
-be done first (the up down choice will carry on after solution). \
-Default has now been changed to hybrid which is breadth first on small depth nodes then fewest.");
+      "Normally before a feasible solution is found, CBC will choose a node with fewest infeasibilities. \
+  Alternatively, one may choose tree-depth as the criterion. This requires the minimal amount of memory, but may take a long time to find the best solution.\
+  Additionally, one may specify whether up or down branches must \
+be selected first (the up-down choice will carry on after a first solution has been bound). \
+The default choice 'hybrid' does breadth first on small depth nodes and then switches to 'fewest'.");
     parameters.push_back(p);
   }
   {
@@ -3048,7 +3061,7 @@ This is a first try and will hopefully become more sophisticated.");
 #endif
   {
     CbcOrClpParam p("objective!Scale", "Scale factor to apply to objective",
-      -1.0e20, 1.0e20, CLP_PARAM_DBL_OBJSCALE, 1);
+      -COIN_DBL_MAX, COIN_DBL_MAX, CLP_PARAM_DBL_OBJSCALE, 1);
     p.setLonghelp(
       "If the objective function has some very large values, you may wish to scale them\
  internally by this amount.  It can also be set by autoscale.  It is applied after scaling.  You are unlikely to need this.");
@@ -3067,7 +3080,7 @@ This is a first try and will hopefully become more sophisticated.");
     p.append("simple");
     p.setLonghelp(
       "This switches on Orbital branching. \
-On just adds orbital, strong tries extra fixing in strong branching");
+Value 'on' just adds orbital, 'strong' tries extra fixing in strong branching.");
     parameters.push_back(p);
   }
 #endif
@@ -3128,20 +3141,19 @@ missing ones have value 0.0.");
 #endif
 #ifdef COIN_HAS_CBC
   {
-    CbcOrClpParam p("passC!uts", "Number of cut passes at root node",
-      -9999999, 9999999, CBC_PARAM_INT_CUTPASS);
+    CbcOrClpParam p("passC!uts", "Number of rounds that cut generators are applied in the root node",
+      -COIN_INT_MAX, COIN_INT_MAX, CBC_PARAM_INT_CUTPASS);
 
     p.setIntValue(20);
     p.setLonghelp(
-      "The default is 100 passes if less than 500 columns, 100 passes (but \
-stop if drop small if less than 5000 columns, 20 otherwise");
+      "The default is to do 100 passes if the problem has less than 500 columns, 100 passes (but \
+stop if the drop in the objective function value is small) if the problem has less than 5000 columns, and 20 passes otherwise. \
+A negative value -n means that n passes are also applied if the objective does not drop.");
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("passF!easibilityPump", "How many passes in feasibility pump",
+    CbcOrClpParam p("passF!easibilityPump", "How many passes to do in the Feasibility Pump heuristic",
       0, 10000, CBC_PARAM_INT_FPUMPITS);
-    p.setLonghelp(
-      "This fine tunes Feasibility Pump by doing more or fewer passes.");
     p.setIntValue(20);
     parameters.push_back(p);
   }
@@ -3159,10 +3171,10 @@ stop if drop small if less than 5000 columns, 20 otherwise");
 #endif
 #ifdef COIN_HAS_CBC
   {
-    CbcOrClpParam p("passT!reeCuts", "Number of cut passes in tree",
-      -9999999, 9999999, CBC_PARAM_INT_CUTPASSINTREE);
+    CbcOrClpParam p("passT!reeCuts", "Number of rounds that cut generators are applied in the tree",
+      -COIN_INT_MAX, COIN_INT_MAX, CBC_PARAM_INT_CUTPASSINTREE);
     p.setIntValue(1);
-    p.setLonghelp("The default is one pass");
+    p.setLonghelp("The default is to do one pass. A negative value -n means that n passes are also applied if the objective does not drop.");
     parameters.push_back(p);
   }
 #endif
@@ -3173,14 +3185,14 @@ stop if drop small if less than 5000 columns, 20 otherwise");
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("perturb!ation", "Whether to perturb problem",
+    CbcOrClpParam p("perturb!ation", "Whether to perturb the problem",
       "on", CLP_PARAM_STR_PERTURBATION);
     p.append("off");
     p.setLonghelp(
-      "Perturbation helps to stop cycling, but Clp uses other measures for this.\
-  However large problems and especially ones with unit elements and unit rhs or costs\
- benefit from perturbation.  Normally Clp tries to be intelligent, but you can switch this off.\
-  The Clp library has this off by default.  This program has it on by default.");
+      "Perturbation helps to stop cycling, but CLP uses other measures for this.\
+  However, large problems and especially ones with unit elements and unit right hand sides or costs\
+ benefit from perturbation.  Normally CLP tries to be intelligent, but one can switch this off.");
+  // The Clp library has this off by default.  This program has it on by default.
     parameters.push_back(p);
   }
   {
@@ -3200,9 +3212,7 @@ stop if drop small if less than 5000 columns, 20 otherwise");
     p.append("on");
     p.append("both");
     p.append("before");
-    p.setLonghelp(
-      "stuff needed. \
-Doh option does heuristic before preprocessing");
+    p.setLonghelp(HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
   {
@@ -3211,9 +3221,7 @@ Doh option does heuristic before preprocessing");
     p.append("on");
     p.append("both");
     p.append("before");
-    p.setLonghelp(
-      "stuff needed. \
-Doh option does heuristic before preprocessing");
+    p.setLonghelp(HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
 #endif
@@ -3248,10 +3256,10 @@ Doh option does heuristic before preprocessing");
     p.append("more");
     p.append("file");
     p.setLonghelp("Presolve analyzes the model to find such things as redundant equations, equations\
- which fix some variables, equations which can be transformed into bounds etc etc.  For the\
- initial solve of any problem this is worth doing unless you know that it will have no effect.  \
-on will normally do 5 passes while using 'more' will do 10.  If the problem is very large you may need \
-to write the original to file using 'file'.");
+ which fix some variables, equations which can be transformed into bounds, etc.  For the\
+ initial solve of any problem this is worth doing unless one knows that it will have no effect.  \
+Option 'on' will normally do 5 passes, while using 'more' will do 10.  If the problem is very large one can \
+let CLP write the original problem to file by using 'file'.");
     parameters.push_back(p);
   }
 #ifdef COIN_HAS_CBC
@@ -3272,21 +3280,21 @@ to write the original to file using 'file'.");
     p.setLonghelp(
       "This tries to reduce size of model in a similar way to presolve and \
 it also tries to strengthen the model - this can be very useful and is worth trying. \
- Save option saves on file presolved.mps.  equal will turn <= cliques into \
-==.  sos will create sos sets if all 0-1 in sets (well one extra is allowed) \
-and no overlaps.  trysos is same but allows any number extra.  equalall will turn all \
-valid inequalities into equalities with integer slacks.  strategy is as \
-on but uses CbcStrategy.");
+ Value 'save' saves the presolved problem to a file presolved.mps.\
+ Value 'equal' will turn inequality-cliques into equalities.\
+ Value 'sos' lets CBC search for rows with upper bound 1 and where all nonzero coefficients are 1 and creates special ordered sets if the sets are not overlapping and all integer variables (except for at most one) are in the sets.\
+ Value 'trysos' is same as 'sos', but allows any number of integer variables outside of sets.\
+ Value 'equalall' lets CBC turn all valid inequalities into equalities by adding integer slack variables."); // Value 'strategy' is as on but uses CbcStrategy.
     parameters.push_back(p);
   }
 #endif
 #ifdef COIN_HAS_CLP
   {
     CbcOrClpParam p("preT!olerance", "Tolerance to use in presolve",
-      1.0e-20, 1.0e12, CLP_PARAM_DBL_PRESOLVETOLERANCE);
+      1.0e-20, COIN_DBL_MAX, CLP_PARAM_DBL_PRESOLVETOLERANCE);
     p.setLonghelp(
-      "The default is 1.0e-8 - you may wish to try 1.0e-7 if presolve says the problem is \
-infeasible and you have awkward numbers and you are sure the problem is really feasible.");
+      "One may want to increase this tolerance if presolve says the problem is \
+infeasible and one has awkward numbers and is sure that the problem is really feasible.");
     parameters.push_back(p);
   }
   {
@@ -3302,17 +3310,14 @@ infeasible and you have awkward numbers and you are sure the problem is really f
     p.append("PEsteep!est");
     p.append("PEdantzig");
     p.setLonghelp(
-      "Clp can use any pivot selection algorithm which the user codes as long as it\
- implements the features in the abstract pivot base class.  The Dantzig method is implemented\
- to show a simple method but its use is deprecated.  Exact devex is the method of choice and there\
+      "The Dantzig method is simple but its use is deprecated.  Exact devex is the method of choice and there\
  are two variants which keep all weights updated but only scan a subset each iteration.\
- Partial switches this on while change initially does dantzig until the factorization\
- becomes denser.  This is still a work in progress. \n\
-** NEWS - the Positive Edge criterion has been added. \
-This selects incoming variables to try and avoid degenerate moves. Code \
-donated by Jeremy Omer.  See \
-Towhidi, M., Desrosiers, J., Soumis, F., The positive edge criterion within COIN-OR’s CLP. and \
-Omer, J., Towhidi, M., Soumis, F., The positive edge pricing rule for the dual simplex.");
+ Partial switches this on while 'change' initially does 'dantzig' until the factorization\
+ becomes denser.  This is still a work in progress.\
+ The PE variants add the Positive Edge criterion.\
+ This selects incoming variables to try to avoid degenerate moves. \
+ See also Towhidi, M., Desrosiers, J., Soumis, F., The positive edge criterion within COIN-OR's CLP;\
+ Omer, J., Towhidi, M., Soumis, F., The positive edge pricing rule for the dual simplex.");
 
     parameters.push_back(p);
   }
@@ -3329,47 +3334,44 @@ Omer, J., Towhidi, M., Soumis, F., The positive edge pricing rule for the dual s
   }
 #endif
   {
-    CbcOrClpParam p("primalT!olerance", "For an optimal solution \
-no primal infeasibility may exceed this value",
-      1.0e-20, 1.0e12, CLP_PARAM_DBL_PRIMALTOLERANCE);
+    CbcOrClpParam p("primalT!olerance", "For a feasible solution \
+no primal infeasibility, i.e., constraint violation, may exceed this value",
+      1.0e-20, COIN_DBL_MAX, CLP_PARAM_DBL_PRIMALTOLERANCE);
     p.setLonghelp(
-      "Normally the default tolerance is fine, but you may want to increase it a\
- bit if a primal run seems to be having a hard time");
+      "Normally the default tolerance is fine, but one may want to increase it a\
+ bit if the primal simplex algorithm seems to be having a hard time.");
     parameters.push_back(p);
   }
 #ifdef COIN_HAS_CLP
   {
     CbcOrClpParam p("primalW!eight", "Initially algorithm acts as if it \
 costs this much to be infeasible",
-      1.0e-20, 1.0e20, CLP_PARAM_DBL_PRIMALWEIGHT);
+      1.0e-20, COIN_DBL_MAX, CLP_PARAM_DBL_PRIMALWEIGHT);
     p.setLonghelp(
       "The primal algorithm in Clp is a single phase algorithm as opposed to a two phase\
  algorithm where you first get feasible then optimal.  So Clp is minimizing this weight times\
  the sum of primal infeasibilities plus the true objective function (in minimization sense).\
-  Too high a value may mean more iterations, while too low a bound means\
- the code may go all the way and then have to increase the weight in order to get feasible.\
-  OSL had a heuristic to\
- adjust bounds, maybe we need that here.");
+  Too high a value may mean more iterations, while too low a value means\
+ the algorithm may iterate into the wrong directory for long and then has to increase the weight in order to get feasible."); // OSL had a heuristic to adjust bounds, maybe we need that here.
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("psi", "Two-dimension pricing factor for Positive edge",
+    CbcOrClpParam p("psi", "Two-dimension pricing factor for Positive Edge criterion",
       -1.1, 1.1, CLP_PARAM_DBL_PSI);
 
     p.setDoubleValue(-0.5);
     p.setLonghelp(
       "The Positive Edge criterion has been added to \
 select incoming variables to try and avoid degenerate moves. \
-Variables not in promising set have their infeasibility weight multiplied by psi \
+Variables not in the promising set have their infeasibility weight multiplied by psi, \
 so 0.01 would mean that if there were any promising variables, then they would always be chosen, \
-while 1.0 effectively switches algorithm off. \
-There are two ways of switching on this feature.  One way is to set psi positive and then \
-the Positive Edge criterion will be used for Primal and Dual.  The other way is to select pesteep \
-in dualpivot choice (for example), then the absolute value of psi is used - default 0.5. \
-Until this settles down it is only implemented in clp. \
+while 1.0 effectively switches the algorithm off. \
+There are two ways of switching this feature on.  One way is to set psi to a positive value and then \
+the Positive Edge criterion will be used for both primal and dual simplex.  The other way is to select PEsteepest \
+in dualpivot choice (for example), then the absolute value of psi is used. \
 Code donated by Jeremy Omer.  See \
-Towhidi, M., Desrosiers, J., Soumis, F., The positive edge criterion within COIN-OR’s CLP. and \
-Omer, J., Towhidi, M., Soumis, F., The positive edge pricing rule for the dual simplex.");
+Towhidi, M., Desrosiers, J., Soumis, F., The positive edge criterion within COIN-OR's CLP; \
+Omer, J., Towhidi, M., Soumis, F., The positive edge pricing rule for the dual simplex.");  // Until this settles down it is only implemented in CLP.
     parameters.push_back(p);
   }
 #endif
@@ -3387,6 +3389,8 @@ Omer, J., Towhidi, M., Soumis, F., The positive edge pricing rule for the dual s
     p.append("stats");
     p.append("boundsint");
     p.append("boundsall");
+    p.append("fixint");
+    p.append("fixall");
     p.setLonghelp(
       "This changes the amount and format of printing a solution:\nnormal - nonzero column variables \n\
 integer - nonzero integer column variables\n\
@@ -3435,10 +3439,11 @@ File is in csv format with allowed headings - name, number, priority, direction,
     p.append("forceOnStrong");
     p.append("forceOnButStrong");
     p.append("strongRoot");
-    p.setLonghelp(
-      "This switches on probing cuts (either at root or in entire tree) \
-    See branchAndCut for information on options. \
-but strong options do more probing");
+    p.setLonghelp(CUTS_LONGHELP
+      " Value 'forceOnBut' turns on probing and forces CBC to do probing at every node, but does only probing, not strengthening etc. \
+    Value 'strong' forces CBC to strongly do probing at every node, that is, also when CBC would usually turn it off because it hasn't found something. \
+    Value 'forceonbutstrong' is like 'forceonstrong', but does only probing (column fixing) and turns off row strengthening, so the matrix will not change inside the branch and bound. \
+    Reference: https://github.com/coin-or/Cgl/wiki/CglProbing");
     parameters.push_back(p);
   }
   {
@@ -3454,27 +3459,30 @@ but strong options do more probing");
     // but allow numbers after this (returning 1)
     p.setFakeKeyWord(1);
     p.setLonghelp(
-      "This switches on a heuristic which looks for a solution close \
-to incumbent solution (Fischetti and Monaci). \
-See Rounding for meaning of on,both,before. \
-Can also set different maxNode settings by plusnnnn (and are 'on'(on==30)).");
+      "This heuristic looks for a solution close to the incumbent solution (Fischetti and Monaci, 2012). \
+The idea is to define a sub-MIP without additional constraints but with a modified objective function intended to attract the search \
+in the proximity of the incumbent. \
+The approach works well for 0-1 MIPs whose solution landscape is not too irregular (meaning the there is reasonable probability of \
+finding an improved solution by flipping a small number of binary variables), in particular when it is applied to the first heuristic solutions \
+found at the root node. "
+      HEURISTICS_LONGHELP); // Can also set different maxNode settings by plusnnnn (and are 'on'(on==30)).
     parameters.push_back(p);
   }
   {
     CbcOrClpParam p("pumpC!utoff", "Fake cutoff for use in feasibility pump",
-      -1.0e100, 1.0e100, CBC_PARAM_DBL_FAKECUTOFF);
+      -COIN_DBL_MAX, COIN_DBL_MAX, CBC_PARAM_DBL_FAKECUTOFF);
     p.setDoubleValue(0.0);
     p.setLonghelp(
-      "0.0 off - otherwise add a constraint forcing objective below this value\
+      "A value of 0.0 means off. Otherwise, add a constraint forcing objective below this value\
  in feasibility pump");
     parameters.push_back(p);
   }
   {
     CbcOrClpParam p("pumpI!ncrement", "Fake increment for use in feasibility pump",
-      -1.0e100, 1.0e100, CBC_PARAM_DBL_FAKEINCREMENT, 1);
+      -COIN_DBL_MAX, COIN_DBL_MAX, CBC_PARAM_DBL_FAKEINCREMENT, 1);
     p.setDoubleValue(0.0);
     p.setLonghelp(
-      "0.0 off - otherwise use as absolute increment to cutoff \
+      "A value of 0.0 means off. Otherwise use as absolute increment to cutoff \
 when solution found in feasibility pump");
     parameters.push_back(p);
   }
@@ -3510,8 +3518,8 @@ are fixed and a small branch and bound is tried.");
       -1, COIN_INT_MAX, CBC_PARAM_INT_RANDOMSEED);
 
     p.setLonghelp(
-      "This sets a random seed for Cbc \
-- 0 says use time of day, -1 is as now.");
+      "Allows initialization of the random seed for pseudo-random numbers used in heuristics such as the Feasibility Pump to decide whether to round up or down. "
+      "The special value of 0 lets Cbc use the time of the day for the initial seed.");
     p.setIntValue(-1);
     parameters.push_back(p);
   }
@@ -3521,9 +3529,7 @@ are fixed and a small branch and bound is tried.");
     p.append("on");
     p.append("both");
     p.append("before");
-    p.setLonghelp(
-      "stuff needed. \
-Doh option does heuristic before preprocessing");
+    p.setLonghelp(HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
 #endif
@@ -3533,8 +3539,9 @@ Doh option does heuristic before preprocessing");
       0, COIN_INT_MAX, CLP_PARAM_INT_RANDOMSEED);
 
     p.setLonghelp(
-      "This sets a random seed for Clp \
-- 0 says use time of day.");
+      "Initialization of the random seed for pseudo-random numbers used to break ties in degenerate problems. "
+      "This may yield a different continuous optimum and, in the context of Cbc, different cuts and heuristic solutions. "
+      "The special value of 0 lets CLP use the time of the day for the initial seed.");
     p.setIntValue(1234567);
     parameters.push_back(p);
   }
@@ -3542,11 +3549,11 @@ Doh option does heuristic before preprocessing");
 #ifdef COIN_HAS_CBC
   {
     CbcOrClpParam p("ratio!Gap", "Stop when gap between best possible and \
-best less than this fraction of larger of two",
-      0.0, 1.0e20, CBC_PARAM_DBL_GAPRATIO);
+best known is less than this fraction of larger of two",
+      0.0, COIN_DBL_MAX, CBC_PARAM_DBL_GAPRATIO);
     p.setDoubleValue(0.0);
     p.setLonghelp(
-      "If the gap between best solution and best possible solution is less than this fraction \
+      "If the gap between the best known solution and the best possible solution is less than this fraction \
 of the objective value at the root node then the search will terminate.  See 'allowableGap' for a \
 way of using absolute value rather than fraction.");
     parameters.push_back(p);
@@ -3572,7 +3579,7 @@ way of using absolute value rather than fraction.");
 #ifdef COIN_HAS_CLP
   {
     CbcOrClpParam p("reallyO!bjectiveScale", "Scale factor to apply to objective in place",
-      -1.0e20, 1.0e20, CLP_PARAM_DBL_OBJSCALE2, 0);
+      -COIN_DBL_MAX, COIN_DBL_MAX, CLP_PARAM_DBL_OBJSCALE2, 0);
     p.setLonghelp("You can set this to -1.0 to test maximization or other to stress code");
     p.setDoubleValue(1.0);
     parameters.push_back(p);
@@ -3593,9 +3600,9 @@ way of using absolute value rather than fraction.");
     p.append("ifmove");
     p.append("forceOn");
     p.setLonghelp(
-      "This switches on reduce and split  cuts (either at root or in entire tree). \
-May be slow \
-See branchAndCut for information on options.");
+      "These cuts may be expensive to generate. "
+      CUTS_LONGHELP
+      " Reference: https://github.com/coin-or/Cgl/wiki/CglRedSplit");
     parameters.push_back(p);
   }
   {
@@ -3605,11 +3612,11 @@ See branchAndCut for information on options.");
     p.append("root");
     p.append("longOn");
     p.append("longRoot");
-    p.setLonghelp("This switches on reduce and split  cuts (either at root or in entire tree) \
-This version is by Giacomo Nannicini based on Francois Margot's version \
-Standard setting only uses rows in tableau <=256, long uses all \
-May be slow \
-See branchAndCut for information on options.");
+    p.setLonghelp("This switches on reduce and split  cuts (either at root or in entire tree). \
+This version is by Giacomo Nannicini based on Francois Margot's version. \
+Standard setting only uses rows in tableau <= 256, long uses all. \
+These cuts may be expensive to generate. \
+See option cuts for more information on the possible values.");
     parameters.push_back(p);
   }
   {
@@ -3619,9 +3626,8 @@ See branchAndCut for information on options.");
     p.append("root");
     p.append("ifmove");
     p.append("forceOn");
-    p.setLonghelp(
-      "Residual capacity cuts. \
-See branchAndCut for information on options.");
+    p.setLonghelp(CUTS_LONGHELP
+      " Reference: https://github.com/coin-or/Cgl/wiki/CglResidualCapacity");
 
     parameters.push_back(p);
   }
@@ -3646,7 +3652,7 @@ See branchAndCut for information on options.");
   }
   {
     CbcOrClpParam p("rhs!Scale", "Scale factor to apply to rhs and bounds",
-      -1.0e20, 1.0e20, CLP_PARAM_DBL_RHSSCALE, 0);
+      -COIN_DBL_MAX, COIN_DBL_MAX, CLP_PARAM_DBL_RHSSCALE, 0);
     p.setLonghelp(
       "If the rhs or bounds have some very large meaningful values, you may wish to scale them\
  internally by this amount.  It can also be set by autoscale.  This should not be needed.");
@@ -3667,11 +3673,8 @@ See branchAndCut for information on options.");
     p.append("dj");
     p.append("djbefore");
     p.append("usesolution");
-    p.setLonghelp(
-      "This switches on Relaxation enforced neighborhood Search. \
-on just does 50 nodes \
-200 or 1000 does that many nodes. \
-Doh option does heuristic before preprocessing");
+    p.setLonghelp(HEURISTICS_LONGHELP
+      " Value 'on' just does 50 nodes. 200, 1000, and 10000 does that many nodes.");
     parameters.push_back(p);
   }
   {
@@ -3681,22 +3684,16 @@ Doh option does heuristic before preprocessing");
     p.append("both");
     p.append("before");
     p.append("often");
-    p.setLonghelp(
-      "This switches on Relaxed induced neighborhood Search. \
-Doh option does heuristic before preprocessing");
+    p.setLonghelp(HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
   {
-    CbcOrClpParam p("round!ingHeuristic", "Whether to use Rounding heuristic",
+    CbcOrClpParam p("round!ingHeuristic", "Whether to use simple (but effective) Rounding heuristic",
       "off", CBC_PARAM_STR_ROUNDING);
     p.append("on");
     p.append("both");
     p.append("before");
-    p.setLonghelp(
-      "This switches on a simple (but effective) rounding heuristic at each node of tree.  \
-On means do in solve i.e. after preprocessing, \
-Before means do if doHeuristics used, off otherwise, \
-and both means do if doHeuristics and in solve.");
+    p.setLonghelp(HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
 #endif
@@ -3734,15 +3731,18 @@ If name contains '_fix_read_' then does not write but reads and will fix all var
     p.setLonghelp(
       "Scaling can help in solving problems which might otherwise fail because of lack of\
  accuracy.  It can also reduce the number of iterations.  It is not applied if the range\
- of elements is small.  When unscaled it is possible that there may be small primal and/or\
- infeasibilities.");
+ of elements is small.  When the solution is evaluated in the unscaled problem, it is possible that small primal and/or\
+ dual infeasibilities occur. "
+ "Option 'equilibrium' uses the largest element for scaling. "
+ "Option 'geometric' uses the squareroot of the product of largest and smallest element. "
+ "Option 'auto' let CLP choose a method that gives the best ratio of the largest element to the smallest one.");
     p.setCurrentOption(3); // say auto
     parameters.push_back(p);
   }
 #ifndef COIN_HAS_CBC
   {
     CbcOrClpParam p("sec!onds", "Maximum seconds",
-      -1.0, 1.0e12, CLP_PARAM_DBL_TIMELIMIT);
+      -1.0, COIN_DBL_MAX, CLP_PARAM_DBL_TIMELIMIT);
 
     p.setLonghelp("After this many seconds clp will act as if maximum iterations had been reached \
 (if value >=0).");
@@ -3751,7 +3751,7 @@ If name contains '_fix_read_' then does not write but reads and will fix all var
 #else
   {
     CbcOrClpParam p("sec!onds", "maximum seconds",
-      -1.0, 1.0e12, CBC_PARAM_DBL_TIMELIMIT_BAB);
+      -1.0, COIN_DBL_MAX, CBC_PARAM_DBL_TIMELIMIT_BAB);
     p.setLonghelp(
       "After this many seconds coin solver will act as if maximum nodes had been reached.");
     parameters.push_back(p);
@@ -3767,10 +3767,11 @@ If name contains '_fix_read_' then does not write but reads and will fix all var
   }
 #ifdef COIN_HAS_CBC
   {
-    CbcOrClpParam p("slow!cutpasses", "Maximum number of tries for slower cuts",
+    CbcOrClpParam p("slow!cutpasses", "Maximum number of rounds for slower cut generators",
       -1, COIN_INT_MAX, CBC_PARAM_INT_MAX_SLOW_CUTS);
     p.setLonghelp(
-      "Some cut generators are fairly slow - this limits the number of times they are tried.");
+      "Some cut generators are fairly slow - this limits the number of times they are tried.\
+      The cut generators identified as 'may be slow' at present are Lift and project cuts and both versions of Reduce and Split cuts.");
     p.setIntValue(10);
     parameters.push_back(p);
   }
@@ -3786,7 +3787,7 @@ sequential Lps to get a good approximate solution.");
   }
 #if CLP_MULTIPLE_FACTORIZATIONS > 0
   {
-    CbcOrClpParam p("small!Factorization", "Whether to use small factorization",
+    CbcOrClpParam p("small!Factorization", "Threshold for using small factorization",
       -1, 10000, CBC_PARAM_INT_SMALLFACT, 1);
     p.setLonghelp(
       "If processed problem <= this use small factorization");
@@ -3839,9 +3840,9 @@ this does branch and cut." );
      p.append("orderhigh");
      p.append("orderlow");
      p.setLonghelp(
-       "This sets priorities for SOS.  The first two just set priority \
-    relative to integers.  Orderhigh gives first set highest priority and integers \
-    a low priority.  Orderlow gives integers high priority then SOS in order.");
+       "This sets priorities for SOS.  Values 'high' and 'low' just set a priority \
+    relative to the for integer variables.  Value 'orderhigh' gives first highest priority to the first SOS and integer variables \
+    a low priority.  Value 'orderlow' gives integer variables a high priority then SOS in order.");
     parameters.push_back(p);
   }
 #else
@@ -3869,12 +3870,12 @@ this does branch and cut." );
   }
   {
     CbcOrClpParam p("sprint!Crash", "Whether to try sprint crash",
-      -1, 5000000, CLP_PARAM_INT_SPRINT);
+      -1, COIN_INT_MAX, CLP_PARAM_INT_SPRINT);
     p.setLonghelp(
-      "For long and thin problems this program may solve a series of small problems\
- created by taking a subset of the columns.  I introduced the idea as 'Sprint' after\
+      "For long and thin problems this method may solve a series of small problems\
+ created by taking a subset of the columns.  The idea as 'Sprint' was introduced by J. Forrest after\
  an LP code of that name of the 60's which tried the same tactic (not totally successfully).\
-  Cplex calls it 'sifting'.  -1 is automatic choice, 0 is off, n is number of passes");
+  CPLEX calls it 'sifting'.  -1 lets CLP automatically choose the number of passes, 0 is off, n is number of passes");
     parameters.push_back(p);
   }
   {
@@ -3901,11 +3902,10 @@ this does branch and cut." );
     p.setLonghelp(
       "This turns on newer features. \
 Use 0 for easy problems, 1 is default, 2 is aggressive. \
-1 uses Gomory cuts using tolerance of 0.01 at root, \
-does a possible restart after 100 nodes if can fix many \
-and activates a diving and RINS heuristic and makes feasibility pump \
-more aggressive. \
-This does not apply to unit tests (where 'experiment' may have similar effects).");
+1 uses Gomory cuts with a tolerance of 0.01 at the root node, \
+does a possible restart after 100 nodes if many variables could be fixed, \
+activates a diving and RINS heuristic, and makes the feasibility pump \
+more aggressive."); // This does not apply to unit tests (where 'experiment' may have similar effects
     p.setIntValue(1);
     parameters.push_back(p);
   }
@@ -3925,9 +3925,9 @@ will be in resulting problem");
     p.setIntValue(20);
     p.setLonghelp(
       "In order to decide which variable to branch on, the code will choose up to this number \
-of unsatisfied variables to do mini up and down branches on.  Then the most effective one is chosen. \
+of unsatisfied variables to try minimal up and down branches on.  Then the most effective one is chosen. \
 If a variable is branched on many times then the previous average up and down costs may be used - \
-see number before trust.");
+see also option trustPseudoCosts.");
     parameters.push_back(p);
   }
 #endif
@@ -3937,8 +3937,8 @@ see number before trust.");
       0, 10000, CLP_PARAM_INT_SUBSTITUTION, 0);
     p.setLonghelp(
       "Normally Presolve gets rid of 'free' variables when there are no more than 3 \
- variables in column.  If you increase this the number of rows may decrease but number of \
- elements may increase.");
+ coefficients in a row.  If you increase this, the number of rows may decrease but the number of \
+ coefficients may increase.");
     parameters.push_back(p);
   }
 #endif
@@ -3966,7 +3966,7 @@ if 200+n use threads for root cuts, 400+n threads used in sub-trees.");
   {
     CbcOrClpParam p("tighten!Factor", "Tighten bounds using this times largest \
 activity at continuous solution",
-      1.0e-3, 1.0e20, CBC_PARAM_DBL_TIGHTENFACTOR, 0);
+      1.0e-3, COIN_DBL_MAX, CBC_PARAM_DBL_TIGHTENFACTOR, 0);
     p.setLonghelp(
       "This sleazy trick can help on some problems.");
     parameters.push_back(p);
@@ -3992,9 +3992,9 @@ activity at continuous solution",
 #ifdef COIN_HAS_CBC
   {
     CbcOrClpParam p("trust!PseudoCosts", "Number of branches before we trust pseudocosts",
-      -3, 2000000000, CBC_PARAM_INT_NUMBERBEFORE);
+      -3, COIN_INT_MAX, CBC_PARAM_INT_NUMBERBEFORE);
     p.setLonghelp(
-      "Using strong branching computes pseudo-costs.  After this many times for a variable we just \
+      "Using strong branching computes pseudo-costs.  This parameter determines after how many branches for a variable we just \
 trust the pseudo costs and do not do any more strong branching.");
     p.setIntValue(10);
     parameters.push_back(p);
@@ -4002,8 +4002,8 @@ trust the pseudo costs and do not do any more strong branching.");
 #endif
 #ifdef COIN_HAS_CBC
   {
-    CbcOrClpParam p("tune!PreProcess", "Dubious tuning parameters",
-      0, 2000000000, CLP_PARAM_INT_PROCESSTUNE, 1);
+    CbcOrClpParam p("tune!PreProcess", "Dubious tuning parameters for preprocessing",
+      0, COIN_INT_MAX, CLP_PARAM_INT_PROCESSTUNE, 1);
     p.setLonghelp(
       "Format aabbcccc - \n If aa then this is number of major passes (i.e. with presolve) \n \
 If bb and bb>0 then this is number of minor passes (if unset or 0 then 10) \n \
@@ -4026,9 +4026,8 @@ cccc is bit set \n 0 - 1 Heavy probing \n 1 - 2 Make variables integer if possib
     p.append("onglobal");
     p.append("forceandglobal");
     p.append("forceLongOn");
-    p.setLonghelp(
-      "This switches on two phase mixed integer rounding  cuts (either at root or in entire tree) \
-See branchAndCut for information on options.");
+    p.setLonghelp(CUTS_LONGHELP
+      " Reference: https://github.com/coin-or/Cgl/wiki/CglTwomir");
     parameters.push_back(p);
   }
 #endif
@@ -4079,9 +4078,7 @@ Being lazy I have used 10 to switch on a pool matrix (11 may come later)");
     p.append("both");
     p.append("before");
     p.append("intree");
-    p.setLonghelp(
-      "This switches on variable neighborhood Search. \
-Doh option does heuristic before preprocessing");
+    p.setLonghelp(HEURISTICS_LONGHELP);
     parameters.push_back(p);
   }
 #endif
@@ -4103,10 +4100,10 @@ Doh option does heuristic before preprocessing");
   }
 #ifdef COIN_HAS_CBC
   {
-    CbcOrClpParam p("vub!heuristic", "Type of vub heuristic",
+    CbcOrClpParam p("vub!heuristic", "Type of VUB heuristic",
       -2, 20, CBC_PARAM_INT_VUBTRY, 0);
     p.setLonghelp(
-      "If set will try and fix some integer variables");
+      "This heuristic tries and fix some integer variables.");
     p.setIntValue(-1);
     parameters.push_back(p);
   }
@@ -4118,10 +4115,8 @@ Doh option does heuristic before preprocessing");
     p.append("ifmove");
     p.append("forceOn");
     p.append("onglobal");
-    p.setLonghelp(
-      "This switches on zero-half cuts (either at root or in entire tree) \
-See branchAndCut for information on options.  This implementation was written by \
-Alberto Caprara.");
+    p.setLonghelp(CUTS_LONGHELP
+      " This implementation was written by Alberto Caprara.");
     parameters.push_back(p);
   }
 #endif

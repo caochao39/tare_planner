@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -18,9 +18,9 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "ortools/algorithms/sparse_permutation.h"
-#include "ortools/base/int_type_indexed_vector.h"
-#include "ortools/base/status.h"
+#include "ortools/base/strong_vector.h"
 #include "ortools/sat/boolean_problem.pb.h"
 #include "ortools/sat/cp_model.pb.h"
 #include "ortools/sat/pb_constraint.h"
@@ -56,7 +56,7 @@ void ExtractAssignment(const LinearBooleanProblem& problem,
 
 // Tests the preconditions of the given problem (as described in the proto) and
 // returns an error if they are not all satisfied.
-util::Status ValidateBooleanProblem(const LinearBooleanProblem& problem);
+absl::Status ValidateBooleanProblem(const LinearBooleanProblem& problem);
 
 // Loads a BooleanProblem into a given SatSolver instance.
 bool LoadBooleanProblem(const LinearBooleanProblem& problem, SatSolver* solver);
@@ -94,11 +94,11 @@ bool IsAssignmentValid(const LinearBooleanProblem& problem,
 
 // Converts a LinearBooleanProblem to the cnf file format.
 // Note that this only works for pure SAT problems (only clauses), max-sat or
-// weighted max-sat problems. Returns an empty std::string on error.
+// weighted max-sat problems. Returns an empty string on error.
 std::string LinearBooleanProblemToCnfString(
     const LinearBooleanProblem& problem);
 
-// Store a variable assignment into the given BooleanAssignement proto.
+// Store a variable assignment into the given BooleanAssignment proto.
 // Note that only the assigned variables are stored, so the assignment may be
 // incomplete.
 void StoreAssignment(const VariablesAssignment& assignment,
@@ -129,7 +129,7 @@ void FindLinearBooleanProblemSymmetries(
 // of the correct size. It can also map a literal index to kTrueLiteralIndex
 // or kFalseLiteralIndex in order to fix the variable.
 void ApplyLiteralMappingToBooleanProblem(
-    const gtl::ITIVector<LiteralIndex, LiteralIndex>& mapping,
+    const absl::StrongVector<LiteralIndex, LiteralIndex>& mapping,
     LinearBooleanProblem* problem);
 
 // A simple preprocessing step that does basic probing and removes the fixed and

@@ -1,0 +1,12 @@
+prefix=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534
+exec_prefix=${prefix}
+libdir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/lib
+includedir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/include
+
+Name: absl_algorithm_container
+Description: Abseil algorithm_container library
+URL: https://abseil.io/
+Version: 20230125
+Requires: absl_algorithm = 20230125, absl_core_headers = 20230125, absl_meta = 20230125
+Libs: -L${libdir}  
+Cflags: -I${includedir} -DNOMINMAX

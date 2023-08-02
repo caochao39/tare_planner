@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -15,17 +15,29 @@
 // Salesman Problen using the Christofides algorithm (c.f.
 // https://en.wikipedia.org/wiki/Christofides_algorithm).
 // Note that the algorithm guarantees finding a solution within 3/2 of the
-// optimum. Its complexity is O(n^2 * log(n)) where n is the number of nodes.
+// optimum when using minimum weight perfect matching in the matching phase.
+// The complexity of the algorithm is dominated by the complexity of the
+// matching algorithm: O(n^2 * log(n)) if minimal matching is used, or at least
+// O(n^3) or O(nmlog(n)) otherwise, depending on the implementation of the
+// perfect matching algorithm used, where n is the number of nodes and m is the
+// number of edges of the subgraph induced by odd-degree nodes of the minimum
+// spanning tree.
 
 #ifndef OR_TOOLS_GRAPH_CHRISTOFIDES_H_
 #define OR_TOOLS_GRAPH_CHRISTOFIDES_H_
 
-#include "absl/container/flat_hash_map.h"
+#include <cstdint>
+#include <string>
+#include <vector>
+
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "ortools/base/integral_types.h"
 #include "ortools/base/logging.h"
 #include "ortools/graph/eulerian_path.h"
 #include "ortools/graph/graph.h"
 #include "ortools/graph/minimum_spanning_tree.h"
+#include "ortools/graph/perfect_matching.h"
 #include "ortools/linear_solver/linear_solver.h"
 #include "ortools/linear_solver/linear_solver.pb.h"
 #include "ortools/util/saturated_arithmetic.h"
@@ -34,20 +46,21 @@ namespace operations_research {
 
 using ::util::CompleteGraph;
 
-template <typename CostType, typename ArcIndex = int64,
-          typename NodeIndex = int32,
+template <typename CostType, typename ArcIndex = int64_t,
+          typename NodeIndex = int32_t,
           typename CostFunction = std::function<CostType(NodeIndex, NodeIndex)>>
 class ChristofidesPathSolver {
  public:
   enum class MatchingAlgorithm {
-#if defined(USE_CBC) || defined(USE_SCIP)
     MINIMUM_WEIGHT_MATCHING,
+#if defined(USE_CBC) || defined(USE_SCIP)
+    MINIMUM_WEIGHT_MATCHING_WITH_MIP,
 #endif  // defined(USE_CBC) || defined(USE_SCIP)
     MINIMAL_WEIGHT_MATCHING,
   };
   ChristofidesPathSolver(NodeIndex num_nodes, CostFunction costs);
 
-  // Sets the matching algorith to use. A minimum weight perfect matching
+  // Sets the matching algorithm to use. A minimum weight perfect matching
   // (MINIMUM_WEIGHT_MATCHING) guarantees the 3/2 upper bound to the optimal
   // solution. A minimal weight perfect matching (MINIMAL_WEIGHT_MATCHING)
   // finds a locally minimal weight matching which does not offer any bound
@@ -65,19 +78,12 @@ class ChristofidesPathSolver {
   // Returns the approximate TSP tour.
   std::vector<NodeIndex> TravelingSalesmanPath();
 
- private:
-  // Runs the Christofides algorithm.
-  void Solve();
+  // Runs the Christofides algorithm. Returns true if a solution was found,
+  // false otherwise.
+  bool Solve();
 
-  // Safe addition operator to avoid overflows when possible.
-  // template <typename T>
-  // T SafeAdd(T a, T b) {
-  //   return a + b;
-  // }
-  //template <>
-  int64 SafeAdd(int64 a, int64 b) {
-    return CapAdd(a, b);
-  }
+ private:
+  int64_t SafeAdd(int64_t a, int64_t b) { return CapAdd(a, b); }
 
   // Matching algorithm to use.
   MatchingAlgorithm matching_;
@@ -98,14 +104,48 @@ class ChristofidesPathSolver {
   bool solved_;
 };
 
+// Computes a minimum weight perfect matching on an undirected graph.
+template <typename WeightFunctionType, typename GraphType>
+absl::StatusOr<std::vector<
+    std::pair<typename GraphType::NodeIndex, typename GraphType::NodeIndex>>>
+ComputeMinimumWeightMatching(const GraphType& graph,
+                             const WeightFunctionType& weight) {
+  using ArcIndex = typename GraphType::ArcIndex;
+  using NodeIndex = typename GraphType::NodeIndex;
+  MinCostPerfectMatching matching(graph.num_nodes());
+  for (NodeIndex tail : graph.AllNodes()) {
+    for (const ArcIndex arc : graph.OutgoingArcs(tail)) {
+      const NodeIndex head = graph.Head(arc);
+      // Adding both arcs is redudant for MinCostPerfectMatching.
+      if (tail < head) {
+        matching.AddEdgeWithCost(tail, head, weight(arc));
+      }
+    }
+  }
+  MinCostPerfectMatching::Status status = matching.Solve();
+  if (status != MinCostPerfectMatching::OPTIMAL) {
+    return absl::InvalidArgumentError("Perfect matching failed");
+  }
+  std::vector<std::pair<NodeIndex, NodeIndex>> match;
+  for (NodeIndex tail : graph.AllNodes()) {
+    const NodeIndex head = matching.Match(tail);
+    if (tail < head) {  // Both arcs are matched for a given edge, we keep one.
+      match.emplace_back(tail, head);
+    }
+  }
+  return match;
+}
+
 #if defined(USE_CBC) || defined(USE_SCIP)
 // Computes a minimum weight perfect matching on an undirected graph using a
 // Mixed Integer Programming model.
 // TODO(user): Handle infeasible cases if this algorithm is used outside of
 // Christofides.
 template <typename WeightFunctionType, typename GraphType>
-std::vector<typename GraphType::ArcIndex> ComputeMinimumWeightMatchingWithMIP(
-    const GraphType& graph, const WeightFunctionType& weight) {
+absl::StatusOr<std::vector<
+    std::pair<typename GraphType::NodeIndex, typename GraphType::NodeIndex>>>
+ComputeMinimumWeightMatchingWithMIP(const GraphType& graph,
+                                    const WeightFunctionType& weight) {
   using ArcIndex = typename GraphType::ArcIndex;
   using NodeIndex = typename GraphType::NodeIndex;
   MPModelProto model;
@@ -114,7 +154,7 @@ std::vector<typename GraphType::ArcIndex> ComputeMinimumWeightMatchingWithMIP(
   // and constraints ensuring that each node appears in exactly one selected
   // arc. The objective is to minimize the sum of the weights of selected arcs.
   // It is assumed the graph is symmetrical.
-  absl::flat_hash_map<ArcIndex, ArcIndex> variable_indices;
+  std::vector<int> variable_indices(graph.num_arcs(), -1);
   for (NodeIndex node : graph.AllNodes()) {
     // Creating arc-selection Boolean variable.
     for (const ArcIndex arc : graph.OutgoingArcs(node)) {
@@ -138,11 +178,13 @@ std::vector<typename GraphType::ArcIndex> ComputeMinimumWeightMatchingWithMIP(
     for (const ArcIndex arc : graph.OutgoingArcs(node)) {
       const NodeIndex head = graph.Head(arc);
       if (node < head) {
+        const int arc_var = variable_indices[arc];
+        DCHECK_GE(arc_var, 0);
         MPConstraintProto* one_of_ct = model.mutable_constraint(node);
-        one_of_ct->add_var_index(variable_indices[arc]);
+        one_of_ct->add_var_index(arc_var);
         one_of_ct->add_coefficient(1);
         one_of_ct = model.mutable_constraint(head);
-        one_of_ct->add_var_index(variable_indices[arc]);
+        one_of_ct->add_var_index(arc_var);
         one_of_ct->add_coefficient(1);
       }
     }
@@ -157,14 +199,17 @@ std::vector<typename GraphType::ArcIndex> ComputeMinimumWeightMatchingWithMIP(
   std::string error;
   mp_solver.LoadModelFromProto(model, &error);
   MPSolver::ResultStatus status = mp_solver.Solve();
-  CHECK_EQ(status, MPSolver::OPTIMAL);
+  if (status != MPSolver::OPTIMAL) {
+    return absl::InvalidArgumentError("MIP-based matching failed");
+  }
   MPSolutionResponse response;
   mp_solver.FillSolutionResponseProto(&response);
-  std::vector<ArcIndex> matching;
-  for (auto arc : variable_indices) {
-    if (response.variable_value(arc.second) > .9) {
-      DCHECK_GE(response.variable_value(arc.second), 1.0 - 1e-4);
-      matching.push_back(arc.first);
+  std::vector<std::pair<NodeIndex, NodeIndex>> matching;
+  for (ArcIndex arc = 0; arc < variable_indices.size(); ++arc) {
+    const int arc_var = variable_indices[arc];
+    if (arc_var >= 0 && response.variable_value(arc_var) > .9) {
+      DCHECK_GE(response.variable_value(arc_var), 1.0 - 1e-4);
+      matching.emplace_back(graph.Tail(arc), graph.Head(arc));
     }
   }
   return matching;
@@ -186,7 +231,8 @@ template <typename CostType, typename ArcIndex, typename NodeIndex,
 CostType ChristofidesPathSolver<CostType, ArcIndex, NodeIndex,
                                 CostFunction>::TravelingSalesmanCost() {
   if (!solved_) {
-    Solve();
+    bool const ok = Solve();
+    DCHECK(ok);
   }
   return tsp_cost_;
 }
@@ -196,14 +242,15 @@ template <typename CostType, typename ArcIndex, typename NodeIndex,
 std::vector<NodeIndex> ChristofidesPathSolver<
     CostType, ArcIndex, NodeIndex, CostFunction>::TravelingSalesmanPath() {
   if (!solved_) {
-    Solve();
+    const bool ok = Solve();
+    DCHECK(ok);
   }
   return tsp_path_;
 }
 
 template <typename CostType, typename ArcIndex, typename NodeIndex,
           typename CostFunction>
-void ChristofidesPathSolver<CostType, ArcIndex, NodeIndex,
+bool ChristofidesPathSolver<CostType, ArcIndex, NodeIndex,
                             CostFunction>::Solve() {
   const NodeIndex num_nodes = graph_.num_nodes();
   tsp_path_.clear();
@@ -212,7 +259,7 @@ void ChristofidesPathSolver<CostType, ArcIndex, NodeIndex,
     tsp_path_ = {0, 0};
   }
   if (num_nodes <= 1) {
-    return;
+    return true;
   }
   // Compute Minimum Spanning Tree.
   const std::vector<ArcIndex> mst =
@@ -236,16 +283,33 @@ void ChristofidesPathSolver<CostType, ArcIndex, NodeIndex,
   const NodeIndex reduced_size = odd_degree_nodes.size();
   DCHECK_NE(0, reduced_size);
   CompleteGraph<NodeIndex, ArcIndex> reduced_graph(reduced_size);
-  std::vector<ArcIndex> closure_arcs;
+  std::vector<std::pair<NodeIndex, NodeIndex>> closure_arcs;
   switch (matching_) {
-#if defined(USE_CBC) || defined(USE_SCIP)
     case MatchingAlgorithm::MINIMUM_WEIGHT_MATCHING: {
-      closure_arcs = ComputeMinimumWeightMatchingWithMIP(
+      auto result = ComputeMinimumWeightMatching(
           reduced_graph, [this, &reduced_graph,
                           &odd_degree_nodes](CompleteGraph<>::ArcIndex arc) {
             return costs_(odd_degree_nodes[reduced_graph.Tail(arc)],
                           odd_degree_nodes[reduced_graph.Head(arc)]);
           });
+      if (!result.ok()) {
+        return false;
+      }
+      result->swap(closure_arcs);
+      break;
+    }
+#if defined(USE_CBC) || defined(USE_SCIP)
+    case MatchingAlgorithm::MINIMUM_WEIGHT_MATCHING_WITH_MIP: {
+      auto result = ComputeMinimumWeightMatchingWithMIP(
+          reduced_graph, [this, &reduced_graph,
+                          &odd_degree_nodes](CompleteGraph<>::ArcIndex arc) {
+            return costs_(odd_degree_nodes[reduced_graph.Tail(arc)],
+                          odd_degree_nodes[reduced_graph.Head(arc)]);
+          });
+      if (!result.ok()) {
+        return false;
+      }
+      result->swap(closure_arcs);
       break;
     }
 #endif  // defined(USE_CBC) || defined(USE_SCIP)
@@ -273,7 +337,7 @@ void ChristofidesPathSolver<CostType, ArcIndex, NodeIndex,
         if (head != tail && !touched_nodes[tail] && !touched_nodes[head]) {
           touched_nodes[tail] = true;
           touched_nodes[head] = true;
-          closure_arcs.push_back(arc);
+          closure_arcs.emplace_back(tail, head);
         }
       }
       break;
@@ -285,14 +349,10 @@ void ChristofidesPathSolver<CostType, ArcIndex, NodeIndex,
   ::util::ReverseArcListGraph<NodeIndex, ArcIndex> egraph(
       num_nodes, closure_arcs.size() + mst.size());
   for (ArcIndex arc : mst) {
-    const NodeIndex tail = graph_.Tail(arc);
-    const NodeIndex head = graph_.Head(arc);
-    egraph.AddArc(tail, head);
+    egraph.AddArc(graph_.Tail(arc), graph_.Head(arc));
   }
-  for (ArcIndex arc : closure_arcs) {
-    const NodeIndex tail = odd_degree_nodes[reduced_graph.Tail(arc)];
-    const NodeIndex head = odd_degree_nodes[reduced_graph.Head(arc)];
-    egraph.AddArc(tail, head);
+  for (const auto arc : closure_arcs) {
+    egraph.AddArc(odd_degree_nodes[arc.first], odd_degree_nodes[arc.second]);
   }
   std::vector<bool> touched(num_nodes, false);
   DCHECK(IsEulerianGraph(egraph));
@@ -307,6 +367,7 @@ void ChristofidesPathSolver<CostType, ArcIndex, NodeIndex,
       SafeAdd(tsp_cost_, tsp_path_.empty() ? 0 : costs_(tsp_path_.back(), 0));
   tsp_path_.push_back(0);
   solved_ = true;
+  return true;
 }
 }  // namespace operations_research
 

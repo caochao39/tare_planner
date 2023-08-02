@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -14,10 +14,14 @@
 #ifndef OR_TOOLS_GLOP_DUAL_EDGE_NORMS_H_
 #define OR_TOOLS_GLOP_DUAL_EDGE_NORMS_H_
 
+#include <string>
+
 #include "ortools/glop/basis_representation.h"
 #include "ortools/glop/parameters.pb.h"
 #include "ortools/lp_data/lp_data.h"
 #include "ortools/lp_data/lp_types.h"
+#include "ortools/lp_data/permutation.h"
+#include "ortools/lp_data/scattered_vector.h"
 #include "ortools/util/stats.h"
 
 namespace operations_research {
@@ -51,11 +55,18 @@ class DualEdgeNorms {
   // full norm recomputation on the next GetEdgeSquaredNorms().
   void Clear();
 
+  // When we just add new constraints to the matrix and use an incremental
+  // solve, we do not need to recompute the norm of the old rows, and the norm
+  // of the new ones can be just set to 1 as long as we use identity columns for
+  // these.
+  void ResizeOnNewRows(RowIndex new_size);
+
   // If this is true, then the caller must re-factorize the basis before the
   // next call to GetEdgeSquaredNorms(). This is because the latter will
   // recompute the norms from scratch and therefore needs a hightened precision
-  // and speed.
-  bool NeedsBasisRefactorization();
+  // and speed. This also indicates if GetEdgeSquaredNorms() will trigger a
+  // recomputation.
+  bool NeedsBasisRefactorization() const;
 
   // Returns the dual edge squared norms. This is only valid if the caller
   // properly called UpdateBeforeBasisPivot() before each basis pivot, or just
@@ -64,6 +75,13 @@ class DualEdgeNorms {
 
   // Updates the norms if the columns of the basis where permuted.
   void UpdateDataOnBasisPermutation(const ColumnPermutation& col_perm);
+
+  // Computes exactly the norm of the given leaving row, and returns true if it
+  // is good enough compared to our current norm. In both case update the
+  // current norm with its precise version and decide if we should recompute
+  // norms on the next GetEdgeSquaredNorms().
+  bool TestPrecision(RowIndex leaving_row,
+                     const ScatteredRow& unit_row_left_inverse);
 
   // Updates the norms just before a basis pivot is applied:
   // - The column at leaving_row will leave the basis and the column at
@@ -114,6 +132,7 @@ class DualEdgeNorms {
 
   // The dual edge norms.
   DenseColumn edge_squared_norms_;
+  DenseColumn tmp_edge_squared_norms_;
 
   // Whether we should recompute the norm from scratch.
   bool recompute_edge_squared_norms_;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -13,6 +13,8 @@
 
 #ifndef OR_TOOLS_GLOP_INITIAL_BASIS_H_
 #define OR_TOOLS_GLOP_INITIAL_BASIS_H_
+
+#include <vector>
 
 #include "ortools/lp_data/lp_data.h"
 #include "ortools/lp_data/lp_types.h"
@@ -44,8 +46,9 @@ namespace glop {
 class InitialBasis {
  public:
   // Takes references to the linear program data we need.
-  InitialBasis(const MatrixView& matrix, const DenseRow& objective,
-               const DenseRow& lower_bound, const DenseRow& upper_bound,
+  InitialBasis(const CompactSparseMatrix& compact_matrix,
+               const DenseRow& objective, const DenseRow& lower_bound,
+               const DenseRow& upper_bound,
                const VariableTypeRow& variable_type);
 
   // Completes the entries of the given basis that are equal to kInvalidCol with
@@ -119,7 +122,7 @@ class InitialBasis {
     const InitialBasis& initial_basis_;
   } triangular_column_comparator_;
 
-  const MatrixView& matrix_;
+  const CompactSparseMatrix& compact_matrix_;
   const DenseRow& objective_;
   const DenseRow& lower_bound_;
   const DenseRow& upper_bound_;

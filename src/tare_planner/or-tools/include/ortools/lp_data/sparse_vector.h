@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -34,6 +34,7 @@
 #include <cstring>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "absl/strings/str_format.h"
 #include "ortools/base/integral_types.h"
@@ -48,8 +49,6 @@ namespace glop {
 
 template <typename IndexType>
 class SparseVectorEntry;
-template <typename EntryType>
-class SparseVectorIterator;
 
 // --------------------------------------------------------
 // SparseVector
@@ -81,8 +80,7 @@ class SparseVectorIterator;
 // TODO(user): un-expose this type to client; by getting rid of the
 // index-based APIs and leveraging iterator-based APIs; if possible.
 template <typename IndexType,
-          typename IteratorType =
-              SparseVectorIterator<SparseVectorEntry<IndexType>>>
+          typename IteratorType = VectorIterator<SparseVectorEntry<IndexType>>>
 class SparseVector {
  public:
   typedef IndexType Index;
@@ -445,37 +443,6 @@ class SparseVectorEntry {
   const Fractional* coefficient_;
 };
 
-// --------------------------------------------------------
-// SparseVectorIterator
-// --------------------------------------------------------
-
-// An iterator over the elements of a sparse data structure that stores the
-// elements in parallel arrays for indices and coefficients. The iterator is
-// built as a wrapper over a sparse vector entry class; the concrete entry class
-// is provided through the template argument EntryType and it must eiter be
-// derived from SparseVectorEntry or it must provide the same public and
-// protected interface.
-template <typename EntryType>
-class SparseVectorIterator : EntryType {
- public:
-  using Index = typename EntryType::Index;
-  using Entry = EntryType;
-
-  SparseVectorIterator(const Index* indices, const Fractional* coefficients,
-                       EntryIndex i)
-      : EntryType(indices, coefficients, i) {}
-
-  void operator++() { ++this->i_; }
-  bool operator!=(const SparseVectorIterator& other) const {
-    // This operator is intended for use in natural range iteration ONLY.
-    // Therefore, we prefer to use '<' so that a buggy range iteration which
-    // start point is *after* its end point stops immediately, instead of
-    // iterating 2^(number of bits of EntryIndex) times.
-    return this->i_ < other.i_;
-  }
-  const Entry& operator*() const { return *this; }
-};
-
 template <typename IndexType, typename IteratorType>
 IteratorType SparseVector<IndexType, IteratorType>::begin() const {
   return Iterator(this->index_, this->coefficient_, EntryIndex(0));
@@ -631,14 +598,19 @@ void SparseVector<IndexType, IteratorType>::PopulateFromSparseVector(
   // the next step anyway.
   Clear();
   Reserve(sparse_vector.capacity_);
-  // NOTE(user): Using a single memmove would be slightly faster, but it
-  // would not work correctly if this already had a greater capacity than
-  // sparse_vector, because the coefficient_ pointer would be positioned
-  // incorrectly.
-  std::memmove(index_, sparse_vector.index_,
-               sizeof(Index) * sparse_vector.num_entries_.value());
-  std::memmove(coefficient_, sparse_vector.coefficient_,
-               sizeof(Fractional) * sparse_vector.num_entries_.value());
+  // If there are no entries, then sparse_vector.index_ or .coefficient_
+  // may be nullptr or invalid, and accessing them in memmove is UB,
+  // even if the moved size is zero.
+  if (sparse_vector.num_entries_ > 0) {
+    // NOTE(user): Using a single memmove would be slightly faster, but it
+    // would not work correctly if this already had a greater capacity than
+    // sparse_vector, because the coefficient_ pointer would be positioned
+    // incorrectly.
+    std::memmove(index_, sparse_vector.index_,
+                 sizeof(Index) * sparse_vector.num_entries_.value());
+    std::memmove(coefficient_, sparse_vector.coefficient_,
+                 sizeof(Fractional) * sparse_vector.num_entries_.value());
+  }
   num_entries_ = sparse_vector.num_entries_;
   may_contain_duplicates_ = sparse_vector.may_contain_duplicates_;
 }

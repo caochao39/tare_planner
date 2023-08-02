@@ -1,0 +1,12 @@
+prefix=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534
+exec_prefix=${prefix}
+libdir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/lib
+includedir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/include
+
+Name: absl_log_initialize
+Description: Abseil log_initialize library
+URL: https://abseil.io/
+Version: 20230125
+Requires: absl_config = 20230125, absl_log_globals = 20230125, absl_log_internal_globals = 20230125, absl_time = 20230125
+Libs: -L${libdir}   -labsl_log_initialize
+Cflags: -I${includedir} -DNOMINMAX

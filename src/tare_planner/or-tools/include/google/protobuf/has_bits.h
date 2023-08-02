@@ -34,6 +34,7 @@
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/port.h>
 
+// Must be included last.
 #include <google/protobuf/port_def.inc>
 
 #ifdef SWIG
@@ -44,20 +45,20 @@ namespace google {
 namespace protobuf {
 namespace internal {
 
-template<size_t doublewords>
+template <size_t doublewords>
 class HasBits {
  public:
-  HasBits() PROTOBUF_ALWAYS_INLINE { Clear(); }
+  PROTOBUF_NDEBUG_INLINE constexpr HasBits() : has_bits_{} {}
 
-  void Clear() PROTOBUF_ALWAYS_INLINE {
+  PROTOBUF_NDEBUG_INLINE void Clear() {
     memset(has_bits_, 0, sizeof(has_bits_));
   }
 
-  ::google::protobuf::uint32& operator[](int index) PROTOBUF_ALWAYS_INLINE {
+  PROTOBUF_NDEBUG_INLINE uint32_t& operator[](int index) {
     return has_bits_[index];
   }
 
-  const ::google::protobuf::uint32& operator[](int index) const PROTOBUF_ALWAYS_INLINE {
+  PROTOBUF_NDEBUG_INLINE const uint32_t& operator[](int index) const {
     return has_bits_[index];
   }
 
@@ -69,10 +70,14 @@ class HasBits {
     return !(*this == rhs);
   }
 
+  void Or(const HasBits<doublewords>& rhs) {
+    for (size_t i = 0; i < doublewords; i++) has_bits_[i] |= rhs[i];
+  }
+
   bool empty() const;
 
  private:
-  ::google::protobuf::uint32 has_bits_[doublewords];
+  uint32_t has_bits_[doublewords];
 };
 
 template <>

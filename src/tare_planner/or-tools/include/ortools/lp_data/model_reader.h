@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -16,12 +16,16 @@
 
 #include <string>
 
+#include "ortools/linear_solver/linear_solver.pb.h"
 #include "ortools/lp_data/lp_data.h"
 
 namespace operations_research {
 namespace glop {
 
-// Helper function to read data from model files into LinearProgram.
+// Helper function to read data from model files into MPModelProto and
+// LinearProgram.
+bool LoadMPModelProtoFromModelOrRequest(const std::string& input_file_path,
+                                        MPModelProto* model);
 bool LoadLinearProgramFromModelOrRequest(const std::string& input_file_path,
                                          LinearProgram* linear_program);
 

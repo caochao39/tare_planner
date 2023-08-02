@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -14,20 +14,24 @@
 #ifndef OR_TOOLS_SAT_DRAT_CHECKER_H_
 #define OR_TOOLS_SAT_DRAT_CHECKER_H_
 
+#include <cstdint>
+#include <limits>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "ortools/base/int_type.h"
-#include "ortools/base/int_type_indexed_vector.h"
+#include "ortools/base/strong_vector.h"
 #include "ortools/sat/sat_base.h"
+#include "ortools/util/strong_integers.h"
 
 namespace operations_research {
 namespace sat {
 
 // Index of a clause (>= 0).
-DEFINE_INT_TYPE(ClauseIndex, int);
+DEFINE_STRONG_INDEX_TYPE(ClauseIndex);
 const ClauseIndex kNoClauseIndex(-1);
 
 // DRAT is a SAT proof format that allows a simple program to check that a
@@ -53,7 +57,7 @@ class DratChecker {
 
   // Adds a clause which is infered from the problem clauses and the previously
   // infered clauses (that are have not been deleted). Infered clauses must be
-  // added after the problem clauses. Clauses with the Reverse Asymetric
+  // added after the problem clauses. Clauses with the Reverse Asymmetric
   // Tautology (RAT) property for literal l must start with this literal. The
   // given clause must not contain a literal and its negation. Must not be
   // called after Check().
@@ -67,7 +71,7 @@ class DratChecker {
   // Checks that the infered clauses form a DRAT proof that the problem clauses
   // are UNSAT. For this the last added infered clause must be the empty clause
   // and each infered clause must have either the Reverse Unit Propagation (RUP)
-  // or the Reverse Asymetric Tautology (RAT) property with respect to the
+  // or the Reverse Asymmetric Tautology (RAT) property with respect to the
   // problem clauses and the previously infered clauses which are not deleted.
   // Returns VALID if the proof is valid, INVALID if it is not, and UNKNOWN if
   // the check timed out.
@@ -216,14 +220,14 @@ class DratChecker {
   std::vector<std::vector<Literal>> GetClausesNeededForProof(
       ClauseIndex begin, ClauseIndex end) const;
 
-  void LogStatistics(int64 duration_nanos) const;
+  void LogStatistics(int64_t duration_nanos) const;
 
   // The index of the first infered clause in 'clauses_', or kNoClauseIndex if
   // there is no infered clause.
   ClauseIndex first_infered_clause_index_;
 
   // The problem clauses, followed by the infered clauses.
-  gtl::ITIVector<ClauseIndex, Clause> clauses_;
+  absl::StrongVector<ClauseIndex, Clause> clauses_;
 
   // A content addressable set of the non-deleted clauses in clauses_. After
   // adding a clause to clauses_, this set can be used to find if the same
@@ -250,7 +254,7 @@ class DratChecker {
   // For each variable, the index of the unit clause that caused its assignment,
   // or kNoClauseIndex if the variable is not assigned, or was assigned to
   // falsify the clause that is currently being checked.
-  gtl::ITIVector<BooleanVariable, ClauseIndex> assignment_source_;
+  absl::StrongVector<BooleanVariable, ClauseIndex> assignment_source_;
 
   // The stack of literals that remain to be assigned to true during boolean
   // constraint propagation, with high priority (unit clauses which are already
@@ -273,7 +277,7 @@ class DratChecker {
   // satisfied (in more details: if a clause c is contained in
   // 'watched_literals_[l]' for literal l, then either c is satisfied with
   // 'assignment_', or l is unassigned or assigned to true).
-  gtl::ITIVector<LiteralIndex, std::vector<ClauseIndex>> watched_literals_;
+  absl::StrongVector<LiteralIndex, std::vector<ClauseIndex>> watched_literals_;
 
   // The list of clauses with only one literal. This is needed for boolean
   // constraint propagation, in addition to watched literals, because watched

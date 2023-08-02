@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -25,12 +25,14 @@
 #define OR_TOOLS_ALGORITHMS_FIND_GRAPH_SYMMETRIES_H_
 
 #include <memory>
+#include <string>
 #include <vector>
 
+#include "absl/numeric/int128.h"
+#include "absl/status/status.h"
 #include "absl/time/time.h"
 #include "ortools/algorithms/dynamic_partition.h"
 #include "ortools/algorithms/dynamic_permutation.h"
-#include "ortools/base/status.h"
 #include "ortools/graph/graph.h"
 #include "ortools/graph/iterators.h"
 #include "ortools/util/stats.h"
@@ -92,18 +94,20 @@ class GraphSymmetryFinder {
   // large as N!).
   //
   // DEADLINE AND PARTIAL COMPLETION:
-  // If the deadline passed as argument is reached, this method will return
-  // quickly (within a few milliseconds). The outputs may be partially filled:
+  // If the deadline passed as argument (via TimeLimit) is reached, this method
+  // will return quickly (within a few milliseconds of the limit). The outputs
+  // may be partially filled:
   // - Each element of "generators", if non-empty, will be a valid permutation.
   // - "node_equivalence_classes_io" will contain the equivalence classes
   //   corresponding to the orbits under all the generators in "generators".
   // - "factorized_automorphism_group_size" will also be incomplete, and
   //   partially valid: its last element may be undervalued. But all prior
   //   elements are valid factors of the automorphism group size.
-  util::Status FindSymmetries(
-      double time_limit_seconds, std::vector<int>* node_equivalence_classes_io,
+  absl::Status FindSymmetries(
+      std::vector<int>* node_equivalence_classes_io,
       std::vector<std::unique_ptr<SparsePermutation> >* generators,
-      std::vector<int>* factorized_automorphism_group_size);
+      std::vector<int>* factorized_automorphism_group_size,
+      TimeLimit* time_limit = nullptr);
 
   // Fully refine the partition of nodes, using the graph as symmetry breaker.
   // This means applying the following steps on each part P of the partition:
@@ -148,8 +152,11 @@ class GraphSymmetryFinder {
   util::BeginEndWrapper<std::vector<int>::const_iterator> TailsOfIncomingArcsTo(
       int node) const;
 
-  // Deadline management. Populated upon FindSymmetries().
-  mutable std::unique_ptr<TimeLimit> time_limit_;
+  // Deadline management. Populated upon FindSymmetries(). If the passed
+  // time limit is nullptr, time_limit_ will point to dummy_time_limit_ which
+  // is an object with infinite limits by default.
+  TimeLimit dummy_time_limit_;
+  TimeLimit* time_limit_;
 
   // Internal search code used in FindSymmetries(), split out for readability:
   // find one permutation (if it exists) that maps root_node to root_image_node
@@ -308,6 +315,39 @@ class GraphSymmetryFinder {
   };
   mutable Stats stats_;
 };
+
+// HELPER FUNCTIONS: PUBLIC FOR UNIT TESTING ONLY.
+
+// Returns, for each node A, the number of pairs of nodes (B, C) such that
+// arcs A->B, A->C and B->C exist. Skips nodes with degree > max_degree
+// (this allows to remain linear in the number of nodes, but gives partial
+// results).
+// The complexity is O(num_nodes * max_degree²).
+//
+// DIFFERENTIATION: In unit test CollisionImpliesIsomorphismInPractice,
+// this metric differentiated 33 of the 34 non-isomorphic collisions found
+// across 200K graphs: only one remained.
+//
+// Example graph differentiated by this metric, but not by LocalBfsFprint():
+//  ,-1-3-.         ,-1-3-.
+// 0  | |  5  and  0   X   5
+//  `-2-3-'         `-2-4-'
+std::vector<int> CountTriangles(const ::util::StaticGraph<int, int>& graph,
+                                int max_degree);
+
+// Runs a Breadth-First-Search locally: it stops when we settled the given
+// number of nodes, though it will finish the current radius.
+// `visited` will contain either the full connected components, or all the nodes
+// with distance ≤ R+1 from the source, where R is the radius where we stopped.
+// `num_within_radius` contains the increasing number of nodes within distance
+// 0, 1, .., R+1 of the source.
+void LocalBfs(const ::util::StaticGraph<int, int>& graph, int source,
+              int stop_after_num_nodes, std::vector<int>* visited,
+              std::vector<int>* num_within_radius,
+              // For performance, the user provides us with an already-
+              // allocated bitmask of size graph.num_nodes() with all values set
+              // to "false", which we'll restore in the same state upon return.
+              std::vector<bool>* tmp_mask);
 
 }  // namespace operations_research
 

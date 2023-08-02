@@ -1,0 +1,12 @@
+prefix=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534
+exec_prefix=${prefix}
+libdir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/lib
+includedir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/include
+
+Name: absl_str_format_internal
+Description: Abseil str_format_internal library
+URL: https://abseil.io/
+Version: 20230125
+Requires: absl_bits = 20230125, absl_strings = 20230125, absl_config = 20230125, absl_core_headers = 20230125, absl_numeric_representation = 20230125, absl_type_traits = 20230125, absl_utility = 20230125, absl_int128 = 20230125, absl_span = 20230125
+Libs: -L${libdir}   -labsl_str_format_internal
+Cflags: -I${includedir} -DNOMINMAX

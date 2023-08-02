@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -14,29 +14,32 @@
 #ifndef OR_TOOLS_BASE_PROTOUTIL_H_
 #define OR_TOOLS_BASE_PROTOUTIL_H_
 
+#include <cstdint>
+
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "google/protobuf/duration.pb.h"
-#include "ortools/base/status.h"
-#include "ortools/base/statusor.h"
 
 namespace util_time {
 
-inline ::util::StatusOr<google::protobuf::Duration> EncodeGoogleApiProto(
+inline ::absl::StatusOr<google::protobuf::Duration> EncodeGoogleApiProto(
     absl::Duration d) {
   google::protobuf::Duration proto;
-  const int64 d_in_nano = ToInt64Nanoseconds(d);
-  proto.set_seconds(static_cast<int64>(d_in_nano / 1000000000));
+  const int64_t d_in_nano = ToInt64Nanoseconds(d);
+  proto.set_seconds(static_cast<int64_t>(d_in_nano / 1000000000));
   proto.set_nanos(static_cast<int>(d_in_nano % 1000000000));
   return proto;
 }
 
-inline ::util::Status EncodeGoogleApiProto(absl::Duration d,
+inline ::absl::Status EncodeGoogleApiProto(absl::Duration d,
                                            google::protobuf::Duration* proto) {
-  *proto = EncodeGoogleApiProto(d).ValueOrDie();
-  return util::OkStatus();
+  *proto = EncodeGoogleApiProto(d).value();
+  return absl::OkStatus();
 }
 
-inline ::util::StatusOr<absl::Duration> DecodeGoogleApiProto(
+inline ::absl::StatusOr<absl::Duration> DecodeGoogleApiProto(
     const google::protobuf::Duration& proto) {
   return absl::Seconds(proto.seconds() + 1e-9 * proto.nanos());
 }

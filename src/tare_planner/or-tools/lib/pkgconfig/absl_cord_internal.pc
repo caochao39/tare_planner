@@ -1,0 +1,12 @@
+prefix=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534
+exec_prefix=${prefix}
+libdir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/lib
+includedir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/include
+
+Name: absl_cord_internal
+Description: Abseil cord_internal library
+URL: https://abseil.io/
+Version: 20230125
+Requires: absl_base_internal = 20230125, absl_compressed_tuple = 20230125, absl_config = 20230125, absl_container_memory = 20230125, absl_core_headers = 20230125, absl_crc_cord_state = 20230125, absl_endian = 20230125, absl_inlined_vector = 20230125, absl_layout = 20230125, absl_raw_logging_internal = 20230125, absl_strings = 20230125, absl_throw_delegate = 20230125, absl_type_traits = 20230125
+Libs: -L${libdir}   -labsl_cord_internal
+Cflags: -I${includedir} -DNOMINMAX

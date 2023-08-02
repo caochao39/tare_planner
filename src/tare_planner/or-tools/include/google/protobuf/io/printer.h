@@ -37,23 +37,26 @@
 #ifndef GOOGLE_PROTOBUF_IO_PRINTER_H__
 #define GOOGLE_PROTOBUF_IO_PRINTER_H__
 
-#include <string>
+
 #include <map>
+#include <string>
 #include <vector>
+
 #include <google/protobuf/stubs/common.h>
 
+// Must be included last.
 #include <google/protobuf/port_def.inc>
 
 namespace google {
 namespace protobuf {
 namespace io {
 
-class ZeroCopyOutputStream;     // zero_copy_stream.h
+class ZeroCopyOutputStream;  // zero_copy_stream.h
 
 // Records annotations about a Printer's output.
 class PROTOBUF_EXPORT AnnotationCollector {
  public:
-  // Annotation is a ofset range and a payload pair.
+  // Annotation is a offset range and a payload pair.
   typedef std::pair<std::pair<size_t, size_t>, std::string> Annotation;
 
   // Records that the bytes in file_path beginning with begin_offset and ending
@@ -64,7 +67,7 @@ class PROTOBUF_EXPORT AnnotationCollector {
 
   // TODO(gerbens) I don't see why we need virtuals here. Just a vector of
   // range, payload pairs stored in a context should suffice.
-  virtual void AddAnnotationNew(Annotation& a) {}
+  virtual void AddAnnotationNew(Annotation& /* a */) {}
 
   virtual ~AnnotationCollector() {}
 };
@@ -81,9 +84,9 @@ class AnnotationProtoCollector : public AnnotationCollector {
       : annotation_proto_(annotation_proto) {}
 
   // Override for AnnotationCollector::AddAnnotation.
-  virtual void AddAnnotation(size_t begin_offset, size_t end_offset,
-                             const std::string& file_path,
-                             const std::vector<int>& path) {
+  void AddAnnotation(size_t begin_offset, size_t end_offset,
+                     const std::string& file_path,
+                     const std::vector<int>& path) override {
     typename AnnotationProto::Annotation* annotation =
         annotation_proto_->add_annotation();
     for (int i = 0; i < path.size(); ++i) {
@@ -94,7 +97,7 @@ class AnnotationProtoCollector : public AnnotationCollector {
     annotation->set_end(end_offset);
   }
   // Override for AnnotationCollector::AddAnnotation.
-  virtual void AddAnnotationNew(Annotation& a) {
+  void AddAnnotationNew(Annotation& a) override {
     auto* annotation = annotation_proto_->add_annotation();
     annotation->ParseFromString(a.second);
     annotation->set_begin(a.first.first);
@@ -193,8 +196,8 @@ class PROTOBUF_EXPORT Printer {
 
   ~Printer();
 
-  // Link a subsitution variable emitted by the last call to Print to the object
-  // described by descriptor.
+  // Link a substitution variable emitted by the last call to Print to the
+  // object described by descriptor.
   template <typename SomeDescriptor>
   void Annotate(const char* varname, const SomeDescriptor* descriptor) {
     Annotate(varname, varname, descriptor);
@@ -217,7 +220,7 @@ class PROTOBUF_EXPORT Printer {
     Annotate(begin_varname, end_varname, descriptor->file()->name(), path);
   }
 
-  // Link a subsitution variable emitted by the last call to Print to the file
+  // Link a substitution variable emitted by the last call to Print to the file
   // with path file_name.
   void Annotate(const char* varname, const std::string& file_name) {
     Annotate(varname, varname, file_name);
@@ -242,7 +245,8 @@ class PROTOBUF_EXPORT Printer {
   // substituted are identified by their names surrounded by delimiter
   // characters (as given to the constructor).  The variable bindings are
   // defined by the given map.
-  void Print(const std::map<std::string, std::string>& variables, const char* text);
+  void Print(const std::map<std::string, std::string>& variables,
+             const char* text);
 
   // Like the first Print(), except the substitutions are given as parameters.
   template <typename... Args>
@@ -278,7 +282,8 @@ class PROTOBUF_EXPORT Printer {
   // and variables directly supplied by arguments (eq "$1$" meaning first
   // argument which is the zero index element of args).
   void FormatInternal(const std::vector<std::string>& args,
-                      const std::map<std::string, std::string>& vars, const char* format);
+                      const std::map<std::string, std::string>& vars,
+                      const char* format);
 
   // True if any write to the underlying stream failed.  (We don't just
   // crash in this case because this is an I/O failure, not a programming
@@ -296,7 +301,8 @@ class PROTOBUF_EXPORT Printer {
                 const std::string& file_path, const std::vector<int>& path);
 
   // Base case
-  void PrintInternal(std::map<std::string, std::string>* vars, const char* text) {
+  void PrintInternal(std::map<std::string, std::string>* vars,
+                     const char* text) {
     Print(*vars, text);
   }
 
@@ -325,8 +331,9 @@ class PROTOBUF_EXPORT Printer {
 
   inline void IndentIfAtStart();
   const char* WriteVariable(
-      const std::vector<std::string>& args, const std::map<std::string, std::string>& vars,
-      const char* format, int* arg_index,
+      const std::vector<std::string>& args,
+      const std::map<std::string, std::string>& vars, const char* format,
+      int* arg_index,
       std::vector<AnnotationCollector::Annotation>* annotations);
 
   const char variable_delimiter_;

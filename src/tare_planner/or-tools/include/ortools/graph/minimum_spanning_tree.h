@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -20,7 +20,7 @@
 #include "ortools/base/adjustable_priority_queue-inl.h"
 #include "ortools/base/adjustable_priority_queue.h"
 #include "ortools/base/integral_types.h"
-#include "ortools/graph/connectivity.h"
+#include "ortools/graph/connected_components.h"
 #include "ortools/util/vector_or_function.h"
 
 namespace operations_research {
@@ -60,16 +60,14 @@ BuildKruskalMinimumSpanningTreeFromSortedArcs(
   }
   const int expected_tree_size = graph.num_nodes() - 1;
   tree_arcs.reserve(expected_tree_size);
-  ConnectedComponents<NodeIndex, ArcIndex> components;
-  components.Init(graph.num_nodes());
+  DenseConnectedComponentsFinder components;
+  components.SetNumberOfNodes(graph.num_nodes());
   while (tree_arcs.size() != expected_tree_size && arc_index < num_arcs) {
     const ArcIndex arc = sorted_arcs[arc_index];
-    const NodeIndex tail_class =
-        components.GetClassRepresentative(graph.Tail(arc));
-    const NodeIndex head_class =
-        components.GetClassRepresentative(graph.Head(arc));
-    if (tail_class != head_class) {
-      components.MergeClasses(tail_class, head_class);
+    const auto tail = graph.Tail(arc);
+    const auto head = graph.Head(arc);
+    if (!components.Connected(tail, head)) {
+      components.AddEdge(tail, head);
       tree_arcs.push_back(arc);
     }
     ++arc_index;
@@ -108,7 +106,7 @@ std::vector<typename Graph::ArcIndex> BuildKruskalMinimumSpanningTree(
 // taken by the graph.
 // Usage:
 //  ListGraph<int, int> graph(...);
-//  const auto arc_cost = [&graph](int arc) -> int64 {
+//  const auto arc_cost = [&graph](int arc) -> int64_t {
 //                           return f(graph.Tail(arc), graph.Head(arc));
 //                        };
 //  std::vector<int> mst = BuildPrimMinimumSpanningTree(graph, arc_cost);

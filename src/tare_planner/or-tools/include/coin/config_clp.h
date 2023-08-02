@@ -1,0 +1,13 @@
+#ifndef __CONFIG_CLP_H__
+#define __CONFIG_CLP_H__
+
+/* CLP_VERSION */
+#define CLP_VERSION "1.17.7"
+/* CLP_VERSION_MAJOR */
+#define CLP_VERSION_MAJOR 1
+/* CLP_VERSION_MINOR */
+#define CLP_VERSION_MINOR 17
+/* CLP_VERSION_RELEASE */
+#define CLP_VERSION_RELEASE 7
+
+#endif

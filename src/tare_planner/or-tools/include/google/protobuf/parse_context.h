@@ -31,15 +31,27 @@
 #ifndef GOOGLE_PROTOBUF_PARSE_CONTEXT_H__
 #define GOOGLE_PROTOBUF_PARSE_CONTEXT_H__
 
+#include <cstdint>
 #include <cstring>
 #include <string>
+#include <type_traits>
 
 #include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream.h>
+#include <google/protobuf/arena.h>
 #include <google/protobuf/port.h>
-#include <google/protobuf/wire_format_lite.h>
 #include <google/protobuf/stubs/strutil.h>
+#include <google/protobuf/arenastring.h>
+#include <google/protobuf/endian.h>
+#include <google/protobuf/implicit_weak_message.h>
+#include <google/protobuf/inlined_string_field.h>
+#include <google/protobuf/metadata_lite.h>
+#include <google/protobuf/repeated_field.h>
+#include <google/protobuf/wire_format_lite.h>
 
+// Must be included last.
 #include <google/protobuf/port_def.inc>
+
 
 namespace google {
 namespace protobuf {
@@ -51,25 +63,16 @@ class MessageFactory;
 namespace internal {
 
 // Template code below needs to know about the existence of these functions.
-PROTOBUF_EXPORT void WriteVarint(uint32 num, uint64 val, std::string* s);
-PROTOBUF_EXPORT
-void WriteLengthDelimited(uint32 num, StringPiece val, std::string* s);
+PROTOBUF_EXPORT void WriteVarint(uint32_t num, uint64_t val, std::string* s);
+PROTOBUF_EXPORT void WriteLengthDelimited(uint32_t num, StringPiece val,
+                                          std::string* s);
 // Inline because it is just forwarding to s->WriteVarint
-inline void WriteVarint(uint32 num, uint64 val, UnknownFieldSet* s);
-inline void WriteLengthDelimited(uint32 num, StringPiece val,
+inline void WriteVarint(uint32_t num, uint64_t val, UnknownFieldSet* s);
+inline void WriteLengthDelimited(uint32_t num, StringPiece val,
                                  UnknownFieldSet* s);
 
 
-// ParseContext contains state that needs to be preserved across buffer seams.
-
-class ParseContext;
-
-// The parser works by composing elementary parse functions, that are generated
-// by the compiler, together to perform the full parse. To accomplish this the
-// functionality of the elementary parse function is slightly increased which
-// allows it to become composable.
-
-// The basic abstraction ParseContext is designed for is a slight modification
+// The basic abstraction the parser is designed for is a slight modification
 // of the ZeroCopyInputStream (ZCIS) abstraction. A ZCIS presents a serialized
 // stream as a series of buffers that concatenate to the full stream.
 // Pictorially a ZCIS presents a stream in chunks like so
@@ -79,11 +82,11 @@ class ParseContext;
 //                                          chunk 3 [--------------]
 //
 // Where the '-' represent the bytes which are vertically lined up with the
-// bytes of the stream.
-// ParseContext requires its input to be presented similarily with the extra
-// property that the last kSlopBytes of a chunk overlaps with the first
-// kSlopBytes of the next chunk, or if there is no next chunk at least its still
-// valid to read those bytes. Again, pictorially, we now have
+// bytes of the stream. The proto parser requires its input to be presented
+// similarly with the extra
+// property that each chunk has kSlopBytes past its end that overlaps with the
+// first kSlopBytes of the next chunk, or if there is no next chunk at least its
+// still valid to read those bytes. Again, pictorially, we now have
 //
 // [---------------------------------------------------------------]
 // [-------------------....] chunk 1
@@ -99,755 +102,919 @@ class ParseContext;
 //
 // The reason for this, admittedly, unconventional invariant is to ruthlessly
 // optimize the protobuf parser. Having an overlap helps in two important ways.
-// Firstly it alleviates having to performing bounds checks, if a piece of code
-// will never read more than kSlopBytes. Secondly, and more importantly, the
-// protobuf wireformat is such that there is always a fresh start of a tag
-// within kSlopBytes. This allows the parser to exit parsing a chunk leaving
-// the parse on a position inside the overlap where a fresh tag starts.
+// Firstly it alleviates having to performing bounds checks if a piece of code
+// is guaranteed to not read more than kSlopBytes. Secondly, and more
+// importantly, the protobuf wireformat is such that reading a key/value pair is
+// always less than 16 bytes. This removes the need to change to next buffer in
+// the middle of reading primitive values. Hence there is no need to store and
+// load the current position.
 
-// The elementary parse function has the following signature
-
-typedef const char* (*ParseFunc)(const char* ptr, const char* end, void* object,
-                                 ParseContext* ctx);
-
-// which parses the serialized data stored in the range [ptr, end) into object.
-// A parse function together with its object forms a callable closure.
-struct ParseClosure {
-  ParseFunc func;
-  void* object;
-
-  // Pre-conditions
-  //   ptr < end is a non-empty range where ptr points to the start of a tag
-  //     and it's okay to read the bytes in [end, end + kSlopBytes).
-  //     Which will contain the bytes of the next chunk if the stream continues,
-  //     or undefined in which case the parse will be guaranteed to fail.
-  //
-  // Post-conditions
-  //   Parsed all tag/value pairs starting before end or if a group end
-  //   tag is encountered returns the pointer to that tag.
-  //   If a group end is encountered it verifies it matches the one that was
-  //   pushed and the stack is popped.
-  //   Otherwise it will parses the entire range pushing if end is inside one
-  //   of the children those are pushed on the stack.
-  //
-  //   If an element is popped from the stack it ended on the correct end group
-  //   returns pointer after end-group tag (posibly in overlap, but the start
-  //   of end-group tag will be before end).
-  //   If the stack is the same or deeper, returns pointer in overlap region
-  //   (end <= retval < end + kSlopBytes).
-  //   All tag/value pairs between in [begin, retval) are parsed and retval
-  //   points to start of a tag.
-  PROTOBUF_ALWAYS_INLINE  // Don't pay for extra stack frame in debug mode
-      const char*
-      operator()(const char* ptr, const char* end, ParseContext* ctx) {
-    GOOGLE_DCHECK(ptr < end);
-    return func(ptr, end, object, ctx);
-  }
-};
-
-// To fully parse a stream, a driver loop repeatedly calls the parse function
-// at the top of the stack, popping and resume parsing the parent message
-// according to the recursive structure of the wireformat. This loop will also
-// need to provide new buffer chunks and align the ptr correctly over the seams.
-// The point of this framework is that chunk refresh logic is located in the
-// outer loop, while the inner loop is almost free of it. The two code paths in
-// the parse code dealing with seams are located in fallback paths whose checks
-// are folded with input limit checks that are necessary anyway. In other words,
-// all the parser code that deals with seams is located in what would otherwise
-// be error paths of a parser that wouldn't need to deal with seams.
-
-class PROTOBUF_EXPORT ParseContext {
+class PROTOBUF_EXPORT EpsCopyInputStream {
  public:
-  enum {
-    // Tag is atmost 5 bytes, varint is atmost 10 resulting in 15 bytes. We
-    // choose
-    // 16 bytes for the obvious reason of alignment.
-    kSlopBytes = 16,
-    // Inlined stack size
-    kInlinedDepth = 15,
-  };
+  enum { kSlopBytes = 16, kMaxCordBytesToCopy = 512 };
 
-  // Arghh!!! here be tech-debt dragons
-  struct ExtraParseData {
-    const DescriptorPool* pool = nullptr;
-    MessageFactory* factory = nullptr;
+  explicit EpsCopyInputStream(bool enable_aliasing)
+      : aliasing_(enable_aliasing ? kOnPatch : kNoAliasing) {}
 
-    // payload is used for MessageSetItem and maps
-    std::string payload;
-    bool (*parse_map)(const char* begin, const char* end, void* map_field,
-                      ParseContext* ctx);
-
-    void SetEnumValidator(bool (*validator)(int), void* unknown,
-                          int field_num) {
-      enum_validator = validator;
-      unknown_fields = unknown;
-      field_number = field_num;
+  void BackUp(const char* ptr) {
+    GOOGLE_DCHECK(ptr <= buffer_end_ + kSlopBytes);
+    int count;
+    if (next_chunk_ == buffer_) {
+      count = static_cast<int>(buffer_end_ + kSlopBytes - ptr);
+    } else {
+      count = size_ + static_cast<int>(buffer_end_ - ptr);
     }
-    void SetEnumValidatorArg(bool (*validator)(const void*, int),
-                             const void* arg, void* unknown, int field_num) {
-      arg_enum_validator = {validator, arg};
-      unknown_fields = unknown;
-      field_number = field_num;
-    }
-    template <typename Unknown>
-    bool ValidateEnum(int val) const {
-      if (enum_validator(val)) return true;
-      WriteVarint(field_number, val, static_cast<Unknown*>(unknown_fields));
-      return false;
-    }
-    template <typename Unknown>
-    bool ValidateEnumArg(int val) const {
-      if (arg_enum_validator(val)) return true;
-      WriteVarint(field_number, val, static_cast<Unknown*>(unknown_fields));
-      return false;
-    }
-
-    void SetFieldName(const void* name) {
-      unknown_fields = const_cast<void*>(name);
-    }
-    const char* FieldName() const {
-      return static_cast<const char*>(unknown_fields);
-    }
-
-    union {
-      bool (*enum_validator)(int);
-      struct {
-        bool operator()(int val) const { return validator(arg, val); }
-        bool (*validator)(const void*, int);
-        const void* arg;
-      } arg_enum_validator;
-    };
-    void* unknown_fields;
-    int field_number;
-    // 0 means no aliasing. If not zero aliasing is the delta between the
-    // ptr and the buffer that needs to be aliased. If the value is
-    // kNoDelta (1) this means delta is actually 0 (we're working directly in
-    // the buffer).
-    enum { kNoDelta = 1 };
-    std::uintptr_t aliasing = 0;
-  };
-
-  ExtraParseData& extra_parse_data() { return extra_parse_data_; }
-  const ExtraParseData& extra_parse_data() const { return extra_parse_data_; }
-
-  // Helpers to detect if a parse of length delimited field is completed.
-  bool AtLimit() const { return limit_ == 0; }
-  int32 CurrentLimit() const { return limit_; }
-
-  // Initializes ParseContext with a specific recursion limit (rec_limit)
-  explicit ParseContext(int rec_limit)
-      : depth_(rec_limit),
-        start_depth_(rec_limit),
-        stack_(inline_stack_ + kInlinedDepth - rec_limit),
-        inlined_depth_(std::max(0, rec_limit - kInlinedDepth)) {}
-
-  ~ParseContext() {
-    if (inlined_depth_ == -1) delete[] stack_;
+    if (count > 0) StreamBackUp(count);
   }
 
-  void StartParse(ParseClosure parser) { parser_ = parser; }
+  // If return value is negative it's an error
+  PROTOBUF_NODISCARD int PushLimit(const char* ptr, int limit) {
+    GOOGLE_DCHECK(limit >= 0 && limit <= INT_MAX - kSlopBytes);
+    // This add is safe due to the invariant above, because
+    // ptr - buffer_end_ <= kSlopBytes.
+    limit += static_cast<int>(ptr - buffer_end_);
+    limit_end_ = buffer_end_ + (std::min)(0, limit);
+    auto old_limit = limit_;
+    limit_ = limit;
+    return old_limit - limit;
+  }
 
-  // Parses a chunk of memory given the current state of parse context (ie.
-  // the active parser and stack) and overrun.
-  // Pre-condition:
-  //   chunk_ is not empty.
-  //   limit_ > 0 (limit from begin) or -1 (no limit)
-  // Post-condition:
-  //   returns true on success with overrun_ptr adjusted to the new value, or
-  //   false is the parse is finished. False means either a parse failure or
-  //   or because the top-level was terminated on a 0 or end-group tag in which
-  //   case overrun points to the position after the ending tag. You can call
-  //   EndedOnTag() to find if the parse failed due to an error or ended on
-  //   terminating tag.
-  bool ParseRange(StringPiece chunk, int* overrun_ptr) {
-    GOOGLE_DCHECK(!chunk.empty());
-    int& overrun = *overrun_ptr;
-    GOOGLE_DCHECK(overrun >= 0);
-    if (overrun >= static_cast<int>(chunk.size())) {
-      // This case can easily happen in patch buffers and we like to inline
-      // this case.
-      overrun -= chunk.size();
+  PROTOBUF_NODISCARD bool PopLimit(int delta) {
+    if (PROTOBUF_PREDICT_FALSE(!EndedAtLimit())) return false;
+    limit_ = limit_ + delta;
+    // TODO(gerbens) We could remove this line and hoist the code to
+    // DoneFallback. Study the perf/bin-size effects.
+    limit_end_ = buffer_end_ + (std::min)(0, limit_);
+    return true;
+  }
+
+  PROTOBUF_NODISCARD const char* Skip(const char* ptr, int size) {
+    if (size <= buffer_end_ + kSlopBytes - ptr) {
+      return ptr + size;
+    }
+    return SkipFallback(ptr, size);
+  }
+  PROTOBUF_NODISCARD const char* ReadString(const char* ptr, int size,
+                                            std::string* s) {
+    if (size <= buffer_end_ + kSlopBytes - ptr) {
+      s->assign(ptr, size);
+      return ptr + size;
+    }
+    return ReadStringFallback(ptr, size, s);
+  }
+  PROTOBUF_NODISCARD const char* AppendString(const char* ptr, int size,
+                                              std::string* s) {
+    if (size <= buffer_end_ + kSlopBytes - ptr) {
+      s->append(ptr, size);
+      return ptr + size;
+    }
+    return AppendStringFallback(ptr, size, s);
+  }
+  // Implemented in arenastring.cc
+  PROTOBUF_NODISCARD const char* ReadArenaString(const char* ptr,
+                                                 ArenaStringPtr* s,
+                                                 Arena* arena);
+
+  template <typename Tag, typename T>
+  PROTOBUF_NODISCARD const char* ReadRepeatedFixed(const char* ptr,
+                                                   Tag expected_tag,
+                                                   RepeatedField<T>* out);
+
+  template <typename T>
+  PROTOBUF_NODISCARD const char* ReadPackedFixed(const char* ptr, int size,
+                                                 RepeatedField<T>* out);
+  template <typename Add>
+  PROTOBUF_NODISCARD const char* ReadPackedVarint(const char* ptr, Add add);
+
+  uint32_t LastTag() const { return last_tag_minus_1_ + 1; }
+  bool ConsumeEndGroup(uint32_t start_tag) {
+    bool res = last_tag_minus_1_ == start_tag;
+    last_tag_minus_1_ = 0;
+    return res;
+  }
+  bool EndedAtLimit() const { return last_tag_minus_1_ == 0; }
+  bool EndedAtEndOfStream() const { return last_tag_minus_1_ == 1; }
+  void SetLastTag(uint32_t tag) { last_tag_minus_1_ = tag - 1; }
+  void SetEndOfStream() { last_tag_minus_1_ = 1; }
+  bool IsExceedingLimit(const char* ptr) {
+    return ptr > limit_end_ &&
+           (next_chunk_ == nullptr || ptr - buffer_end_ > limit_);
+  }
+  bool AliasingEnabled() const { return aliasing_ != kNoAliasing; }
+  int BytesUntilLimit(const char* ptr) const {
+    return limit_ + static_cast<int>(buffer_end_ - ptr);
+  }
+  // Returns true if more data is available, if false is returned one has to
+  // call Done for further checks.
+  bool DataAvailable(const char* ptr) { return ptr < limit_end_; }
+
+ protected:
+  // Returns true is limit (either an explicit limit or end of stream) is
+  // reached. It aligns *ptr across buffer seams.
+  // If limit is exceeded it returns true and ptr is set to null.
+  bool DoneWithCheck(const char** ptr, int d) {
+    GOOGLE_DCHECK(*ptr);
+    if (PROTOBUF_PREDICT_TRUE(*ptr < limit_end_)) return false;
+    int overrun = static_cast<int>(*ptr - buffer_end_);
+    GOOGLE_DCHECK_LE(overrun, kSlopBytes);  // Guaranteed by parse loop.
+    if (overrun ==
+        limit_) {  //  No need to flip buffers if we ended on a limit.
+      // If we actually overrun the buffer and next_chunk_ is null. It means
+      // the stream ended and we passed the stream end.
+      if (overrun > 0 && next_chunk_ == nullptr) *ptr = nullptr;
       return true;
     }
-    auto res = ParseRangeWithLimit(chunk.begin() + overrun, chunk.end());
-    overrun = res.second;
-    return res.first;
+    auto res = DoneFallback(overrun, d);
+    *ptr = res.first;
+    return res.second;
   }
 
-  bool ValidEnd(int overrun) { return depth_ == start_depth_ && overrun == 0; }
-  bool EndedOnTag() const { return last_tag_minus_1_ != 0; }
-  uint32 LastTag() const { return last_tag_minus_1_ + 1; }
-
-  // Generically verifies for the slop region [begin, begin + kSlopBytes) if
-  // the parse will be terminated by 0 or end-group tag. If true than you can
-  // safely parse the slop region without having to load more data.
-  bool ParseEndsInSlopRegion(const char* begin, int overrun) const;
-
-  // Should only be called by Parse code.
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Fast path helpers. These helpers maintain the state in parse context
-  // through recursive calls. The whole design is to make this as minimal as
-  // possible. Only recursion depth and limit are maintained at every recursion.
-  //////////////////////////////////////////////////////////////////////////////
-
-  bool ParseExactRange(ParseClosure parser, const char* begin,
-                       const char* end) {
-    if (PROTOBUF_PREDICT_FALSE(--depth_ < 0)) return false;
-    auto old_limit = limit_;
-    limit_ = 0;
-    auto ptr = begin;
-    if (ptr < end) ptr = parser(ptr, end, this);
-    if (ptr != end || EndedOnTag()) return false;
-    limit_ = old_limit;
-    ++depth_;
-    return true;
-  }
-
-  // Returns a pair of the pointer the parse is left and a boolean indicating
-  // if the group is still continuing.
-  std::pair<const char*, bool> ParseGroup(uint32 tag, ParseClosure parser,
-                                          const char* begin, const char* end,
-                                          int* depth) {
-    if (PROTOBUF_PREDICT_FALSE(--depth_ < 0)) return {};
-    *depth = depth_;
-    auto ptr = begin;
-    if (ptr < end) ptr = parser(ptr, end, this);
-    if (ptr == nullptr) return {};
-    if (!EndedOnTag()) {
-      // The group hasn't been terminated by an end-group and thus continues,
-      // hence it must have ended because it crossed "end".
-      GOOGLE_DCHECK(ptr >= end);
-      return {ptr, true};
-    }
-    // Verify that the terminating tag matches the start group tag. As an extra
-    // subtlety it could have been terminated by an end-group tag but in a
-    // length delimited sub field of the group. So we must also check that depth
-    // matches, if it doesn't match it means a length delimited subfield got
-    // terminated by an end group which is an error.
-    if (tag != last_tag_minus_1_ || *depth != depth_) return {};
-    last_tag_minus_1_ = 0;  // It must always be cleared.
-    ++depth_;
-    return {ptr, false};
-  }
-
-  void EndGroup(uint32 tag) {
-    GOOGLE_DCHECK(tag == 0 || (tag & 7) == 4);
-    // Because of the above assert last_tag_minus_1 is never set to 0, and the
-    // caller can verify the child parser was terminated, by comparing to 0.
-    last_tag_minus_1_ = tag - 1;
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Slow path helper functions when a child crosses the "end" of range.
-  // This is either an error (if limit_ = 0) OR we need to store state.
-  // These functions manage the task of updating the state correctly.
-  //////////////////////////////////////////////////////////////////////////////
-
-  // Helper function called by generated code in case of a length delimited
-  // field that is going to cross the boundary.
-  const char* StoreAndTailCall(const char* ptr, const char* end,
-                               ParseClosure current_parser,
-                               ParseClosure child_parser, int32 size) {
-    // At this point ptr could be past end. Hence a malicious size could
-    // overflow.
-    int64 safe_new_limit = size - static_cast<int64>(end - ptr);
-    if (safe_new_limit > INT_MAX) return nullptr;
-    GOOGLE_DCHECK(safe_new_limit > 0);  // only call this if it's crossing end
-    int32 new_limit = static_cast<int32>(safe_new_limit);
-    int32 delta;
-    if (limit_ != -1) {
-      if (PROTOBUF_PREDICT_FALSE(new_limit > limit_)) return nullptr;
-      delta = limit_ - new_limit;
+  const char* InitFrom(StringPiece flat) {
+    overall_limit_ = 0;
+    if (flat.size() > kSlopBytes) {
+      limit_ = kSlopBytes;
+      limit_end_ = buffer_end_ = flat.data() + flat.size() - kSlopBytes;
+      next_chunk_ = buffer_;
+      if (aliasing_ == kOnPatch) aliasing_ = kNoDelta;
+      return flat.data();
     } else {
-      delta = -1;  // special value
+      std::memcpy(buffer_, flat.data(), flat.size());
+      limit_ = 0;
+      limit_end_ = buffer_end_ = buffer_ + flat.size();
+      next_chunk_ = nullptr;
+      if (aliasing_ == kOnPatch) {
+        aliasing_ = reinterpret_cast<std::uintptr_t>(flat.data()) -
+                    reinterpret_cast<std::uintptr_t>(buffer_);
+      }
+      return buffer_;
     }
-    limit_ = new_limit;
-    // Save the current closure on the stack.
-    if (!Push(current_parser, delta)) return nullptr;
-    // Ensure the active state is set correctly.
-    parser_ = child_parser;
-    return ptr < end ? child_parser(ptr, end, this) : ptr;
   }
 
-  // Helper function for a child group that has crossed the boundary.
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif  // defined(__GNUC__) && !defined(__clang__)
-  bool StoreGroup(ParseClosure current_parser, ParseClosure child_parser,
-                  int depth, uint32 tag) {
-    // The group must still read an end-group tag, so it can't be at a limit.
-    // By having this check we ensure that when limit_ = 0 we can't end in some
-    // deeper recursion. Hence ParseExactRange does not need to check for
-    // matching depth.
-    if (limit_ == 0) return false;
-    if (depth == depth_) {
-      // This child group is the active parser. The fast path code assumes
-      // everything will be parsed within a chunk and doesn't modify
-      // parse context in this case. We need to make the child parser active.
-      parser_ = child_parser;
-    }
-    if (PROTOBUF_PREDICT_FALSE(depth < inlined_depth_)) SwitchStack();
-    stack_[depth] = {current_parser, static_cast<int32>(~(tag >> 3))};
-    return true;
+  const char* InitFrom(io::ZeroCopyInputStream* zcis);
+
+  const char* InitFrom(io::ZeroCopyInputStream* zcis, int limit) {
+    if (limit == -1) return InitFrom(zcis);
+    overall_limit_ = limit;
+    auto res = InitFrom(zcis);
+    limit_ = limit - static_cast<int>(buffer_end_ - res);
+    limit_end_ = buffer_end_ + (std::min)(0, limit_);
+    return res;
   }
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif  // defined(__GNUC__) && !defined(__clang__)
 
  private:
-  // This the "active" or current parser.
-  ParseClosure parser_;
+  const char* limit_end_;  // buffer_end_ + min(limit_, 0)
+  const char* buffer_end_;
+  const char* next_chunk_;
+  int size_;
+  int limit_;  // relative to buffer_end_;
+  io::ZeroCopyInputStream* zcis_ = nullptr;
+  char buffer_[2 * kSlopBytes] = {};
+  enum { kNoAliasing = 0, kOnPatch = 1, kNoDelta = 2 };
+  std::uintptr_t aliasing_ = kNoAliasing;
+  // This variable is used to communicate how the parse ended, in order to
+  // completely verify the parsed data. A wire-format parse can end because of
+  // one of the following conditions:
+  // 1) A parse can end on a pushed limit.
+  // 2) A parse can end on End Of Stream (EOS).
+  // 3) A parse can end on 0 tag (only valid for toplevel message).
+  // 4) A parse can end on an end-group tag.
+  // This variable should always be set to 0, which indicates case 1. If the
+  // parse terminated due to EOS (case 2), it's set to 1. In case the parse
+  // ended due to a terminating tag (case 3 and 4) it's set to (tag - 1).
+  // This var doesn't really belong in EpsCopyInputStream and should be part of
+  // the ParseContext, but case 2 is most easily and optimally implemented in
+  // DoneFallback.
+  uint32_t last_tag_minus_1_ = 0;
+  int overall_limit_ = INT_MAX;  // Overall limit independent of pushed limits.
+  // Pretty random large number that seems like a safe allocation on most
+  // systems. TODO(gerbens) do we need to set this as build flag?
+  enum { kSafeStringSize = 50000000 };
+
+  // Advances to next buffer chunk returns a pointer to the same logical place
+  // in the stream as set by overrun. Overrun indicates the position in the slop
+  // region the parse was left (0 <= overrun <= kSlopBytes). Returns true if at
+  // limit, at which point the returned pointer maybe null if there was an
+  // error. The invariant of this function is that it's guaranteed that
+  // kSlopBytes bytes can be accessed from the returned ptr. This function might
+  // advance more buffers than one in the underlying ZeroCopyInputStream.
+  std::pair<const char*, bool> DoneFallback(int overrun, int depth);
+  // Advances to the next buffer, at most one call to Next() on the underlying
+  // ZeroCopyInputStream is made. This function DOES NOT match the returned
+  // pointer to where in the slop region the parse ends, hence no overrun
+  // parameter. This is useful for string operations where you always copy
+  // to the end of the buffer (including the slop region).
+  const char* Next();
+  // overrun is the location in the slop region the stream currently is
+  // (0 <= overrun <= kSlopBytes). To prevent flipping to the next buffer of
+  // the ZeroCopyInputStream in the case the parse will end in the last
+  // kSlopBytes of the current buffer. depth is the current depth of nested
+  // groups (or negative if the use case does not need careful tracking).
+  inline const char* NextBuffer(int overrun, int depth);
+  const char* SkipFallback(const char* ptr, int size);
+  const char* AppendStringFallback(const char* ptr, int size, std::string* str);
+  const char* ReadStringFallback(const char* ptr, int size, std::string* str);
+  bool StreamNext(const void** data) {
+    bool res = zcis_->Next(data, &size_);
+    if (res) overall_limit_ -= size_;
+    return res;
+  }
+  void StreamBackUp(int count) {
+    zcis_->BackUp(count);
+    overall_limit_ += count;
+  }
+
+  template <typename A>
+  const char* AppendSize(const char* ptr, int size, const A& append) {
+    int chunk_size = buffer_end_ + kSlopBytes - ptr;
+    do {
+      GOOGLE_DCHECK(size > chunk_size);
+      if (next_chunk_ == nullptr) return nullptr;
+      append(ptr, chunk_size);
+      ptr += chunk_size;
+      size -= chunk_size;
+      // TODO(gerbens) Next calls NextBuffer which generates buffers with
+      // overlap and thus incurs cost of copying the slop regions. This is not
+      // necessary for reading strings. We should just call Next buffers.
+      if (limit_ <= kSlopBytes) return nullptr;
+      ptr = Next();
+      if (ptr == nullptr) return nullptr;  // passed the limit
+      ptr += kSlopBytes;
+      chunk_size = buffer_end_ + kSlopBytes - ptr;
+    } while (size > chunk_size);
+    append(ptr, size);
+    return ptr + size;
+  }
+
+  // AppendUntilEnd appends data until a limit (either a PushLimit or end of
+  // stream. Normal payloads are from length delimited fields which have an
+  // explicit size. Reading until limit only comes when the string takes
+  // the place of a protobuf, ie RawMessage/StringRawMessage, lazy fields and
+  // implicit weak messages. We keep these methods private and friend them.
+  template <typename A>
+  const char* AppendUntilEnd(const char* ptr, const A& append) {
+    if (ptr - buffer_end_ > limit_) return nullptr;
+    while (limit_ > kSlopBytes) {
+      size_t chunk_size = buffer_end_ + kSlopBytes - ptr;
+      append(ptr, chunk_size);
+      ptr = Next();
+      if (ptr == nullptr) return limit_end_;
+      ptr += kSlopBytes;
+    }
+    auto end = buffer_end_ + limit_;
+    GOOGLE_DCHECK(end >= ptr);
+    append(ptr, end - ptr);
+    return end;
+  }
+
+  PROTOBUF_NODISCARD const char* AppendString(const char* ptr,
+                                              std::string* str) {
+    return AppendUntilEnd(
+        ptr, [str](const char* p, ptrdiff_t s) { str->append(p, s); });
+  }
+  friend class ImplicitWeakMessage;
+};
+
+using LazyEagerVerifyFnType = const char* (*)(const char* ptr,
+                                              ParseContext* ctx);
+using LazyEagerVerifyFnRef = std::remove_pointer<LazyEagerVerifyFnType>::type&;
+
+// ParseContext holds all data that is global to the entire parse. Most
+// importantly it contains the input stream, but also recursion depth and also
+// stores the end group tag, in case a parser ended on a endgroup, to verify
+// matching start/end group tags.
+class PROTOBUF_EXPORT ParseContext : public EpsCopyInputStream {
+ public:
+  struct Data {
+    const DescriptorPool* pool = nullptr;
+    MessageFactory* factory = nullptr;
+    Arena* arena = nullptr;
+  };
+
+  template <typename... T>
+  ParseContext(int depth, bool aliasing, const char** start, T&&... args)
+      : EpsCopyInputStream(aliasing), depth_(depth) {
+    *start = InitFrom(std::forward<T>(args)...);
+  }
+
+  void TrackCorrectEnding() { group_depth_ = 0; }
+
+  bool Done(const char** ptr) { return DoneWithCheck(ptr, group_depth_); }
+
+  int depth() const { return depth_; }
+
+  Data& data() { return data_; }
+  const Data& data() const { return data_; }
+
+  const char* ParseMessage(MessageLite* msg, const char* ptr);
+
+  // Spawns a child parsing context that inherits key properties. New context
+  // inherits the following:
+  // --depth_, data_, check_required_fields_, lazy_parse_mode_
+  // The spawned context always disables aliasing (different input).
+  template <typename... T>
+  ParseContext Spawn(const char** start, T&&... args) {
+    ParseContext spawned(depth_, false, start, std::forward<T>(args)...);
+    // Transfer key context states.
+    spawned.data_ = data_;
+    return spawned;
+  }
+
+  // This overload supports those few cases where ParseMessage is called
+  // on a class that is not actually a proto message.
+  // TODO(jorg): Eliminate this use case.
+  template <typename T,
+            typename std::enable_if<!std::is_base_of<MessageLite, T>::value,
+                                    bool>::type = true>
+  PROTOBUF_NODISCARD const char* ParseMessage(T* msg, const char* ptr);
+
+  template <typename T>
+  PROTOBUF_NODISCARD PROTOBUF_NDEBUG_INLINE const char* ParseGroup(
+      T* msg, const char* ptr, uint32_t tag) {
+    if (--depth_ < 0) return nullptr;
+    group_depth_++;
+    ptr = msg->_InternalParse(ptr, this);
+    group_depth_--;
+    depth_++;
+    if (PROTOBUF_PREDICT_FALSE(!ConsumeEndGroup(tag))) return nullptr;
+    return ptr;
+  }
+
+ private:
+  // Out-of-line routine to save space in ParseContext::ParseMessage<T>
+  //   int old;
+  //   ptr = ReadSizeAndPushLimitAndDepth(ptr, &old)
+  // is equivalent to:
+  //   int size = ReadSize(&ptr);
+  //   if (!ptr) return nullptr;
+  //   int old = PushLimit(ptr, size);
+  //   if (--depth_ < 0) return nullptr;
+  PROTOBUF_NODISCARD const char* ReadSizeAndPushLimitAndDepth(const char* ptr,
+                                                              int* old_limit);
+
   // The context keeps an internal stack to keep track of the recursive
   // part of the parse state.
   // Current depth of the active parser, depth counts down.
   // This is used to limit recursion depth (to prevent overflow on malicious
   // data), but is also used to index in stack_ to store the current state.
   int depth_;
-  int32 limit_ = -1;
-
-  // A state is on the stack to save it, in order to continue parsing after
-  // child is done.
-  struct State {
-    ParseClosure parser;
-    // This element describes how to adjust the parse state after finishing
-    // the child. If the child was a length delimited field, delta describes
-    // the limit relative to the child's limit (hence >= 0).
-    // If child was a sub group limit contains ~field num (hence < 0) in order
-    // to verify the group ended on a correct end tag. No limit adjusting.
-    // Note above the sign of delta is meaningful
-    int32 delta_or_group_num;
-  };
-  int start_depth_;
-  // This is used to return the end group (or 0 tag) that terminated the parse.
-  // Actually it contains last_tag minus 1. Which is either the start group tag
-  // or -1. This member should always be zero and the caller should immediately
-  // check this member to verify what state the parser ended on and clear its
-  // value.
-  uint32 last_tag_minus_1_ = 0;
-
-  ExtraParseData extra_parse_data_;
-  State* stack_;
-  State inline_stack_[kInlinedDepth];
-  int inlined_depth_;
-
-  bool Push(ParseClosure parser, int32 delta) {
-    GOOGLE_DCHECK(delta >= -1);  // Make sure it's a valid len-delim
-    if (PROTOBUF_PREDICT_FALSE(--depth_ < 0)) return false;
-    if (PROTOBUF_PREDICT_FALSE(depth_ < inlined_depth_)) SwitchStack();
-    stack_[depth_] = {parser, delta};
-    return true;
-  }
-
-  State Pop() { return stack_[depth_++]; }
-
-  void SwitchStack();
-
-  // Parses a chunk of memory given the current state of parse context (ie.
-  // the active parser and stack).
-  // Pre-condition:
-  //   begin < end (non-empty range)
-  //   limit_ > 0 (limit from begin) or -1 (no limit)
-  // Post-condition:
-  //   returns either (true, overrun) for a successful parse that can continue,
-  //   or (false, overrun) for a parse that can't continue. Either due to a
-  //   corrupt data (parse failure) or because the top-level was terminated on a
-  //   0 or end-group tag in which case overrun points to the position after the
-  //   end.
-  std::pair<bool, int> ParseRangeWithLimit(const char* begin, const char* end);
+  // Unfortunately necessary for the fringe case of ending on 0 or end-group tag
+  // in the last kSlopBytes of a ZeroCopyInputStream chunk.
+  int group_depth_ = INT_MIN;
+  Data data_;
 };
 
-// This is wrapper to parse a sequence of buffers without the overlap property,
-// like the sequence given by ZeroCopyInputStream (ZCIS) or ByteSource. This is
-// done by copying data around the seams, hence the name EpsCopyParser.
-// Pictorially if ZCIS presents a stream in chunks like so
-// [---------------------------------------------------------------]
-// [---------------------] chunk 1
-//                      [----------------------------] chunk 2
-//                                          chunk 3 [--------------]
-// where '-' depicts bytes of the stream or chunks vertically alligned with the
-// corresponding bytes between stream and chunk.
-//
-// This class will present chunks to the ParseContext like this
-// [-----------------....] chunk 1
-//                  [----....] patch
-//                      [------------------------....] chunk 2
-//                                              [----....] patch
-//                                          chunk 3 [----------....]
-//                                                      patch [----****]
-// by using a fixed size buffer to patch over the seams. This requires
-// copying of an "epsilon" neighboorhood around the seams. In the picture above
-// dots mean bytes beyond the end of the new chunks. Each chunk is kSlopBytes
-// smalller as its original chunk (above depicted as 4 dots) and the number of
-// of chunks is doubled because each seam in the original stream introduces a
-// new patch.
-//
-// The algorithm is simple but not entirely trivial. Two complications arise
-// 1) The original chunk could be less than kSlopBytes. Hence we can't simply
-// chop the last kSlopBytes of a chunk.
-// 2) In some (infrequent) use cases, we don't necessarily parse unitl the end
-// of a stream, but instead the parse is terminated by 0 or end-group tag. If
-// this is allowed we must take care to leave the underlying stream at a
-// position precisely after the terminating tag. If this happens in the slop
-// region of a buffer we will already have loaded the next buffer. Not all
-// streams allow backing up to a previous buffer blocking us from leaving the
-// stream in the proper state. If terminating on 0 is allowed (in the old parser
-// this means a call to MergePartialFromCodedStream without a subsequent call to
-// ConsumedEntireMessage), this algorithm needs to ensure the parse won't end
-// in the slop region before moving the next buffer.
-//
-// The core idea of EpsCopyParser is to parse ranges except the last kSlopBytes
-// and store those in the patch buffer, until the next parse provides additional
-// data to fill the slop region. So parsing a range means first parsing the slop
-// bytes of the previous range using the new range to provide slop bytes for the
-// patch, followed by parsing the actual range except the last kSlopBytes and
-// store those. If no more data is available a call to Done finishes the parse
-// by parsing the remaining slopbytes.
-//
-// In order to deal with problem 1, we need to deal with the case that a new
-// chunk can be less or equal than kSlopBytes big. We can just copy the chunk
-// to the end and return (buffer, chunk->size). Pictorially
-// [--------] chunk 1
-//         [--] chunk 2
-//           [---] chunk 3
-// will become
-// [----....] chunk 1
-//     [--....] patch (not full range of the patch buffer, only two hyphens)
-//         [--] chunk 2 (too small so never parsed directly)
-//       [---....] patch (not full range of the buffer, only three hyphens)
-//           [---] chunk 3 (too small so never parsed directly)
-//          [----****] patch (full range, last bytes are garbage)
-// Because of this the source (the dots in above) can overlap with the
-// destination buffer and so we have to use memmove.
-//
-// To solve problem 2, we use a generic parser together with knowledge of the
-// nesting from the side stack to verify if the parse will be terminated in the
-// slop region. If it terminates inside the slop region, we just parse it as
-// well. See ParseEndsInSlopRegion in ParseContext for the implementation. This
-// is only done if ensure_non_negative_skip is true, if it's false Skip() could
-// return a negative number.
-template <bool ensure_non_negative_skip>
-class EpsCopyParser {
- public:
-  EpsCopyParser(ParseClosure parser, ParseContext* ctx) : ctx_(ctx) {
-    ctx_->StartParse(parser);
+template <uint32_t tag>
+bool ExpectTag(const char* ptr) {
+  if (tag < 128) {
+    return *ptr == static_cast<char>(tag);
+  } else {
+    static_assert(tag < 128 * 128, "We only expect tags for 1 or 2 bytes");
+    char buf[2] = {static_cast<char>(tag | 0x80), static_cast<char>(tag >> 7)};
+    return std::memcmp(ptr, buf, 2) == 0;
   }
+}
 
-  // Parse the bytes as provided by the non-empty range.
-  // Returns true on a successful parse ready to accept more data, if there is
-  // no more data call Done() to finish the parse.
-  // Returns false if the parse is terminated. Termination is either due to a
-  // parse error or due to termination on an end-group or 0 tag. You can call
-  // EndedOnTag() on the underlying ParseContext to find out if the parse ended
-  // correctly on a terminating tag.
-  bool Parse(StringPiece range) {
-    GOOGLE_DCHECK(!range.empty());
-    auto size = range.size();
-    if (size > kSlopBytes) {
-      // The buffer is large enough to be able to parse the (size - kSlopBytes)
-      // prefix directly. However we still need to parse the data in buffer_,
-      // that holds the slop region of the previous buffer.
-      if (overrun_ == kSlopBytes) {
-        // We overrun the whole slop region of the previous buffer.
-        // Optimization, we can skip the patch buffer.
-        overrun_ = 0;
-      } else {
-        std::memcpy(buffer_ + kSlopBytes, range.begin(), kSlopBytes);
-        if (!ParseRange({buffer_, kSlopBytes}, 0)) return false;
+template <int>
+struct EndianHelper;
+
+template <>
+struct EndianHelper<1> {
+  static uint8_t Load(const void* p) { return *static_cast<const uint8_t*>(p); }
+};
+
+template <>
+struct EndianHelper<2> {
+  static uint16_t Load(const void* p) {
+    uint16_t tmp;
+    std::memcpy(&tmp, p, 2);
+    return little_endian::ToHost(tmp);
+  }
+};
+
+template <>
+struct EndianHelper<4> {
+  static uint32_t Load(const void* p) {
+    uint32_t tmp;
+    std::memcpy(&tmp, p, 4);
+    return little_endian::ToHost(tmp);
+  }
+};
+
+template <>
+struct EndianHelper<8> {
+  static uint64_t Load(const void* p) {
+    uint64_t tmp;
+    std::memcpy(&tmp, p, 8);
+    return little_endian::ToHost(tmp);
+  }
+};
+
+template <typename T>
+T UnalignedLoad(const char* p) {
+  auto tmp = EndianHelper<sizeof(T)>::Load(p);
+  T res;
+  memcpy(&res, &tmp, sizeof(T));
+  return res;
+}
+
+PROTOBUF_EXPORT
+std::pair<const char*, uint32_t> VarintParseSlow32(const char* p, uint32_t res);
+PROTOBUF_EXPORT
+std::pair<const char*, uint64_t> VarintParseSlow64(const char* p, uint32_t res);
+
+inline const char* VarintParseSlow(const char* p, uint32_t res, uint32_t* out) {
+  auto tmp = VarintParseSlow32(p, res);
+  *out = tmp.second;
+  return tmp.first;
+}
+
+inline const char* VarintParseSlow(const char* p, uint32_t res, uint64_t* out) {
+  auto tmp = VarintParseSlow64(p, res);
+  *out = tmp.second;
+  return tmp.first;
+}
+
+template <typename T>
+PROTOBUF_NODISCARD const char* VarintParse(const char* p, T* out) {
+  auto ptr = reinterpret_cast<const uint8_t*>(p);
+  uint32_t res = ptr[0];
+  if (!(res & 0x80)) {
+    *out = res;
+    return p + 1;
+  }
+  uint32_t byte = ptr[1];
+  res += (byte - 1) << 7;
+  if (!(byte & 0x80)) {
+    *out = res;
+    return p + 2;
+  }
+  return VarintParseSlow(p, res, out);
+}
+
+// Used for tags, could read up to 5 bytes which must be available.
+// Caller must ensure its safe to call.
+
+PROTOBUF_EXPORT
+std::pair<const char*, uint32_t> ReadTagFallback(const char* p, uint32_t res);
+
+// Same as ParseVarint but only accept 5 bytes at most.
+inline const char* ReadTag(const char* p, uint32_t* out,
+                           uint32_t /*max_tag*/ = 0) {
+  uint32_t res = static_cast<uint8_t>(p[0]);
+  if (res < 128) {
+    *out = res;
+    return p + 1;
+  }
+  uint32_t second = static_cast<uint8_t>(p[1]);
+  res += (second - 1) << 7;
+  if (second < 128) {
+    *out = res;
+    return p + 2;
+  }
+  auto tmp = ReadTagFallback(p, res);
+  *out = tmp.second;
+  return tmp.first;
+}
+
+// As above, but optimized to consume very few registers while still being fast,
+// ReadTagInlined is useful for callers that don't mind the extra code but would
+// like to avoid an extern function call causing spills into the stack.
+//
+// Two support routines for ReadTagInlined come first...
+template <class T>
+PROTOBUF_NODISCARD PROTOBUF_ALWAYS_INLINE constexpr T RotateLeft(
+    T x, int s) noexcept {
+  return static_cast<T>(x << (s & (std::numeric_limits<T>::digits - 1))) |
+         static_cast<T>(x >> ((-s) & (std::numeric_limits<T>::digits - 1)));
+}
+
+PROTOBUF_NODISCARD inline PROTOBUF_ALWAYS_INLINE uint64_t
+RotRight7AndReplaceLowByte(uint64_t res, const char& byte) {
+#if defined(__x86_64__) && defined(__GNUC__)
+  // This will only use one register for `res`.
+  // `byte` comes as a reference to allow the compiler to generate code like:
+  //
+  //   rorq    $7, %rcx
+  //   movb    1(%rax), %cl
+  //
+  // which avoids loading the incoming bytes into a separate register first.
+  asm("ror $7,%0\n\t"
+      "movb %1,%b0"
+      : "+r"(res)
+      : "m"(byte));
+#else
+  res = RotateLeft(res, -7);
+  res = res & ~0xFF;
+  res |= 0xFF & byte;
+#endif
+  return res;
+};
+
+inline PROTOBUF_ALWAYS_INLINE
+const char* ReadTagInlined(const char* ptr, uint32_t* out) {
+  uint64_t res = 0xFF & ptr[0];
+  if (PROTOBUF_PREDICT_FALSE(res >= 128)) {
+    res = RotRight7AndReplaceLowByte(res, ptr[1]);
+    if (PROTOBUF_PREDICT_FALSE(res & 0x80)) {
+      res = RotRight7AndReplaceLowByte(res, ptr[2]);
+      if (PROTOBUF_PREDICT_FALSE(res & 0x80)) {
+        res = RotRight7AndReplaceLowByte(res, ptr[3]);
+        if (PROTOBUF_PREDICT_FALSE(res & 0x80)) {
+          // Note: this wouldn't work if res were 32-bit,
+          // because then replacing the low byte would overwrite
+          // the bottom 4 bits of the result.
+          res = RotRight7AndReplaceLowByte(res, ptr[4]);
+          if (PROTOBUF_PREDICT_FALSE(res & 0x80)) {
+            // The proto format does not permit longer than 5-byte encodings for
+            // tags.
+            *out = 0;
+            return nullptr;
+          }
+          *out = static_cast<uint32_t>(RotateLeft(res, 28));
+#if defined(__GNUC__)
+          // Note: this asm statement prevents the compiler from
+          // trying to share the "return ptr + constant" among all
+          // branches.
+          asm("" : "+r"(ptr));
+#endif
+          return ptr + 5;
+        }
+        *out = static_cast<uint32_t>(RotateLeft(res, 21));
+        return ptr + 4;
       }
-      range.remove_suffix(kSlopBytes);
-    } else {
-      std::memcpy(buffer_ + kSlopBytes, range.begin(), size);
-      range = {buffer_, size};
+      *out = static_cast<uint32_t>(RotateLeft(res, 14));
+      return ptr + 3;
     }
-    if (!ParseRange(range, size - kSlopBytes)) return false;
-    std::memmove(buffer_, range.end(), kSlopBytes);
-    if (ensure_non_negative_skip &&
-        ctx_->ParseEndsInSlopRegion(buffer_, overrun_)) {
-      // We care about leaving the stream at the right place and the stream will
-      // indeed terminate, so just parse it.
-      auto res = ParseRange({buffer_, kSlopBytes}, size);
-      GOOGLE_DCHECK(!res);
-      return false;
+    *out = static_cast<uint32_t>(RotateLeft(res, 7));
+    return ptr + 2;
+  }
+  *out = static_cast<uint32_t>(res);
+  return ptr + 1;
+}
+
+// Decode 2 consecutive bytes of a varint and returns the value, shifted left
+// by 1. It simultaneous updates *ptr to *ptr + 1 or *ptr + 2 depending if the
+// first byte's continuation bit is set.
+// If bit 15 of return value is set (equivalent to the continuation bits of both
+// bytes being set) the varint continues, otherwise the parse is done. On x86
+// movsx eax, dil
+// and edi, eax
+// add eax, edi
+// adc [rsi], 1
+inline uint32_t DecodeTwoBytes(const char** ptr) {
+  uint32_t value = UnalignedLoad<uint16_t>(*ptr);
+  // Sign extend the low byte continuation bit
+  uint32_t x = static_cast<int8_t>(value);
+  value &= x;  // Mask out the high byte iff no continuation
+  // This add is an amazing operation, it cancels the low byte continuation bit
+  // from y transferring it to the carry. Simultaneously it also shifts the 7
+  // LSB left by one tightly against high byte varint bits. Hence value now
+  // contains the unpacked value shifted left by 1.
+  value += x;
+  // Use the carry to update the ptr appropriately.
+  *ptr += value < x ? 2 : 1;
+  return value;
+}
+
+// More efficient varint parsing for big varints
+inline const char* ParseBigVarint(const char* p, uint64_t* out) {
+  auto pnew = p;
+  auto tmp = DecodeTwoBytes(&pnew);
+  uint64_t res = tmp >> 1;
+  if (PROTOBUF_PREDICT_TRUE(static_cast<std::int16_t>(tmp) >= 0)) {
+    *out = res;
+    return pnew;
+  }
+  for (std::uint32_t i = 1; i < 5; i++) {
+    pnew = p + 2 * i;
+    tmp = DecodeTwoBytes(&pnew);
+    res += (static_cast<std::uint64_t>(tmp) - 2) << (14 * i - 1);
+    if (PROTOBUF_PREDICT_TRUE(static_cast<std::int16_t>(tmp) >= 0)) {
+      *out = res;
+      return pnew;
     }
-    return true;
   }
+  return nullptr;
+}
 
-  // Finish the parse by parsing the remaining data and verify success.
-  bool Done() {
-    return ParseRange({buffer_, kSlopBytes}, 0) && ctx_->ValidEnd(overrun_);
-  }
-
-  // If the parse was terminated by a end-group or 0 tag. Skip returns the
-  // offset where the parse left off relative to the start of the last range
-  // parsed.
-  // NOTE: This could be negative unless ensure_non_negative_skip is true.
-  int Skip() {
-    // The reason of ensure_non_negative_skip and ParseEndsInSlopRegion is that
-    // the following assert holds. Which implies the stream doesn't need to
-    // backup.
-    GOOGLE_DCHECK(!ensure_non_negative_skip || overrun_ >= 0);
-    return overrun_;
-  }
-
- private:
-  constexpr static int kSlopBytes = ParseContext::kSlopBytes;
-  // overrun_ stores where in the slop region of the previous parse the parse
-  // was left off. This is used to start the parse of the next region at the
-  // correct point. Initially overrun_ should be set to kSlopBytes which means
-  // that the parse starts at precisely the beginning of new buffer provided.
-  int overrun_ = kSlopBytes;
-  // The first kSlopBytes of buffer_ contains the slop region of the previous
-  // parsed region.
-  char buffer_[2 * kSlopBytes] = {};
-  ParseContext* ctx_;
-
-  bool ParseRange(StringPiece range, int delta) {
-    auto res = ctx_->ParseRange(range, &overrun_);
-    if (!res) overrun_ += delta;
+PROTOBUF_EXPORT
+std::pair<const char*, int32_t> ReadSizeFallback(const char* p, uint32_t first);
+// Used for tags, could read up to 5 bytes which must be available. Additionally
+// it makes sure the unsigned value fits a int32_t, otherwise returns nullptr.
+// Caller must ensure its safe to call.
+inline uint32_t ReadSize(const char** pp) {
+  auto p = *pp;
+  uint32_t res = static_cast<uint8_t>(p[0]);
+  if (res < 128) {
+    *pp = p + 1;
     return res;
   }
-};
+  auto x = ReadSizeFallback(p, res);
+  *pp = x.first;
+  return x.second;
+}
+
+// Some convenience functions to simplify the generated parse loop code.
+// Returning the value and updating the buffer pointer allows for nicer
+// function composition. We rely on the compiler to inline this.
+// Also in debug compiles having local scoped variables tend to generated
+// stack frames that scale as O(num fields).
+inline uint64_t ReadVarint64(const char** p) {
+  uint64_t tmp;
+  *p = VarintParse(*p, &tmp);
+  return tmp;
+}
+
+inline uint32_t ReadVarint32(const char** p) {
+  uint32_t tmp;
+  *p = VarintParse(*p, &tmp);
+  return tmp;
+}
+
+inline int64_t ReadVarintZigZag64(const char** p) {
+  uint64_t tmp;
+  *p = VarintParse(*p, &tmp);
+  return WireFormatLite::ZigZagDecode64(tmp);
+}
+
+inline int32_t ReadVarintZigZag32(const char** p) {
+  uint64_t tmp;
+  *p = VarintParse(*p, &tmp);
+  return WireFormatLite::ZigZagDecode32(static_cast<uint32_t>(tmp));
+}
+
+template <typename T, typename std::enable_if<
+                          !std::is_base_of<MessageLite, T>::value, bool>::type>
+PROTOBUF_NODISCARD const char* ParseContext::ParseMessage(T* msg,
+                                                          const char* ptr) {
+  int old;
+  ptr = ReadSizeAndPushLimitAndDepth(ptr, &old);
+  ptr = ptr ? msg->_InternalParse(ptr, this) : nullptr;
+  depth_++;
+  if (!PopLimit(old)) return nullptr;
+  return ptr;
+}
+
+template <typename Tag, typename T>
+const char* EpsCopyInputStream::ReadRepeatedFixed(const char* ptr,
+                                                  Tag expected_tag,
+                                                  RepeatedField<T>* out) {
+  do {
+    out->Add(UnalignedLoad<T>(ptr));
+    ptr += sizeof(T);
+    if (PROTOBUF_PREDICT_FALSE(ptr >= limit_end_)) return ptr;
+  } while (UnalignedLoad<Tag>(ptr) == expected_tag && (ptr += sizeof(Tag)));
+  return ptr;
+}
 
 // Add any of the following lines to debug which parse function is failing.
 
 #define GOOGLE_PROTOBUF_ASSERT_RETURN(predicate, ret) \
   if (!(predicate)) {                                  \
-    /*  raise(SIGINT); */                              \
-    /*  GOOGLE_LOG(ERROR) << "Parse failure"; */              \
+    /*  ::raise(SIGINT);  */                           \
+    /*  GOOGLE_LOG(ERROR) << "Parse failure";  */             \
     return ret;                                        \
   }
 
 #define GOOGLE_PROTOBUF_PARSER_ASSERT(predicate) \
-    GOOGLE_PROTOBUF_ASSERT_RETURN(predicate, nullptr)
+  GOOGLE_PROTOBUF_ASSERT_RETURN(predicate, nullptr)
 
 template <typename T>
-std::pair<const char*, bool> FieldParser(uint64 tag, ParseClosure parent,
-                                         T field_parser, const char* begin,
-                                         const char* end, ParseContext* ctx) {
-  auto ptr = begin;
-  uint32 number = tag >> 3;
-  if (PROTOBUF_PREDICT_FALSE(number == 0)) {
-    GOOGLE_PROTOBUF_ASSERT_RETURN(tag == 0, {});
-    // Special case scenario of 0 termination.
-    ctx->EndGroup(tag);
-    return {ptr, true};
+const char* EpsCopyInputStream::ReadPackedFixed(const char* ptr, int size,
+                                                RepeatedField<T>* out) {
+  GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+  int nbytes = buffer_end_ + kSlopBytes - ptr;
+  while (size > nbytes) {
+    int num = nbytes / sizeof(T);
+    int old_entries = out->size();
+    out->Reserve(old_entries + num);
+    int block_size = num * sizeof(T);
+    auto dst = out->AddNAlreadyReserved(num);
+#ifdef PROTOBUF_LITTLE_ENDIAN
+    std::memcpy(dst, ptr, block_size);
+#else
+    for (int i = 0; i < num; i++)
+      dst[i] = UnalignedLoad<T>(ptr + i * sizeof(T));
+#endif
+    size -= block_size;
+    if (limit_ <= kSlopBytes) return nullptr;
+    ptr = Next();
+    if (ptr == nullptr) return nullptr;
+    ptr += kSlopBytes - (nbytes - block_size);
+    nbytes = buffer_end_ + kSlopBytes - ptr;
   }
+  int num = size / sizeof(T);
+  int old_entries = out->size();
+  out->Reserve(old_entries + num);
+  int block_size = num * sizeof(T);
+  auto dst = out->AddNAlreadyReserved(num);
+#ifdef PROTOBUF_LITTLE_ENDIAN
+  std::memcpy(dst, ptr, block_size);
+#else
+  for (int i = 0; i < num; i++) dst[i] = UnalignedLoad<T>(ptr + i * sizeof(T));
+#endif
+  ptr += block_size;
+  if (size != block_size) return nullptr;
+  return ptr;
+}
+
+template <typename Add>
+const char* ReadPackedVarintArray(const char* ptr, const char* end, Add add) {
+  while (ptr < end) {
+    uint64_t varint;
+    ptr = VarintParse(ptr, &varint);
+    if (ptr == nullptr) return nullptr;
+    add(varint);
+  }
+  return ptr;
+}
+
+template <typename Add>
+const char* EpsCopyInputStream::ReadPackedVarint(const char* ptr, Add add) {
+  int size = ReadSize(&ptr);
+  GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+  int chunk_size = buffer_end_ - ptr;
+  while (size > chunk_size) {
+    ptr = ReadPackedVarintArray(ptr, buffer_end_, add);
+    if (ptr == nullptr) return nullptr;
+    int overrun = ptr - buffer_end_;
+    GOOGLE_DCHECK(overrun >= 0 && overrun <= kSlopBytes);
+    if (size - chunk_size <= kSlopBytes) {
+      // The current buffer contains all the information needed, we don't need
+      // to flip buffers. However we must parse from a buffer with enough space
+      // so we are not prone to a buffer overflow.
+      char buf[kSlopBytes + 10] = {};
+      std::memcpy(buf, buffer_end_, kSlopBytes);
+      GOOGLE_CHECK_LE(size - chunk_size, kSlopBytes);
+      auto end = buf + (size - chunk_size);
+      auto res = ReadPackedVarintArray(buf + overrun, end, add);
+      if (res == nullptr || res != end) return nullptr;
+      return buffer_end_ + (res - buf);
+    }
+    size -= overrun + chunk_size;
+    GOOGLE_DCHECK_GT(size, 0);
+    // We must flip buffers
+    if (limit_ <= kSlopBytes) return nullptr;
+    ptr = Next();
+    if (ptr == nullptr) return nullptr;
+    ptr += overrun;
+    chunk_size = buffer_end_ - ptr;
+  }
+  auto end = ptr + size;
+  ptr = ReadPackedVarintArray(ptr, end, add);
+  return end == ptr ? ptr : nullptr;
+}
+
+// Helper for verification of utf8
+PROTOBUF_EXPORT
+bool VerifyUTF8(StringPiece s, const char* field_name);
+
+inline bool VerifyUTF8(const std::string* s, const char* field_name) {
+  return VerifyUTF8(*s, field_name);
+}
+
+// All the string parsers with or without UTF checking and for all CTypes.
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* InlineGreedyStringParser(
+    std::string* s, const char* ptr, ParseContext* ctx);
+
+
+template <typename T>
+PROTOBUF_NODISCARD const char* FieldParser(uint64_t tag, T& field_parser,
+                                           const char* ptr, ParseContext* ctx) {
+  uint32_t number = tag >> 3;
+  GOOGLE_PROTOBUF_PARSER_ASSERT(number != 0);
   using WireType = internal::WireFormatLite::WireType;
   switch (tag & 7) {
     case WireType::WIRETYPE_VARINT: {
-      uint64 value;
-      ptr = io::Parse64(ptr, &value);
-      GOOGLE_PROTOBUF_ASSERT_RETURN(ptr != nullptr, {});
+      uint64_t value;
+      ptr = VarintParse(ptr, &value);
+      GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
       field_parser.AddVarint(number, value);
       break;
     }
     case WireType::WIRETYPE_FIXED64: {
-      uint64 value = io::UnalignedLoad<uint64>(ptr);
+      uint64_t value = UnalignedLoad<uint64_t>(ptr);
       ptr += 8;
       field_parser.AddFixed64(number, value);
       break;
     }
     case WireType::WIRETYPE_LENGTH_DELIMITED: {
-      int32 size;
-      ptr = io::ReadSize(ptr, &size);
-      GOOGLE_PROTOBUF_ASSERT_RETURN(ptr != nullptr, {});
-      ParseClosure child = field_parser.AddLengthDelimited(number, size);
-      if (size > end - ptr) {
-        return {ctx->StoreAndTailCall(ptr, end, parent, child, size), true};
-      }
-      auto newend = ptr + size;
-      GOOGLE_PROTOBUF_ASSERT_RETURN(ctx->ParseExactRange(child, ptr, newend),
-                                     {});
-      ptr = newend;
+      ptr = field_parser.ParseLengthDelimited(number, ptr, ctx);
+      GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
       break;
     }
     case WireType::WIRETYPE_START_GROUP: {
-      int depth;
-      ParseClosure child = field_parser.StartGroup(number);
-      auto res = ctx->ParseGroup(tag, child, ptr, end, &depth);
-      ptr = res.first;
-      GOOGLE_PROTOBUF_ASSERT_RETURN(ptr != nullptr, {});
-      if (res.second) {
-        GOOGLE_PROTOBUF_ASSERT_RETURN(
-            ctx->StoreGroup(parent, child, depth, tag), {});
-        return {ptr, true};
-      }
+      ptr = field_parser.ParseGroup(number, ptr, ctx);
+      GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
       break;
     }
     case WireType::WIRETYPE_END_GROUP: {
-      field_parser.EndGroup(number);
-      ctx->EndGroup(tag);
-      return {ptr, true};
+      GOOGLE_LOG(FATAL) << "Can't happen";
+      break;
     }
     case WireType::WIRETYPE_FIXED32: {
-      uint32 value = io::UnalignedLoad<uint32>(ptr);
+      uint32_t value = UnalignedLoad<uint32_t>(ptr);
       ptr += 4;
       field_parser.AddFixed32(number, value);
       break;
     }
     default:
-      GOOGLE_PROTOBUF_ASSERT_RETURN(false, {});
-  }
-  GOOGLE_DCHECK(ptr != nullptr);
-  return {ptr, false};
-}
-
-template <typename T>
-const char* WireFormatParser(ParseClosure parent, T field_parser,
-                             const char* begin, const char* end,
-                             ParseContext* ctx) {
-  auto ptr = begin;
-  while (ptr < end) {
-    uint32 tag;
-    ptr = io::Parse32(ptr, &tag);
-    GOOGLE_PROTOBUF_PARSER_ASSERT(ptr != nullptr);
-    auto res = FieldParser(tag, parent, field_parser, ptr, end, ctx);
-    ptr = res.first;
-    GOOGLE_PROTOBUF_PARSER_ASSERT(ptr != nullptr);
-    if (res.second) return ptr;
+      return nullptr;
   }
   return ptr;
 }
 
-// Here are the elementary parsers for length delimited subfields that contain
-// plain data (ie not a protobuf). These are trivial as they don't recurse,
-// except for the UnknownGroupLiteParse that parses a group into a string.
-// Some functions need extra arguments that the function signature allows,
-// these are passed through variables in ParseContext::ExtraParseData that the
-// caller needs to set prior to the call.
-
-// The null parser does not do anything, but is useful as a substitute.
-PROTOBUF_EXPORT
-const char* NullParser(const char* begin, const char* end, void* object,
-                       ParseContext*);
-
-// Helper for verification of utf8
-PROTOBUF_EXPORT
-bool VerifyUTF8(StringPiece s, ParseContext* ctx);
-// All the string parsers with or without UTF checking and for all CTypes.
-PROTOBUF_EXPORT
-const char* StringParser(const char* begin, const char* end, void* object,
-                         ParseContext*);
-PROTOBUF_EXPORT
-const char* CordParser(const char* begin, const char* end, void* object,
-                       ParseContext*);
-PROTOBUF_EXPORT
-const char* StringPieceParser(const char* begin, const char* end, void* object,
-                              ParseContext*);
-PROTOBUF_EXPORT
-const char* StringParserUTF8(const char* begin, const char* end, void* object,
-                             ParseContext*);
-PROTOBUF_EXPORT
-const char* CordParserUTF8(const char* begin, const char* end, void* object,
-                           ParseContext*);
-PROTOBUF_EXPORT
-const char* StringPieceParserUTF8(const char* begin, const char* end,
-                                  void* object, ParseContext*);
-PROTOBUF_EXPORT
-const char* StringParserUTF8Verify(const char* begin, const char* end,
-                                   void* object, ParseContext*);
-PROTOBUF_EXPORT
-const char* CordParserUTF8Verify(const char* begin, const char* end,
-                                 void* object, ParseContext*);
-PROTOBUF_EXPORT
-const char* StringPieceParserUTF8Verify(const char* begin, const char* end,
-                                        void* object, ParseContext*);
-// Parsers that also eat the slopbytes if possible. Can only be called in a
-// ParseContext where limit_ is set properly.
-PROTOBUF_EXPORT
-const char* GreedyStringParser(const char* begin, const char* end, void* object,
-                         ParseContext*);
-PROTOBUF_EXPORT
-const char* GreedyStringParserUTF8(const char* begin, const char* end, void* object,
-                             ParseContext*);
-PROTOBUF_EXPORT
-const char* GreedyStringParserUTF8Verify(const char* begin, const char* end,
-                                   void* object, ParseContext*);
-
-// This is the only recursive parser.
-PROTOBUF_EXPORT
-const char* UnknownGroupLiteParse(const char* begin, const char* end,
-                                  void* object, ParseContext* ctx);
-// This is a helper to for the UnknownGroupLiteParse but is actually also
-// useful in the generated code. It uses overload on string* vs
-// UnknownFieldSet* to make the generated code isomorphic between full and lite.
-PROTOBUF_EXPORT
-std::pair<const char*, bool> UnknownFieldParse(uint32 tag, ParseClosure parent,
-                                               const char* begin,
-                                               const char* end, std::string* unknown,
-                                               ParseContext* ctx);
+template <typename T>
+PROTOBUF_NODISCARD const char* WireFormatParser(T& field_parser,
+                                                const char* ptr,
+                                                ParseContext* ctx) {
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ReadTag(ptr, &tag);
+    GOOGLE_PROTOBUF_PARSER_ASSERT(ptr != nullptr);
+    if (tag == 0 || (tag & 7) == 4) {
+      ctx->SetLastTag(tag);
+      return ptr;
+    }
+    ptr = FieldParser(tag, field_parser, ptr, ctx);
+    GOOGLE_PROTOBUF_PARSER_ASSERT(ptr != nullptr);
+  }
+  return ptr;
+}
 
 // The packed parsers parse repeated numeric primitives directly into  the
 // corresponding field
 
 // These are packed varints
-PROTOBUF_EXPORT
-const char* PackedInt32Parser(const char* begin, const char* end, void* object,
-                              ParseContext* ctx);
-PROTOBUF_EXPORT
-const char* PackedUInt32Parser(const char* begin, const char* end, void* object,
-                               ParseContext* ctx);
-PROTOBUF_EXPORT
-const char* PackedInt64Parser(const char* begin, const char* end, void* object,
-                              ParseContext* ctx);
-PROTOBUF_EXPORT
-const char* PackedUInt64Parser(const char* begin, const char* end, void* object,
-                               ParseContext* ctx);
-PROTOBUF_EXPORT
-const char* PackedSInt32Parser(const char* begin, const char* end, void* object,
-                               ParseContext* ctx);
-PROTOBUF_EXPORT
-const char* PackedSInt64Parser(const char* begin, const char* end, void* object,
-                               ParseContext* ctx);
-PROTOBUF_EXPORT
-const char* PackedBoolParser(const char* begin, const char* end, void* object,
-                             ParseContext* ctx);
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedInt32Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedUInt32Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedInt64Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedUInt64Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedSInt32Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedSInt64Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedEnumParser(
+    void* object, const char* ptr, ParseContext* ctx);
 
-// Enums in proto3 do not require verification
-PROTOBUF_EXPORT
-const char* PackedEnumParser(const char* begin, const char* end, void* object,
-                             ParseContext* ctx);
-// Enums in proto2 require verification. So an additional verification function
-// needs to be passed into ExtraParseData.
-// If it's a generated verification function we only need the function pointer.
-PROTOBUF_EXPORT
-const char* PackedValidEnumParserLite(const char* begin, const char* end,
-                                      void* object, ParseContext* ctx);
-// If it's reflective we need a function that takes an additional argument.
-PROTOBUF_EXPORT
-const char* PackedValidEnumParserLiteArg(const char* begin, const char* end,
-                                         void* object, ParseContext* ctx);
+template <typename T>
+PROTOBUF_NODISCARD const char* PackedEnumParser(void* object, const char* ptr,
+                                                ParseContext* ctx,
+                                                bool (*is_valid)(int),
+                                                InternalMetadata* metadata,
+                                                int field_num) {
+  return ctx->ReadPackedVarint(
+      ptr, [object, is_valid, metadata, field_num](uint64_t val) {
+        if (is_valid(val)) {
+          static_cast<RepeatedField<int>*>(object)->Add(val);
+        } else {
+          WriteVarint(field_num, val, metadata->mutable_unknown_fields<T>());
+        }
+      });
+}
 
-// These are the packed fixed field parsers.
-PROTOBUF_EXPORT
-const char* PackedFixed32Parser(const char* begin, const char* end,
-                                void* object, ParseContext* ctx);
-PROTOBUF_EXPORT
-const char* PackedSFixed32Parser(const char* begin, const char* end,
-                                 void* object, ParseContext* ctx);
-PROTOBUF_EXPORT
-const char* PackedFixed64Parser(const char* begin, const char* end,
-                                void* object, ParseContext* ctx);
-PROTOBUF_EXPORT
-const char* PackedSFixed64Parser(const char* begin, const char* end,
-                                 void* object, ParseContext* ctx);
-PROTOBUF_EXPORT
-const char* PackedFloatParser(const char* begin, const char* end, void* object,
-                              ParseContext* ctx);
-PROTOBUF_EXPORT
-const char* PackedDoubleParser(const char* begin, const char* end, void* object,
-                               ParseContext* ctx);
+template <typename T>
+PROTOBUF_NODISCARD const char* PackedEnumParserArg(
+    void* object, const char* ptr, ParseContext* ctx,
+    bool (*is_valid)(const void*, int), const void* data,
+    InternalMetadata* metadata, int field_num) {
+  return ctx->ReadPackedVarint(
+      ptr, [object, is_valid, data, metadata, field_num](uint64_t val) {
+        if (is_valid(data, val)) {
+          static_cast<RepeatedField<int>*>(object)->Add(val);
+        } else {
+          WriteVarint(field_num, val, metadata->mutable_unknown_fields<T>());
+        }
+      });
+}
 
-// Maps key/value's are stored in a MapEntry length delimited field. If this
-// crosses a seam we fallback to first store in payload. The object points
-// to a MapField in which we parse the payload upon done (we detect this when
-// this function is called with limit_ == 0), by calling parse_map (also stored
-// in ctx) on the resulting string.
-PROTOBUF_EXPORT
-const char* SlowMapEntryParser(const char* begin, const char* end, void* object,
-                               internal::ParseContext* ctx);
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedBoolParser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedFixed32Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedSFixed32Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedFixed64Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedSFixed64Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedFloatParser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedDoubleParser(
+    void* object, const char* ptr, ParseContext* ctx);
+
+// This is the only recursive parser.
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* UnknownGroupLiteParse(
+    std::string* unknown, const char* ptr, ParseContext* ctx);
+// This is a helper to for the UnknownGroupLiteParse but is actually also
+// useful in the generated code. It uses overload on std::string* vs
+// UnknownFieldSet* to make the generated code isomorphic between full and lite.
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* UnknownFieldParse(
+    uint32_t tag, std::string* unknown, const char* ptr, ParseContext* ctx);
 
 }  // namespace internal
 }  // namespace protobuf

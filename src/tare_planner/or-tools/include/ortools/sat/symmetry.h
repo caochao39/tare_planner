@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -19,8 +19,8 @@
 
 #include "absl/types/span.h"
 #include "ortools/algorithms/sparse_permutation.h"
-#include "ortools/base/int_type_indexed_vector.h"
 #include "ortools/base/macros.h"
+#include "ortools/base/strong_vector.h"
 #include "ortools/sat/sat_base.h"
 #include "ortools/util/stats.h"
 
@@ -43,7 +43,7 @@ namespace sat {
 // assignment order) the idea is to compute (as efficiently as possible) for
 // each permutation added to this class what is called the first (under the
 // trail assignment order) non-symmetric literal. A literal 'l' is said to be
-// non-symmetric under a given assignement and for a given permutation 'p' if
+// non-symmetric under a given assignment and for a given permutation 'p' if
 // 'l' is assigned to true but not 'p(l)'.
 //
 // If a first non-symmetric literal 'l' for a permutation 'p' is not a decision,
@@ -110,7 +110,7 @@ class SymmetryPropagator : public SatPropagator {
     int permutation_index;
     Literal image;
   };
-  gtl::ITIVector<LiteralIndex, std::vector<ImageInfo>> images_;
+  absl::StrongVector<LiteralIndex, std::vector<ImageInfo>> images_;
 
   // For each permutation p, we maintain the list of all assigned literals
   // affected by p whose trail index is < propagation_trail_index_; sorted by
@@ -141,7 +141,7 @@ class SymmetryPropagator : public SatPropagator {
   // The identity permutation over all the literals.
   // This is temporary modified to encode a sparse permutation and then always
   // restored to the identity.
-  mutable gtl::ITIVector<LiteralIndex, Literal> tmp_literal_mapping_;
+  mutable absl::StrongVector<LiteralIndex, Literal> tmp_literal_mapping_;
 
   // Symmetry reason indexed by trail_index.
   struct ReasonInfo {

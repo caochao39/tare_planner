@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -14,10 +14,16 @@
 #ifndef OR_TOOLS_BOP_BOP_BASE_H_
 #define OR_TOOLS_BOP_BOP_BASE_H_
 
+#include <cstdint>
+#include <limits>
+#include <ostream>
 #include <string>
+#include <vector>
 
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "ortools/base/basictypes.h"
+#include "ortools/base/strong_vector.h"
 #include "ortools/bop/bop_parameters.pb.h"
 #include "ortools/bop/bop_solution.h"
 #include "ortools/lp_data/lp_types.h"
@@ -39,7 +45,7 @@ class ProblemState;
 // are run sequentially or concurrently. See for instance BopRandomLNSOptimizer.
 class BopOptimizerBase {
  public:
-  explicit BopOptimizerBase(const std::string& name);
+  explicit BopOptimizerBase(absl::string_view name);
   virtual ~BopOptimizerBase();
 
   // Returns the name given at construction.
@@ -91,7 +97,7 @@ class BopOptimizerBase {
                           const ProblemState& problem_state,
                           LearnedInfo* learned_info, TimeLimit* time_limit) = 0;
 
-  // Returns a std::string describing the status.
+  // Returns a string describing the status.
   static std::string GetStatusString(Status status);
 
  protected:
@@ -110,7 +116,7 @@ inline std::ostream& operator<<(std::ostream& os,
 // information that the solver learned about it at a given time.
 class ProblemState {
  public:
-  explicit ProblemState(const LinearBooleanProblem& problem);
+  explicit ProblemState(const sat::LinearBooleanProblem& problem);
 
   // Sets parameters, used for instance to get the tolerance, the gap limit...
   void SetParameters(const BopParameters& parameters) {
@@ -149,8 +155,8 @@ class ProblemState {
   // state has been updated. If the stamp changed since last time one has
   // checked the state, it's worth trying again as it might have changed
   // (no guarantee).
-  static const int64 kInitialStampValue;
-  int64 update_stamp() const { return update_stamp_; }
+  static const int64_t kInitialStampValue;
+  int64_t update_stamp() const { return update_stamp_; }
 
   // Marks the problem state as optimal.
   void MarkAsOptimal();
@@ -170,7 +176,7 @@ class ProblemState {
   // Returns true when the variable var is fixed in the current problem state.
   // The value of the fixed variable is returned by GetVariableFixedValue(var).
   bool IsVariableFixed(VariableIndex var) const { return is_fixed_[var]; }
-  const gtl::ITIVector<VariableIndex, bool>& is_fixed() const {
+  const absl::StrongVector<VariableIndex, bool>& is_fixed() const {
     return is_fixed_;
   }
 
@@ -179,7 +185,7 @@ class ProblemState {
   bool GetVariableFixedValue(VariableIndex var) const {
     return fixed_values_[var];
   }
-  const gtl::ITIVector<VariableIndex, bool>& fixed_values() const {
+  const absl::StrongVector<VariableIndex, bool>& fixed_values() const {
     return fixed_values_;
   }
 
@@ -195,7 +201,7 @@ class ProblemState {
   // Returns the original problem. Note that the current problem might be
   // different, e.g. fixed variables, but equivalent, i.e. a solution to one
   // should be a solution to the other too.
-  const LinearBooleanProblem& original_problem() const {
+  const sat::LinearBooleanProblem& original_problem() const {
     return original_problem_;
   }
 
@@ -203,8 +209,8 @@ class ProblemState {
   // For internal use only: this is the unscaled version of the lower (resp.
   // upper) bound, and so should be compared only to the unscaled cost given by
   // solution.GetCost().
-  int64 lower_bound() const { return lower_bound_; }
-  int64 upper_bound() const { return upper_bound_; }
+  int64_t lower_bound() const { return lower_bound_; }
+  int64_t upper_bound() const { return upper_bound_; }
 
   // Returns the scaled lower bound of the original problem.
   double GetScaledLowerBound() const {
@@ -220,17 +226,17 @@ class ProblemState {
   void SynchronizationDone();
 
  private:
-  const LinearBooleanProblem& original_problem_;
+  const sat::LinearBooleanProblem& original_problem_;
   BopParameters parameters_;
-  int64 update_stamp_;
-  gtl::ITIVector<VariableIndex, bool> is_fixed_;
-  gtl::ITIVector<VariableIndex, bool> fixed_values_;
+  int64_t update_stamp_;
+  absl::StrongVector<VariableIndex, bool> is_fixed_;
+  absl::StrongVector<VariableIndex, bool> fixed_values_;
   glop::DenseRow lp_values_;
   BopSolution solution_;
   std::vector<bool> assignment_preference_;
 
-  int64 lower_bound_;
-  int64 upper_bound_;
+  int64_t lower_bound_;
+  int64_t upper_bound_;
 
   // Manage the set of the problem binary clauses (including the learned ones).
   sat::BinaryClauseManager binary_clause_manager_;
@@ -243,10 +249,10 @@ class ProblemState {
 // with the problem state in order to get a more constrained problem to be used
 // by the next called optimizer.
 struct LearnedInfo {
-  explicit LearnedInfo(const LinearBooleanProblem& problem)
+  explicit LearnedInfo(const sat::LinearBooleanProblem& problem)
       : fixed_literals(),
         solution(problem, "AllZero"),
-        lower_bound(kint64min),
+        lower_bound(std::numeric_limits<int64_t>::min()),
         lp_values(),
         binary_clauses() {}
 
@@ -254,7 +260,7 @@ struct LearnedInfo {
   // to reduce the number of creation / deletion of objects.
   void Clear() {
     fixed_literals.clear();
-    lower_bound = kint64min;
+    lower_bound = std::numeric_limits<int64_t>::min();
     lp_values.clear();
     binary_clauses.clear();
   }
@@ -266,7 +272,7 @@ struct LearnedInfo {
   BopSolution solution;
 
   // A lower bound (for multi-threading purpose).
-  int64 lower_bound;
+  int64_t lower_bound;
 
   // An assignment for the relaxed linear programming problem (can be empty).
   // This is meant to be the optimal LP solution, but can just be a feasible
@@ -277,7 +283,6 @@ struct LearnedInfo {
   // New binary clauses.
   std::vector<sat::BinaryClause> binary_clauses;
 };
-
 }  // namespace bop
 }  // namespace operations_research
 #endif  // OR_TOOLS_BOP_BOP_BASE_H_

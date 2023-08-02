@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -31,14 +31,18 @@ class ThreadPool {
   void StartWorkers();
   void Schedule(std::function<void()> closure);
   std::function<void()> GetNextTask();
+  void SetQueueCapacity(int capacity);
 
  private:
   const int num_workers_;
   std::list<std::function<void()>> tasks_;
   std::mutex mutex_;
   std::condition_variable condition_;
-  bool waiting_to_finish_;
-  bool started_;
+  std::condition_variable capacity_condition_;
+  bool waiting_to_finish_ = false;
+  bool waiting_for_capacity_ = false;
+  bool started_ = false;
+  int queue_capacity_ = 2e9;
   std::vector<std::thread> all_workers_;
 };
 }  // namespace operations_research

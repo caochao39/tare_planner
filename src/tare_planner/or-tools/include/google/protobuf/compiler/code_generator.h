@@ -38,18 +38,22 @@
 #ifndef GOOGLE_PROTOBUF_COMPILER_CODE_GENERATOR_H__
 #define GOOGLE_PROTOBUF_COMPILER_CODE_GENERATOR_H__
 
-#include <google/protobuf/stubs/common.h>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
+#include <google/protobuf/stubs/common.h>
 
+// Must be included last.
 #include <google/protobuf/port_def.inc>
 
 namespace google {
 namespace protobuf {
 
-namespace io { class ZeroCopyOutputStream; }
+namespace io {
+class ZeroCopyOutputStream;
+}
 class FileDescriptor;
+class GeneratedCodeInfo;
 
 namespace compiler {
 class AccessInfoMap;
@@ -100,6 +104,17 @@ class PROTOC_EXPORT CodeGenerator {
                            GeneratorContext* generator_context,
                            std::string* error) const;
 
+  // This must be kept in sync with plugin.proto. See that file for
+  // documentation on each value.
+  enum Feature {
+    FEATURE_PROTO3_OPTIONAL = 1,
+  };
+
+  // Implement this to indicate what features this code generator supports.
+  //
+  // This must be a bitwise OR of values from the Feature enum above (or zero).
+  virtual uint64_t GetSupportedFeatures() const { return 0; }
+
   // This is no longer used, but this class is part of the opensource protobuf
   // library, so it has to remain to keep vtables the same for the current
   // version of the library. When protobufs does a api breaking change, the
@@ -144,6 +159,15 @@ class PROTOC_EXPORT GeneratorContext {
   virtual io::ZeroCopyOutputStream* OpenForInsert(
       const std::string& filename, const std::string& insertion_point);
 
+  // Similar to OpenForInsert, but if `info` is non-empty, will open (or create)
+  // filename.pb.meta and insert info at the appropriate place with the
+  // necessary shifts. The default implementation ignores `info`.
+  //
+  // WARNING:  This feature will be REMOVED in the near future.
+  virtual io::ZeroCopyOutputStream* OpenForInsertWithGeneratedCodeInfo(
+      const std::string& filename, const std::string& insertion_point,
+      const google::protobuf::GeneratedCodeInfo& info);
+
   // Returns a vector of FileDescriptors for all the files being compiled
   // in this run.  Useful for languages, such as Go, that treat files
   // differently when compiled as a set rather than individually.
@@ -165,11 +189,14 @@ typedef GeneratorContext OutputDirectory;
 // Several code generators treat the parameter argument as holding a
 // list of options separated by commas.  This helper function parses
 // a set of comma-delimited name/value pairs: e.g.,
-//   "foo=bar,baz,qux=corge"
+//   "foo=bar,baz,moo=corge"
 // parses to the pairs:
-//   ("foo", "bar"), ("baz", ""), ("qux", "corge")
+//   ("foo", "bar"), ("baz", ""), ("moo", "corge")
 PROTOC_EXPORT void ParseGeneratorParameter(
     const std::string&, std::vector<std::pair<std::string, std::string> >*);
+
+// Strips ".proto" or ".protodevel" from the end of a filename.
+PROTOC_EXPORT std::string StripProto(const std::string& filename);
 
 }  // namespace compiler
 }  // namespace protobuf

@@ -31,11 +31,12 @@ class ClpSimplex;
 
   Parameter type ranges are allocated as follows
   <ul>
-    <li>   1 -- 100	double parameters
-    <li> 101 -- 200	integer parameters
-    <li> 201 -- 250	string parameters
-    <li> 251 -- 300	cuts etc(string but broken out for clarity)
-    <li> 301 -- 400	`actions'
+    <li>   1 -- 100  double parameters
+    <li> 101 -- 200  integer parameters
+    <li> 201 -- 300  Clp string parameters
+    <li> 301 -- 400  Cbc string parameters
+    <li> 401 -- 500  (mostly) Clp actions
+    <li> 501 -- 600  (mostly) Cbc actions
   </ul>
 
   `Actions' do not necessarily invoke an immediate action; it's just that they
@@ -336,6 +337,36 @@ public:
   inline std::string shortHelp() const
   {
     return shortHelp_;
+  }
+  /// Returns long help
+  inline std::string longHelp() const
+  {
+    return longHelp_;
+  }
+  /// Returns set of valid strings
+  inline const std::vector<std::string>& definedKeywords() const
+  {
+    return definedKeyWords_;
+  }
+  /// Returns the lower bound for a double-valued parameter
+  inline double lowerDoubleValue() const
+  {
+     return lowerDoubleValue_;
+  }
+  /// Returns the upper bound for a double-valued parameter
+  inline double upperDoubleValue() const
+  {
+     return upperDoubleValue_;
+  }
+  /// Returns the lower bound for an int-valued parameter
+  inline int lowerIntValue() const
+  {
+     return lowerIntValue_;
+  }
+  /// Returns the upper bound for an int-valued parameter
+  inline int upperIntValue() const
+  {
+     return upperIntValue_;
   }
   /// Sets a double parameter (nonzero code if error)
   int setDoubleParameter(CbcModel &model, double value);

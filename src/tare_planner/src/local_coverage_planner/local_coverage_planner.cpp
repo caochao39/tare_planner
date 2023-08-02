@@ -391,8 +391,11 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveTSP(const std::v
       double path_length = misc_utils_ns::GetPathLength(path);
       //   int to_graph_idx = graph_index_map_[to_ind];
       //   double path_length =
-      //       misc_utils_ns::AStarSearch(candidate_viewpoint_graph_, candidate_viewpoint_dist_,
-      //                                  candidate_viewpoint_position_, from_graph_idx, to_graph_idx, false, tmp);
+      //       misc_utils_ns::AStarSearch(candidate_viewpoint_graph_,
+      //       candidate_viewpoint_dist_,
+      //                                  candidate_viewpoint_position_,
+      //                                  from_graph_idx, to_graph_idx, false,
+      //                                  tmp);
       distance_matrix[i][j] = static_cast<int>(10 * path_length);
     }
   }
@@ -483,6 +486,7 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveTSP(const std::v
   data.depot = start_ind;
 
   tsp_solver_ns::TSPSolver tsp_solver(data);
+
   tsp_solver.Solve();
 
   std::vector<int> path_index;
@@ -537,7 +541,8 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveTSP(const std::v
 
       // Add viewpoint node
       // int cur_array_ind = grid_->GetArrayInd(cur_ind);
-      // geometry_msgs::Point cur_node_position = viewpoints_[cur_array_ind].GetPosition();
+      // geometry_msgs::Point cur_node_position =
+      // viewpoints_[cur_array_ind].GetPosition();
       geometry_msgs::Point cur_node_position = viewpoint_manager_->GetViewPointPosition(cur_ind);
       exploration_path_ns::Node cur_node(cur_node_position, exploration_path_ns::NodeType::LOCAL_VIEWPOINT);
       cur_node.local_viewpoint_ind_ = cur_ind;
@@ -572,9 +577,10 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveTSP(const std::v
       nav_msgs::Path path_between_viewpoints = viewpoint_manager_->GetViewPointShortestPath(cur_ind, next_ind);
 
       //   std::vector<int> path_graph_indices;
-      //   misc_utils_ns::AStarSearch(candidate_viewpoint_graph_, candidate_viewpoint_dist_,
-      //   candidate_viewpoint_position_,
-      //                              from_graph_idx, to_graph_idx, true, path_graph_indices);
+      //   misc_utils_ns::AStarSearch(candidate_viewpoint_graph_,
+      //   candidate_viewpoint_dist_, candidate_viewpoint_position_,
+      //                              from_graph_idx, to_graph_idx, true,
+      //                              path_graph_indices);
       // Add viapoint nodes;
       //   if (path_graph_indices.size() > 2)
       if (path_between_viewpoints.poses.size() > 2)
@@ -587,9 +593,9 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveTSP(const std::v
           exploration_path_ns::Node node;
           node.type_ = exploration_path_ns::NodeType::LOCAL_VIA_POINT;
           node.local_viewpoint_ind_ = -1;
-          //   geometry_msgs::Point node_position = viewpoint_manager_->GetViewPointPosition(ind);
-          //   node.position_.x() = node_position.x;
-          //   node.position_.y() = node_position.y;
+          //   geometry_msgs::Point node_position =
+          //   viewpoint_manager_->GetViewPointPosition(ind); node.position_.x()
+          //   = node_position.x; node.position_.y() = node_position.y;
           //   node.position_.z() = node_position.z;
           node.position_.x() = path_between_viewpoints.poses[j].pose.position.x;
           node.position_.y() = path_between_viewpoints.poses[j].pose.position.y;
@@ -735,7 +741,6 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveLocalCoveragePro
 
       select_viewpoint_timer.Stop(false, kRuntimeUnit);
       viewpoint_sampling_runtime_ += select_viewpoint_timer.GetDuration(kRuntimeUnit);
-
       // Solve the TSP problem
       exploration_path_ns::ExplorationPath local_path_itr;
       local_path_itr = SolveTSP(selected_viewpoint_indices_itr, ordered_viewpoint_indices);
@@ -780,7 +785,6 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveLocalCoveragePro
 
     select_viewpoint_timer.Stop(false, kRuntimeUnit);
     viewpoint_sampling_runtime_ += select_viewpoint_timer.GetDuration(kRuntimeUnit);
-
     local_path = SolveTSP(selected_viewpoint_indices_itr, ordered_viewpoint_indices);
 
     last_selected_viewpoint_indices_ = ordered_viewpoint_indices;
@@ -806,6 +810,7 @@ exploration_path_ns::ExplorationPath LocalCoveragePlanner::SolveLocalCoveragePro
       viewpoint_manager_->SetViewPointSelected(viewpoint_index, true);
     }
   }
+
   return local_path;
 }
 

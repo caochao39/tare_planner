@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -70,17 +70,21 @@
 
 #include <map>
 #include <string>
+#include <vector>
+
 #ifdef HAS_PERF_SUBSYSTEM
 #include "absl/strings/str_replace.h"
 #include "exegesis/exegesis/itineraries/perf_subsystem.h"
 #include "ortools/util/time_limit.h"
 #endif  // HAS_PERF_SUBSYSTEM
+
+#include "absl/strings/string_view.h"
+#include "ortools/base/macros.h"
 #include "ortools/base/timer.h"
 
 namespace operations_research {
 
-// Returns the current thread's total memory usage in an human-readable
-// std::string.
+// Returns the current thread's total memory usage in an human-readable string.
 std::string MemoryUsage();
 
 // Forward declaration.
@@ -90,10 +94,10 @@ class TimeDistribution;
 // Base class for a statistic that can be pretty-printed.
 class Stat {
  public:
-  explicit Stat(const std::string& name) : name_(name) {}
+  explicit Stat(absl::string_view name) : name_(name) {}
 
   // Also add this stat to the given group.
-  Stat(const std::string& name, StatsGroup* group);
+  Stat(absl::string_view name, StatsGroup* group);
   virtual ~Stat() {}
 
   // Only used for display purposes.
@@ -133,12 +137,12 @@ class StatsGroup {
     SORT_BY_NAME = 1,
   };
 
-  explicit StatsGroup(const std::string& name)
+  explicit StatsGroup(absl::string_view name)
       : name_(name), stats_(), time_distributions_() {}
   ~StatsGroup();
 
-  // Registers a Stat, which will appear in the std::string returned by
-  // StatString(). The Stat object must live as long as this StatsGroup.
+  // Registers a Stat, which will appear in the string returned by StatString().
+  // The Stat object must live as long as this StatsGroup.
   void Register(Stat* stat);
 
   // Returns this group name, followed by one line per Stat registered with this
@@ -172,8 +176,9 @@ class StatsGroup {
 // the values are added to the sequence and in the way the stats are printed.
 class DistributionStat : public Stat {
  public:
-  explicit DistributionStat(const std::string& name);
-  DistributionStat(const std::string& name, StatsGroup* group);
+  explicit DistributionStat(absl::string_view name);
+  DistributionStat() : DistributionStat("") {}
+  DistributionStat(absl::string_view name, StatsGroup* group);
   ~DistributionStat() override {}
   void Reset() override;
   bool WorthPrinting() const override { return num_ != 0; }
@@ -185,7 +190,7 @@ class DistributionStat : public Stat {
   double Sum() const override { return sum_; }
   double Max() const { return max_; }
   double Min() const { return min_; }
-  int64 Num() const { return num_; }
+  int64_t Num() const { return num_; }
 
   // Get the average of the distribution or 0.0 if empty.
   double Average() const;
@@ -205,28 +210,29 @@ class DistributionStat : public Stat {
   double sum_squares_from_average_;
   double min_;
   double max_;
-  int64 num_;
+  int64_t num_;
 };
 
 // Statistic on the distribution of a sequence of running times.
 // Also provides some facility to measure such time with the CPU cycle counter.
 //
 // TODO(user): Since we inherit from DistributionStat, we currently store the
-// sum of CPU cycles as a double internally. A better option is to use int64
+// sum of CPU cycles as a double internally. A better option is to use int64_t
 // because with the 53 bits of precision of a double, we will run into an issue
 // if the sum of times reaches 52 days for a 2GHz processor.
 class TimeDistribution : public DistributionStat {
  public:
-  explicit TimeDistribution(const std::string& name)
+  explicit TimeDistribution(absl::string_view name)
       : DistributionStat(name), timer_() {}
-  TimeDistribution(const std::string& name, StatsGroup* group)
+  TimeDistribution() : TimeDistribution("") {}
+  TimeDistribution(absl::string_view name, StatsGroup* group)
       : DistributionStat(name, group), timer_() {}
   std::string ValueAsString() const override;
 
   // Time distributions have a high priority to be displayed first.
   int Priority() const override { return 100; }
 
-  // Internaly the TimeDistribution stores CPU cycles (to do a bit less work
+  // Internally the TimeDistribution stores CPU cycles (to do a bit less work
   // on each StopTimerAndAddElapsedTime()). Use this function to convert
   // all the statistics of DistributionStat into seconds.
   static double CyclesToSeconds(double num_cycles);
@@ -258,9 +264,9 @@ class TimeDistribution : public DistributionStat {
 // Statistic on the distribution of a sequence of ratios, displayed as %.
 class RatioDistribution : public DistributionStat {
  public:
-  explicit RatioDistribution(const std::string& name)
-      : DistributionStat(name) {}
-  RatioDistribution(const std::string& name, StatsGroup* group)
+  explicit RatioDistribution(absl::string_view name) : DistributionStat(name) {}
+  RatioDistribution() : RatioDistribution("") {}
+  RatioDistribution(absl::string_view name, StatsGroup* group)
       : DistributionStat(name, group) {}
   std::string ValueAsString() const override;
   void Add(double value);
@@ -269,9 +275,10 @@ class RatioDistribution : public DistributionStat {
 // Statistic on the distribution of a sequence of doubles.
 class DoubleDistribution : public DistributionStat {
  public:
-  explicit DoubleDistribution(const std::string& name)
+  explicit DoubleDistribution(absl::string_view name)
       : DistributionStat(name) {}
-  DoubleDistribution(const std::string& name, StatsGroup* group)
+  DoubleDistribution() : DoubleDistribution("") {}
+  DoubleDistribution(absl::string_view name, StatsGroup* group)
       : DistributionStat(name, group) {}
   std::string ValueAsString() const override;
   void Add(double value);
@@ -280,12 +287,13 @@ class DoubleDistribution : public DistributionStat {
 // Statistic on the distribution of a sequence of integers.
 class IntegerDistribution : public DistributionStat {
  public:
-  explicit IntegerDistribution(const std::string& name)
+  explicit IntegerDistribution(absl::string_view name)
       : DistributionStat(name) {}
-  IntegerDistribution(const std::string& name, StatsGroup* group)
+  IntegerDistribution() : IntegerDistribution("") {}
+  IntegerDistribution(absl::string_view name, StatsGroup* group)
       : DistributionStat(name, group) {}
   std::string ValueAsString() const override;
-  void Add(int64 value);
+  void Add(int64_t value);
 };
 
 // Helper classes to time a block of code and add the result to a
@@ -352,7 +360,7 @@ class DisabledScopedTimeDistributionUpdater {
 //   sudo echo "0" > /proc/sys/kernel/kptr_restrict
 class EnabledScopedInstructionCounter {
  public:
-  explicit EnabledScopedInstructionCounter(const std::string& name,
+  explicit EnabledScopedInstructionCounter(absl::string_view name,
                                            TimeLimit* time_limit);
   EnabledScopedInstructionCounter(const EnabledScopedInstructionCounter&) =
       delete;
@@ -373,7 +381,7 @@ class EnabledScopedInstructionCounter {
 
 class DisabledScopedInstructionCounter {
  public:
-  explicit DisabledScopedInstructionCounter(const std::string& name) {}
+  explicit DisabledScopedInstructionCounter(absl::string_view) {}
   DisabledScopedInstructionCounter(const DisabledScopedInstructionCounter&) =
       delete;
   DisabledScopedInstructionCounter& operator=(
@@ -416,9 +424,11 @@ inline std::string RemoveOperationsResearchAndGlop(
   operations_research::ScopedInstructionCounter scoped_instruction_count( \
       RemoveOperationsResearchAndGlop(__PRETTY_FUNCTION__), time_limit)
 
+#else  // !HAS_PERF_SUBSYSTEM
+#define SCOPED_INSTRUCTION_COUNT(time_limit)
 #endif  // HAS_PERF_SUBSYSTEM
 
-#else  // OR_STATS
+#else  // !OR_STATS
 // If OR_STATS is not defined, we remove some instructions that may be time
 // consuming.
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -25,7 +25,7 @@ namespace operations_research {
 namespace sat {
 
 // Adds a cumulative constraint on the given intervals, the associated demands
-// and the capacity variables.
+// and the capacity expressions.
 //
 // Each interval represents a task to be scheduled in time such that the task
 // consumes the resource during the time range [lb, ub) where lb and ub
@@ -37,27 +37,30 @@ namespace sat {
 // the sum of the demands of all the tasks that overlap any time point cannot
 // exceed the capacity of the resource.
 //
-// This constraint assumes that an interval can be optional or have a duration
+// This constraint assumes that an interval can be optional or have a size
 // of zero. The demands and the capacity can be any non-negative number.
 //
 // Optimization: If one already have an helper constructed from the interval
 // variable, it can be passed as last argument.
 std::function<void(Model*)> Cumulative(
     const std::vector<IntervalVariable>& vars,
-    const std::vector<IntegerVariable>& demand_vars,
-    const IntegerVariable& capacity_var,
+    const std::vector<AffineExpression>& demands, AffineExpression capacity,
     SchedulingConstraintHelper* helper = nullptr);
 
-// Adds a simple cumulative constraint on the given intervals, the associated
-// demands and the capacity variables. See the comment of Cumulative() above for
-// a definition of the constraint.
+// Adds a simple cumulative constraint. See the comment of Cumulative() above
+// for a definition of the constraint. This is only used for testing.
 //
-// This constraint assumes that task demands and the resource capacity must be
-// assigned to a non-negative number.
+// This constraint assumes that task demands and the resource capacity are fixed
+// to non-negative number.
 std::function<void(Model*)> CumulativeTimeDecomposition(
     const std::vector<IntervalVariable>& vars,
-    const std::vector<IntegerVariable>& demand_vars,
-    const IntegerVariable& capacity_var,
+    const std::vector<AffineExpression>& demands, AffineExpression capacity,
+    SchedulingConstraintHelper* helper = nullptr);
+
+// Another testing code, same assumptions as the CumulativeTimeDecomposition().
+std::function<void(Model*)> CumulativeUsingReservoir(
+    const std::vector<IntervalVariable>& vars,
+    const std::vector<AffineExpression>& demands, AffineExpression capacity,
     SchedulingConstraintHelper* helper = nullptr);
 
 }  // namespace sat

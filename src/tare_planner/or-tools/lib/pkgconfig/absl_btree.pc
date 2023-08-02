@@ -1,0 +1,12 @@
+prefix=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534
+exec_prefix=${prefix}
+libdir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/lib
+includedir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/include
+
+Name: absl_btree
+Description: Abseil btree library
+URL: https://abseil.io/
+Version: 20230125
+Requires: absl_container_common = 20230125, absl_common_policy_traits = 20230125, absl_compare = 20230125, absl_compressed_tuple = 20230125, absl_container_memory = 20230125, absl_cord = 20230125, absl_core_headers = 20230125, absl_layout = 20230125, absl_memory = 20230125, absl_raw_logging_internal = 20230125, absl_strings = 20230125, absl_throw_delegate = 20230125, absl_type_traits = 20230125, absl_utility = 20230125
+Libs: -L${libdir}  
+Cflags: -I${includedir} -DNOMINMAX

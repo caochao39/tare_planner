@@ -37,18 +37,21 @@
 #ifndef GOOGLE_PROTOBUF_IO_TOKENIZER_H__
 #define GOOGLE_PROTOBUF_IO_TOKENIZER_H__
 
+
 #include <string>
 #include <vector>
+
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/stubs/logging.h>
 
+// Must be included last.
 #include <google/protobuf/port_def.inc>
 
 namespace google {
 namespace protobuf {
 namespace io {
 
-class ZeroCopyInputStream;     // zero_copy_stream.h
+class ZeroCopyInputStream;  // zero_copy_stream.h
 
 // Defined in this file.
 class ErrorCollector;
@@ -77,8 +80,8 @@ class PROTOBUF_EXPORT ErrorCollector {
   // Indicates that there was a warning in the input at the given line and
   // column numbers.  The numbers are zero-based, so you may want to add
   // 1 to each before printing them.
-  virtual void AddWarning(int line, ColumnNumber column,
-                          const std::string& message) { }
+  virtual void AddWarning(int /* line */, ColumnNumber /* column */,
+                          const std::string& /* message */) {}
 
  private:
   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(ErrorCollector);
@@ -99,8 +102,8 @@ class PROTOBUF_EXPORT Tokenizer {
   ~Tokenizer();
 
   enum TokenType {
-    TYPE_START,       // Next() has not yet been called.
-    TYPE_END,         // End of input reached.  "text" is empty.
+    TYPE_START,  // Next() has not yet been called.
+    TYPE_END,    // End of input reached.  "text" is empty.
 
     TYPE_IDENTIFIER,  // A sequence of letters, digits, and underscores, not
                       // starting with a digit.  It is an error for a number
@@ -121,12 +124,19 @@ class PROTOBUF_EXPORT Tokenizer {
     TYPE_SYMBOL,      // Any other printable character, like '!' or '+'.
                       // Symbols are always a single character, so "!+$%" is
                       // four tokens.
+    TYPE_WHITESPACE,  // A sequence of whitespace.  This token type is only
+                      // produced if report_whitespace() is true.  It is not
+                      // reported for whitespace within comments or strings.
+    TYPE_NEWLINE,     // A newline (\n).  This token type is only
+                      // produced if report_whitespace() is true and
+                      // report_newlines() is true.  It is not reported for
+                      // newlines in comments or strings.
   };
 
   // Structure representing a token read from the token stream.
   struct Token {
     TokenType type;
-    std::string text;       // The exact text of the token as it appeared in
+    std::string text;  // The exact text of the token as it appeared in
                        // the input.  e.g. tokens of TYPE_STRING will still
                        // be escaped and in quotes.
 
@@ -216,8 +226,8 @@ class PROTOBUF_EXPORT Tokenizer {
   // result.  If the text is not from a Token of type TYPE_INTEGER originally
   // parsed by a Tokenizer, the result is undefined (possibly an assert
   // failure).
-  static bool ParseInteger(const std::string& text, uint64 max_value,
-                           uint64* output);
+  static bool ParseInteger(const std::string& text, uint64_t max_value,
+                           uint64_t* output);
 
   // Options ---------------------------------------------------------
 
@@ -251,6 +261,16 @@ class PROTOBUF_EXPORT Tokenizer {
     allow_multiline_strings_ = allow;
   }
 
+  // If true, whitespace tokens are reported by Next().
+  // Note: `set_report_whitespace(false)` implies `set_report_newlines(false)`.
+  bool report_whitespace() const;
+  void set_report_whitespace(bool report);
+
+  // If true, newline tokens are reported by Next().
+  // Note: `set_report_newlines(true)` implies `set_report_whitespace(true)`.
+  bool report_newlines() const;
+  void set_report_newlines(bool report);
+
   // External helper: validate an identifier.
   static bool IsIdentifier(const std::string& text);
 
@@ -258,17 +278,17 @@ class PROTOBUF_EXPORT Tokenizer {
  private:
   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(Tokenizer);
 
-  Token current_;           // Returned by current().
-  Token previous_;          // Returned by previous().
+  Token current_;   // Returned by current().
+  Token previous_;  // Returned by previous().
 
   ZeroCopyInputStream* input_;
   ErrorCollector* error_collector_;
 
-  char current_char_;       // == buffer_[buffer_pos_], updated by NextChar().
-  const char* buffer_;      // Current buffer returned from input_.
-  int buffer_size_;         // Size of buffer_.
-  int buffer_pos_;          // Current position within the buffer.
-  bool read_error_;         // Did we previously encounter a read error?
+  char current_char_;   // == buffer_[buffer_pos_], updated by NextChar().
+  const char* buffer_;  // Current buffer returned from input_.
+  int buffer_size_;     // Size of buffer_.
+  int buffer_pos_;      // Current position within the buffer.
+  bool read_error_;     // Did we previously encounter a read error?
 
   // Line and column number of current_char_ within the whole input stream.
   int line_;
@@ -286,6 +306,8 @@ class PROTOBUF_EXPORT Tokenizer {
   CommentStyle comment_style_;
   bool require_space_after_number_;
   bool allow_multiline_strings_;
+  bool report_whitespace_ = false;
+  bool report_newlines_ = false;
 
   // Since we count columns we need to interpret tabs somehow.  We'll take
   // the standard 8-character definition for lack of any way to do better.
@@ -359,6 +381,14 @@ class PROTOBUF_EXPORT Tokenizer {
   // of comment it is.
   NextCommentStatus TryConsumeCommentStart();
 
+  // If we're looking at a TYPE_WHITESPACE token and `report_whitespace_` is
+  // true, consume it and return true.
+  bool TryConsumeWhitespace();
+
+  // If we're looking at a TYPE_NEWLINE token and `report_newlines_` is true,
+  // consume it and return true.
+  bool TryConsumeNewline();
+
   // -----------------------------------------------------------------
   // These helper methods make the parsing code more readable.  The
   // "character classes" referred to are defined at the top of the .cc file.
@@ -369,39 +399,36 @@ class PROTOBUF_EXPORT Tokenizer {
 
   // Returns true if the current character is of the given character
   // class, but does not consume anything.
-  template<typename CharacterClass>
+  template <typename CharacterClass>
   inline bool LookingAt();
 
   // If the current character is in the given class, consume it and return
   // true.  Otherwise return false.
   // e.g. TryConsumeOne<Letter>()
-  template<typename CharacterClass>
+  template <typename CharacterClass>
   inline bool TryConsumeOne();
 
   // Like above, but try to consume the specific character indicated.
   inline bool TryConsume(char c);
 
   // Consume zero or more of the given character class.
-  template<typename CharacterClass>
+  template <typename CharacterClass>
   inline void ConsumeZeroOrMore();
 
   // Consume one or more of the given character class or log the given
   // error message.
   // e.g. ConsumeOneOrMore<Digit>("Expected digits.");
-  template<typename CharacterClass>
+  template <typename CharacterClass>
   inline void ConsumeOneOrMore(const char* error);
 };
 
 // inline methods ====================================================
-inline const Tokenizer::Token& Tokenizer::current() {
-  return current_;
-}
+inline const Tokenizer::Token& Tokenizer::current() { return current_; }
 
-inline const Tokenizer::Token& Tokenizer::previous() {
-  return previous_;
-}
+inline const Tokenizer::Token& Tokenizer::previous() { return previous_; }
 
-inline void Tokenizer::ParseString(const std::string& text, std::string* output) {
+inline void Tokenizer::ParseString(const std::string& text,
+                                   std::string* output) {
   output->clear();
   ParseStringAppend(text, output);
 }

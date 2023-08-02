@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -17,12 +17,18 @@
 #define OR_TOOLS_LP_DATA_LP_TYPES_H_
 
 #include <cmath>
+#include <cstdint>
 #include <limits>
+#include <ostream>
+#include <string>
+#include <type_traits>
+#include <vector>
 
-#include "ortools/base/basictypes.h"
-#include "ortools/base/int_type.h"
-#include "ortools/base/int_type_indexed_vector.h"
+#include "ortools/base/integral_types.h"
+#include "ortools/base/logging.h"
+#include "ortools/base/strong_vector.h"
 #include "ortools/util/bitset.h"
+#include "ortools/util/strong_integers.h"
 
 // We use typedefs as much as possible to later permit the usage of
 // types such as quad-doubles or rationals.
@@ -32,16 +38,16 @@ namespace glop {
 
 // This type is defined to avoid cast issues during index conversions,
 // e.g. converting ColIndex into RowIndex.
-// All types should use 'Index' instead of int32.
-typedef int32 Index;
+// All types should use 'Index' instead of int32_t.
+typedef int32_t Index;
 
 // ColIndex is the type for integers representing column/variable indices.
 // int32s are enough for handling even the largest problems.
-DEFINE_INT_TYPE(ColIndex, Index);
+DEFINE_STRONG_INDEX_TYPE(ColIndex);
 
 // RowIndex is the type for integers representing row/constraint indices.
 // int32s are enough for handling even the largest problems.
-DEFINE_INT_TYPE(RowIndex, Index);
+DEFINE_STRONG_INDEX_TYPE(RowIndex);
 
 // Get the ColIndex corresponding to the column # row.
 inline ColIndex RowToColIndex(RowIndex row) { return ColIndex(row.value()); }
@@ -59,9 +65,9 @@ inline Index RowToIntIndex(RowIndex row) { return row.value(); }
 // An entry in a sparse matrix is a pair (row, value) for a given known column.
 // See classes SparseColumn and SparseMatrix.
 #if defined(__ANDROID__)
-DEFINE_INT_TYPE(EntryIndex, int32);
+DEFINE_STRONG_INDEX_TYPE(EntryIndex);
 #else
-DEFINE_INT_TYPE(EntryIndex, int64);
+DEFINE_STRONG_INT64_TYPE(EntryIndex);
 #endif
 
 static inline double ToDouble(double f) { return f; }
@@ -76,13 +82,13 @@ static inline double ToDouble(long double f) { return static_cast<double>(f); }
 typedef double Fractional;
 
 // Range max for type Fractional. DBL_MAX for double for example.
-const double kRangeMax = std::numeric_limits<double>::max();
+constexpr double kRangeMax = std::numeric_limits<double>::max();
 
 // Infinity for type Fractional.
-const double kInfinity = std::numeric_limits<double>::infinity();
+constexpr double kInfinity = std::numeric_limits<double>::infinity();
 
 // Epsilon for type Fractional, i.e. the smallest e such that 1.0 + e != 1.0 .
-const double kEpsilon = std::numeric_limits<double>::epsilon();
+constexpr double kEpsilon = std::numeric_limits<double>::epsilon();
 
 // Returns true if the given value is finite, that means for a double:
 // not a NaN and not +/- infinity.
@@ -93,11 +99,11 @@ inline bool IsFinite(Fractional value) {
 // Constants to represent invalid row or column index.
 // It is important that their values be the same because during transposition,
 // one needs to be converted into the other.
-const RowIndex kInvalidRow(-1);
-const ColIndex kInvalidCol(-1);
+constexpr RowIndex kInvalidRow(-1);
+constexpr ColIndex kInvalidCol(-1);
 
 // Different statuses for a given problem.
-enum class ProblemStatus : int8 {
+enum class ProblemStatus : int8_t {
   // The problem has been solved to optimality. Both the primal and dual have
   // a feasible solution.
   OPTIMAL,
@@ -161,7 +167,7 @@ enum class ProblemStatus : int8 {
   IMPRECISE,
 };
 
-// Returns the std::string representation of the ProblemStatus enum.
+// Returns the string representation of the ProblemStatus enum.
 std::string GetProblemStatusString(ProblemStatus problem_status);
 
 inline std::ostream& operator<<(std::ostream& os, ProblemStatus status) {
@@ -170,7 +176,7 @@ inline std::ostream& operator<<(std::ostream& os, ProblemStatus status) {
 }
 
 // Different types of variables.
-enum class VariableType : int8 {
+enum class VariableType : int8_t {
   UNCONSTRAINED,
   LOWER_BOUNDED,
   UPPER_BOUNDED,
@@ -178,7 +184,7 @@ enum class VariableType : int8 {
   FIXED_VARIABLE
 };
 
-// Returns the std::string representation of the VariableType enum.
+// Returns the string representation of the VariableType enum.
 std::string GetVariableTypeString(VariableType variable_type);
 
 inline std::ostream& operator<<(std::ostream& os, VariableType type) {
@@ -192,7 +198,7 @@ inline std::ostream& operator<<(std::ostream& os, VariableType type) {
 // execution of the revised simplex algorithm, except that because of
 // bound-shifting, the variable may not be at their exact bounds until the
 // shifts are removed.
-enum class VariableStatus : int8 {
+enum class VariableStatus : int8_t {
   // The basic status is special and takes precedence over all the other
   // statuses. It means that the variable is part of the basis.
   BASIC,
@@ -206,10 +212,13 @@ enum class VariableStatus : int8 {
   AT_UPPER_BOUND,
   // Only possible status of an UNCONSTRAINED non-basic variable.
   // Its value should be zero.
+  //
+  // Note that during crossover, this status is relaxed, and any variable that
+  // can currently move in both directions can be marked as free.
   FREE,
 };
 
-// Returns the std::string representation of the VariableStatus enum.
+// Returns the string representation of the VariableStatus enum.
 std::string GetVariableStatusString(VariableStatus status);
 
 inline std::ostream& operator<<(std::ostream& os, VariableStatus status) {
@@ -223,7 +232,7 @@ inline std::ostream& operator<<(std::ostream& os, VariableStatus status) {
 // VariableStatus of the slack variable associated to a constraint modulo a
 // change of sign. The difference is that because of precision error, a
 // constraint activity cannot exactly be equal to one of its bounds or to zero.
-enum class ConstraintStatus : int8 {
+enum class ConstraintStatus : int8_t {
   BASIC,
   FIXED_VALUE,
   AT_LOWER_BOUND,
@@ -231,7 +240,7 @@ enum class ConstraintStatus : int8 {
   FREE,
 };
 
-// Returns the std::string representation of the ConstraintStatus enum.
+// Returns the string representation of the ConstraintStatus enum.
 std::string GetConstraintStatusString(ConstraintStatus status);
 
 inline std::ostream& operator<<(std::ostream& os, ConstraintStatus status) {
@@ -242,16 +251,46 @@ inline std::ostream& operator<<(std::ostream& os, ConstraintStatus status) {
 // Returns the ConstraintStatus corresponding to a given VariableStatus.
 ConstraintStatus VariableToConstraintStatus(VariableStatus status);
 
+// A span of `T`, indexed by a strict int type `IntType`. Intended to be passed
+// by value. See b/259677543.
+template <typename IntType, typename T>
+class StrictITISpan {
+ public:
+  using IndexType = IntType;
+  using reference = T&;
+  using value_type = T;
+
+  StrictITISpan(T* data, IntType size) : data_(data), size_(size) {}
+
+  reference operator[](IntType i) const {
+    return data_[static_cast<size_t>(i.value())];
+  }
+
+  IntType size() const { return size_; }
+
+  // TODO(user): This should probably be a strictly typed iterator too, but
+  // `StrongVector::begin()` already suffers from this problem.
+  auto begin() const { return data_; }
+  auto end() const { return data_ + static_cast<size_t>(size_.value()); }
+
+ private:
+  T* const data_;
+  const IntType size_;
+};
+
 // Wrapper around an ITIVector to allow (and enforce) creation/resize/assign
 // to use the index type for the size.
 //
 // TODO(user): This should probably move into ITIVector, but note that this
 // version is more strict and does not allow any other size types.
 template <typename IntType, typename T>
-class StrictITIVector : public gtl::ITIVector<IntType, T> {
+class StrictITIVector : public absl::StrongVector<IntType, T> {
  public:
-  typedef IntType IndexType;  // g++ 4.8.1 needs this.
-  typedef gtl::ITIVector<IntType, T> ParentType;
+  typedef IntType IndexType;
+  typedef absl::StrongVector<IntType, T> ParentType;
+  using View = StrictITISpan<IntType, T>;
+  using ConstView = StrictITISpan<IntType, const T>;
+
 // This allows for brace initialization, which is really useful in tests.
 // It is not 'explicit' by design, so one can do vector = {...};
 #if !defined(__ANDROID__) && (!defined(_MSC_VER) || (_MSC_VER >= 1800))
@@ -275,6 +314,10 @@ class StrictITIVector : public gtl::ITIVector<IntType, T> {
   IntType size() const { return IntType(ParentType::size()); }
 
   IntType capacity() const { return IntType(ParentType::capacity()); }
+
+  View view() { return View(ParentType::data(), size()); }
+  ConstView const_view() const { return ConstView(ParentType::data(), size()); }
+  ConstView view() const { return const_view(); }
 
   // Since calls to resize() must use a default value, we introduce a new
   // function for convenience to reduce the size of a vector.
@@ -343,66 +386,39 @@ typedef StrictITIVector<RowIndex, ColIndex> RowToColMapping;
 // Column of constraints (slack variables) statuses.
 typedef StrictITIVector<RowIndex, ConstraintStatus> ConstraintStatusColumn;
 
-// Returns true if it is more advantageous to use a dense iteration rather than
-// using the non-zeros positions.
-//
-// TODO(user): The constant should depend on what algorithm is used. Clearing a
-// dense vector is a lot more efficient than doing more complex stuff. Clean
-// this up by extracting all the currently used constants in one place with
-// meaningful names.
-template <typename ScatteredRowOrCol>
-bool ShouldUseDenseIteration(const ScatteredRowOrCol& v) {
-  if (v.non_zeros.empty()) return true;
-  const double kThresholdForUsingDenseRepresentation = 0.8;
-  return static_cast<double>(v.non_zeros.size()) >
-         kThresholdForUsingDenseRepresentation *
-             static_cast<double>(v.values.size().value());
-}
+// --------------------------------------------------------
+// VectorIterator
+// --------------------------------------------------------
 
-// A simple struct that contains a DenseVector and its non-zeros indices.
-template <typename Index>
-struct ScatteredVector {
-  StrictITIVector<Index, Fractional> values;
+// An iterator over the elements of a sparse data structure that stores the
+// elements in arrays for indices and coefficients. The iterator is
+// built as a wrapper over a sparse vector entry class; the concrete entry class
+// is provided through the template argument EntryType.
+template <typename EntryType>
+class VectorIterator : EntryType {
+ public:
+  using Index = typename EntryType::Index;
+  using Entry = EntryType;
 
-  // This can be left empty in which case we just have the dense representation
-  // above. Otherwise, it should always be a subset of the actual non-zeros.
-  bool non_zeros_are_sorted = false;
-  std::vector<Index> non_zeros;
+  VectorIterator(const Index* indices, const Fractional* coefficients,
+                 EntryIndex i)
+      : EntryType(indices, coefficients, i) {}
 
-  // Temporary vector used in some sparse computation on the ScatteredColumn.
-  // True indicate a possible non-zero value. Note that its state is not always
-  // consistent.
-  StrictITIVector<Index, bool> is_non_zero;
-
-  Fractional operator[](Index index) const { return values[index]; }
-  Fractional& operator[](Index index) { return values[index]; }
-
-  // Sorting the non-zeros is not always needed, but it allows us to have
-  // exactly the same behavior while using a sparse iteration or a dense one. So
-  // we always do it after a Solve().
-  void SortNonZerosIfNeeded() {
-    if (!non_zeros_are_sorted) {
-      std::sort(non_zeros.begin(), non_zeros.end());
-      non_zeros_are_sorted = true;
-    }
+  void operator++() { ++this->i_; }
+  bool operator!=(const VectorIterator& other) const {
+    // This operator is intended for use in natural range iteration ONLY.
+    // Therefore, we prefer to use '<' so that a buggy range iteration which
+    // start point is *after* its end point stops immediately, instead of
+    // iterating 2^(number of bits of EntryIndex) times.
+    return this->i_ < other.i_;
   }
+  const Entry& operator*() const { return *this; }
 };
-
-// Specialization used in the code.
-struct ScatteredColumn : public ScatteredVector<RowIndex> {};
-struct ScatteredRow : public ScatteredVector<ColIndex> {};
-
-inline const ScatteredRow& TransposedView(const ScatteredColumn& c) {
-  return reinterpret_cast<const ScatteredRow&>(c);
-}
-inline const ScatteredColumn& TransposedView(const ScatteredRow& r) {
-  return reinterpret_cast<const ScatteredColumn&>(r);
-}
 
 // This is used during the deterministic time computation to convert a given
 // number of floating-point operations to something in the same order of
 // magnitude as a second (on a 2014 desktop).
-static inline double DeterministicTimeForFpOperations(int64 n) {
+static inline double DeterministicTimeForFpOperations(int64_t n) {
   const double kConversionFactor = 2e-9;
   return kConversionFactor * static_cast<double>(n);
 }

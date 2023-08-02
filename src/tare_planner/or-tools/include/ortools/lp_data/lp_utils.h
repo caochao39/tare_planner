@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -16,8 +16,11 @@
 #ifndef OR_TOOLS_LP_DATA_LP_UTILS_H_
 #define OR_TOOLS_LP_DATA_LP_UTILS_H_
 
+#include <cmath>
+
 #include "ortools/base/accurate_sum.h"
 #include "ortools/lp_data/lp_types.h"
+#include "ortools/lp_data/scattered_vector.h"
 #include "ortools/lp_data/sparse_column.h"
 
 namespace operations_research {
@@ -87,6 +90,20 @@ Fractional ScalarProduct(const DenseRowOrColumn& u, const SparseColumn& v) {
   return sum;
 }
 
+template <class DenseRowOrColumn>
+Fractional ScalarProduct(const DenseRowOrColumn& u, const ScatteredColumn& v) {
+  DCHECK_EQ(u.size().value(), v.values.size().value());
+  if (v.ShouldUseDenseIteration()) {
+    return ScalarProduct(u, v.values);
+  }
+  Fractional sum = 0.0;
+  for (const auto e : v) {
+    sum += (u[typename DenseRowOrColumn::IndexType(e.row().value())] *
+            e.coefficient());
+  }
+  return sum;
+}
+
 template <class DenseRowOrColumn, class DenseRowOrColumn2>
 Fractional PreciseScalarProduct(const DenseRowOrColumn& u,
                                 const DenseRowOrColumn2& v) {
@@ -105,20 +122,6 @@ Fractional PreciseScalarProduct(const DenseRowOrColumn& u,
   for (const SparseColumn::Entry e : v) {
     sum.Add(u[typename DenseRowOrColumn::IndexType(e.row().value())] *
             e.coefficient());
-  }
-  return sum.Value();
-}
-
-template <class DenseRowOrColumn>
-Fractional PreciseScalarProduct(const DenseRowOrColumn& u,
-                                const ScatteredColumn& v) {
-  DCHECK_EQ(u.size().value(), v.values.size().value());
-  if (ShouldUseDenseIteration(v)) {
-    return PreciseScalarProduct(u, v.values);
-  }
-  KahanSum sum;
-  for (const RowIndex row : v.non_zeros) {
-    sum.Add(u[typename DenseRowOrColumn::IndexType(row.value())] * v[row]);
   }
   return sum.Value();
 }
@@ -142,6 +145,8 @@ Fractional PartialScalarProduct(const DenseRowOrColumn& u,
 // The precise version uses KahanSum and are about two times slower.
 Fractional SquaredNorm(const SparseColumn& v);
 Fractional SquaredNorm(const DenseColumn& column);
+Fractional SquaredNorm(const ColumnView& v);
+Fractional SquaredNorm(const ScatteredColumn& v);
 Fractional PreciseSquaredNorm(const SparseColumn& v);
 Fractional PreciseSquaredNorm(const DenseColumn& column);
 Fractional PreciseSquaredNorm(const ScatteredColumn& v);
@@ -149,6 +154,7 @@ Fractional PreciseSquaredNorm(const ScatteredColumn& v);
 // Returns the maximum of the |coefficients| of 'v'.
 Fractional InfinityNorm(const DenseColumn& v);
 Fractional InfinityNorm(const SparseColumn& v);
+Fractional InfinityNorm(const ColumnView& v);
 
 // Returns the fraction of non-zero entries of the given row.
 //
@@ -169,17 +175,17 @@ const DenseColumn& Transpose(const DenseRow& row);
 // Returns the maximum of the |coefficients| of the given column restricted
 // to the rows_to_consider. Also returns the first RowIndex 'row' that attains
 // this maximum. If the maximum is 0.0, then row_index is left untouched.
-Fractional RestrictedInfinityNorm(const SparseColumn& column,
+Fractional RestrictedInfinityNorm(const ColumnView& column,
                                   const DenseBooleanColumn& rows_to_consider,
                                   RowIndex* row_index);
 
 // Sets to false the entry b[row] if column[row] is non null.
 // Note that if 'b' was true only on the non-zero position of column, this can
 // be used as a fast way to clear 'b'.
-void SetSupportToFalse(const SparseColumn& column, DenseBooleanColumn* b);
+void SetSupportToFalse(const ColumnView& column, DenseBooleanColumn* b);
 
 // Returns true iff for all 'row' we have '|column[row]| <= radius[row]'.
-bool IsDominated(const SparseColumn& column, const DenseColumn& radius);
+bool IsDominated(const ColumnView& column, const DenseColumn& radius);
 
 // This cast based implementation should be safe, as long as DenseRow and
 // DenseColumn are implemented by the same underlying type.
@@ -312,20 +318,32 @@ inline void ChangeSign(StrictITIVector<IndexType, Fractional>* data) {
 //
 // The numerical accuracy suffers however. If X is 1e100 and SumWithout(X)
 // should be 1e-100, then the value actually returned by SumWithout(X) is likely
-// to be wrong (by up to std::numeric_limits<Fractional>::epsilon() ^ 2).
+// to be wrong.
 template <bool supported_infinity_is_positive>
 class SumWithOneMissing {
  public:
   SumWithOneMissing() : num_infinities_(0), sum_() {}
 
   void Add(Fractional x) {
-    if (num_infinities_ > 1) return;
-    if (IsFinite(x)) {
-      sum_.Add(x);
+    DCHECK(!std::isnan(x));
+
+    if (!IsFinite(x)) {
+      DCHECK_EQ(x, Infinity());
+      ++num_infinities_;
       return;
     }
-    DCHECK_EQ(Infinity(), x);
-    ++num_infinities_;
+
+    // If we overflow, then there is not much we can do. This is needed
+    // because KahanSum seems to give nan if we try to add stuff to an
+    // infinite sum.
+    if (!IsFinite(sum_.Value())) return;
+
+    sum_.Add(x);
+  }
+
+  void RemoveOneInfinity() {
+    DCHECK_GE(num_infinities_, 1);
+    --num_infinities_;
   }
 
   Fractional Sum() const {
@@ -343,13 +361,24 @@ class SumWithOneMissing {
     return sum_.Value();
   }
 
+  // When the term we substract has a big magnitude, the SumWithout() can be
+  // quite imprecise. On can use these version to have more defensive bounds.
+  Fractional SumWithoutLb(Fractional c) const {
+    if (!IsFinite(c)) return SumWithout(c);
+    return SumWithout(c) - std::abs(c) * 1e-12;
+  }
+
+  Fractional SumWithoutUb(Fractional c) const {
+    if (!IsFinite(c)) return SumWithout(c);
+    return SumWithout(c) + std::abs(c) * 1e-12;
+  }
+
  private:
   Fractional Infinity() const {
     return supported_infinity_is_positive ? kInfinity : -kInfinity;
   }
 
-  // Count how many times Add() was called with an infinite value. The count is
-  // stopped at 2 to be a bit faster.
+  // Count how many times Add() was called with an infinite value.
   int num_infinities_;
   KahanSum sum_;  // stripped of all the infinite values.
 };

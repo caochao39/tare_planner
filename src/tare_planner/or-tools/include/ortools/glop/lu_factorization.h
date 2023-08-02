@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -14,10 +14,17 @@
 #ifndef OR_TOOLS_GLOP_LU_FACTORIZATION_H_
 #define OR_TOOLS_GLOP_LU_FACTORIZATION_H_
 
+#include <string>
+#include <vector>
+
 #include "ortools/glop/markowitz.h"
 #include "ortools/glop/parameters.pb.h"
 #include "ortools/glop/status.h"
+#include "ortools/lp_data/lp_types.h"
+#include "ortools/lp_data/permutation.h"
+#include "ortools/lp_data/scattered_vector.h"
 #include "ortools/lp_data/sparse.h"
+#include "ortools/lp_data/sparse_column.h"
 #include "ortools/util/stats.h"
 
 namespace operations_research {
@@ -48,7 +55,15 @@ class LuFactorization {
   // it being confused by this revert to identity factorization behavior. The
   // reason behind it is that this way, calling any public function of this
   // class will never cause a crash of the program.
-  ABSL_MUST_USE_RESULT Status ComputeFactorization(const MatrixView& matrix);
+  ABSL_MUST_USE_RESULT Status
+  ComputeFactorization(const CompactSparseMatrixView& compact_matrix);
+
+  // Given a set of columns, find a maximum linearly independent subset that can
+  // be factorized in a stable way, and complete it into a square matrix using
+  // slack columns. The initial set can have less, more or the same number of
+  // columns as the number of rows.
+  RowToColMapping ComputeInitialBasis(const CompactSparseMatrix& matrix,
+                                      const std::vector<ColIndex>& candidates);
 
   // Returns the column permutation used by the LU factorization.
   const ColumnPermutation& GetColumnPermutation() const { return col_perm_; }
@@ -98,19 +113,20 @@ class LuFactorization {
   // then false is returned.
   bool LeftSolveLWithNonZeros(ScatteredRow* y,
                               ScatteredColumn* result_before_permutation) const;
+  void LeftSolveLWithNonZeros(ScatteredRow* y) const;
 
   // Specialized version of RightSolveLWithNonZeros() that takes a SparseColumn
   // or a ScatteredColumn as input. non_zeros will either be cleared or set to
   // the non zeros of the result. Important: the output x must be of the correct
   // size and all zero.
-  void RightSolveLForColumnView(const CompactSparseMatrix::ColumnView& b,
-                                ScatteredColumn* x) const;
+  void RightSolveLForColumnView(const ColumnView& b, ScatteredColumn* x) const;
   void RightSolveLForScatteredColumn(const ScatteredColumn& b,
                                      ScatteredColumn* x) const;
 
-  // Specialized version of RightSolveLWithNonZeros() where x is originaly equal
-  // to 'a' permuted by row_perm_. Note that 'a' is only used for DCHECK.
-  void RightSolveLWithPermutedInput(const DenseColumn& a, DenseColumn* x) const;
+  // Specialized version of RightSolveLWithNonZeros() where x is originally
+  // equal to 'a' permuted by row_perm_. Note that 'a' is only used for DCHECK.
+  void RightSolveLWithPermutedInput(const DenseColumn& a,
+                                    ScatteredColumn* x) const;
 
   // Specialized version of LeftSolveU() for an unit right-hand side.
   // non_zeros will either be cleared or set to the non zeros of the results.
@@ -124,7 +140,7 @@ class LuFactorization {
   const SparseColumn& GetColumnOfU(ColIndex col) const;
 
   // Returns the norm of B^{-1}.a
-  Fractional RightSolveSquaredNorm(const SparseColumn& a) const;
+  Fractional RightSolveSquaredNorm(const ColumnView& a) const;
 
   // Returns the norm of (B^T)^{-1}.e_row where e is an unit vector.
   Fractional DualEdgeSquaredNorm(RowIndex row) const;
@@ -135,7 +151,7 @@ class LuFactorization {
   //
   // This returns the number of entries in lower + upper as the percentage of
   // the number of entries in B.
-  double GetFillInPercentage(const MatrixView& matrix) const;
+  double GetFillInPercentage(const CompactSparseMatrixView& matrix) const;
 
   // Returns the number of entries in L + U.
   // If the factorization is the identity, this returns 0.
@@ -173,8 +189,10 @@ class LuFactorization {
   // for ComputeFactorization().
   //
   // TODO(user): separate this from LuFactorization.
-  Fractional ComputeOneNormConditionNumber(const MatrixView& matrix) const;
-  Fractional ComputeInfinityNormConditionNumber(const MatrixView& matrix) const;
+  Fractional ComputeOneNormConditionNumber(
+      const CompactSparseMatrixView& matrix) const;
+  Fractional ComputeInfinityNormConditionNumber(
+      const CompactSparseMatrixView& matrix) const;
   Fractional ComputeInverseInfinityNormUpperBound() const;
 
   // Sets the current parameters.
@@ -183,7 +201,7 @@ class LuFactorization {
     markowitz_.SetParameters(parameters);
   }
 
-  // Returns a std::string containing the statistics for this class.
+  // Returns a string containing the statistics for this class.
   std::string StatString() const {
     return stats_.StatString() + markowitz_.StatString();
   }
@@ -197,6 +215,9 @@ class LuFactorization {
     upper_.CopyToSparseMatrix(&temp_upper);
     product->PopulateFromProduct(temp_lower, temp_upper);
   }
+
+  // Returns the deterministic time of the last factorization.
+  double DeterministicTimeOfLastFactorization() const;
 
   // Visible for testing.
   const RowPermutation& row_perm() const { return row_perm_; }
@@ -218,6 +239,10 @@ class LuFactorization {
   // Internal function used in the left solve functions.
   void LeftSolveScratchpad() const;
 
+  // Internal function used in the right solve functions
+  template <typename Column>
+  void RightSolveLInternal(const Column& b, ScatteredColumn* x) const;
+
   // Fills transpose_upper_ from upper_.
   void ComputeTransposeUpper();
 
@@ -226,7 +251,8 @@ class LuFactorization {
 
   // Computes R = P.B.Q^{-1} - L.U and returns false if the largest magnitude of
   // the coefficients of P.B.Q^{-1} - L.U is greater than tolerance.
-  bool CheckFactorization(const MatrixView& matrix, Fractional tolerance) const;
+  bool CheckFactorization(const CompactSparseMatrixView& matrix,
+                          Fractional tolerance) const;
 
   // Special case where we have nothing to do. This happens at the beginning
   // when we start the problem with an all-slack basis and gives a good speedup

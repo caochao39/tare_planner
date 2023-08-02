@@ -943,12 +943,16 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
 
   if (forward_viewpoint_count > 0 && !has_forward)
   {
-    std::cout << "forward viewpoint count > 0 but does not have forward lookahead point" << std::endl;
+    std::cout << "forward viewpoint count > 0 but does not have forward "
+                 "lookahead point"
+              << std::endl;
     exit(1);
   }
   if (backward_viewpoint_count > 0 && !has_backward)
   {
-    std::cout << "backward viewpoint count > 0 but does not have backward lookahead point" << std::endl;
+    std::cout << "backward viewpoint count > 0 but does not have backward "
+                 "lookahead point"
+              << std::endl;
     exit(1);
   }
 

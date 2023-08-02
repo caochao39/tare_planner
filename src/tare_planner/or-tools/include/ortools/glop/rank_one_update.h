@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -14,9 +14,12 @@
 #ifndef OR_TOOLS_GLOP_RANK_ONE_UPDATE_H_
 #define OR_TOOLS_GLOP_RANK_ONE_UPDATE_H_
 
+#include <vector>
+
 #include "ortools/base/logging.h"
 #include "ortools/lp_data/lp_types.h"
 #include "ortools/lp_data/lp_utils.h"
+#include "ortools/lp_data/scattered_vector.h"
 #include "ortools/lp_data/sparse.h"
 
 namespace operations_research {
@@ -156,10 +159,11 @@ class RankOneUpdateFactorization {
     for (int i = elementary_matrices_.size() - 1; i >= 0; --i) {
       elementary_matrices_[i].LeftSolve(y);
     }
+    dtime_ += DeterministicTimeForFpOperations(num_entries_.value());
   }
 
   // Same as LeftSolve(), but if the given non_zeros are not empty, then all
-  // the new non-zeros in the result are happended to it.
+  // the new non-zeros in the result are appended to it.
   void LeftSolveWithNonZeros(ScatteredRow* y) const {
     RETURN_IF_NULL(y);
     if (y->non_zeros.empty()) {
@@ -167,21 +171,21 @@ class RankOneUpdateFactorization {
       return;
     }
 
-    // tmp_row_is_non_zero_ is always all false before and after this code.
-    y->is_non_zero.resize(y->values.size(), false);
+    // y->is_non_zero is always all false before and after this code.
     DCHECK(IsAllFalse(y->is_non_zero));
-    for (const ColIndex col : y->non_zeros) y->is_non_zero[col] = true;
-    const int hypersparse_threshold = static_cast<int>(
-        hypersparse_ratio_ * static_cast<double>(y->values.size().value()));
+    y->RepopulateSparseMask();
+    bool use_dense = y->ShouldUseDenseIteration(hypersparse_ratio_);
     for (int i = elementary_matrices_.size() - 1; i >= 0; --i) {
-      if (y->non_zeros.size() < hypersparse_threshold) {
-        elementary_matrices_[i].LeftSolveWithNonZeros(y);
-      } else {
+      if (use_dense) {
         elementary_matrices_[i].LeftSolve(&y->values);
+      } else {
+        elementary_matrices_[i].LeftSolveWithNonZeros(y);
+        use_dense = y->ShouldUseDenseIteration(hypersparse_ratio_);
       }
     }
-    for (const ColIndex col : y->non_zeros) y->is_non_zero[col] = false;
-    if (y->non_zeros.size() >= hypersparse_threshold) y->non_zeros.clear();
+    y->ClearSparseMask();
+    y->ClearNonZerosIfTooDense(hypersparse_ratio_);
+    dtime_ += DeterministicTimeForFpOperations(num_entries_.value());
   }
 
   // Right-solves all systems from left to right, i.e. T_i.d_{i+1} = d_i
@@ -191,10 +195,11 @@ class RankOneUpdateFactorization {
     for (int i = 0; i < end; ++i) {
       elementary_matrices_[i].RightSolve(d);
     }
+    dtime_ += DeterministicTimeForFpOperations(num_entries_.value());
   }
 
   // Same as RightSolve(), but if the given non_zeros are not empty, then all
-  // the new non-zeros in the result are happended to it.
+  // the new non-zeros in the result are appended to it.
   void RightSolveWithNonZeros(ScatteredColumn* d) const {
     RETURN_IF_NULL(d);
     if (d->non_zeros.empty()) {
@@ -203,26 +208,37 @@ class RankOneUpdateFactorization {
     }
 
     // d->is_non_zero is always all false before and after this code.
-    d->is_non_zero.resize(d->values.size(), false);
     DCHECK(IsAllFalse(d->is_non_zero));
-    for (const RowIndex row : d->non_zeros) d->is_non_zero[row] = true;
+    d->RepopulateSparseMask();
+    bool use_dense = d->ShouldUseDenseIteration(hypersparse_ratio_);
     const size_t end = elementary_matrices_.size();
-    const int hypersparse_threshold = static_cast<int>(
-        hypersparse_ratio_ * static_cast<double>(d->values.size().value()));
     for (int i = 0; i < end; ++i) {
-      if (d->non_zeros.size() < hypersparse_threshold) {
-        elementary_matrices_[i].RightSolveWithNonZeros(d);
-      } else {
+      if (use_dense) {
         elementary_matrices_[i].RightSolve(&d->values);
+      } else {
+        elementary_matrices_[i].RightSolveWithNonZeros(d);
+        use_dense = d->ShouldUseDenseIteration(hypersparse_ratio_);
       }
     }
-    for (const RowIndex row : d->non_zeros) d->is_non_zero[row] = false;
-    if (d->non_zeros.size() >= hypersparse_threshold) d->non_zeros.clear();
+    d->ClearSparseMask();
+    d->ClearNonZerosIfTooDense(hypersparse_ratio_);
+    dtime_ += DeterministicTimeForFpOperations(num_entries_.value());
   }
 
   EntryIndex num_entries() const { return num_entries_; }
 
+  // Deterministic time spent in all the solves function since last reset.
+  //
+  // TODO(user): This is quite precise. However we overcount a bit, because in
+  // each elementary solves, if the scalar product involved is zero, we skip
+  // some of the operations counted here. Is it worth spending a bit more time
+  // to be more precise here?
+  double DeterministicTimeSinceLastReset() const { return dtime_; }
+  void ResetDeterministicTime() { dtime_ = 0.0; }
+
  private:
+  mutable double dtime_ = 0.0;
+
   double hypersparse_ratio_;
   EntryIndex num_entries_;
   std::vector<RankOneUpdateElementaryMatrix> elementary_matrices_;

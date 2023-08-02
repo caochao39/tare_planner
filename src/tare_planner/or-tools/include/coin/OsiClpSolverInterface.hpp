@@ -174,13 +174,9 @@ public:
      and can be queried by other methods.
   */
   virtual void enableSimplexInterface(bool doingPrimal);
-  /// Copy across enabled stuff from one solver to another
-  void copyEnabledSuff(OsiClpSolverInterface &rhs);
 
   /*! \brief Undo setting changes made by #enableSimplexInterface */
   virtual void disableSimplexInterface();
-  /// Copy across enabled stuff from one solver to another
-  void copyEnabledStuff(ClpSimplex &rhs);
 
   /** Perform a pivot by substituting a colIn for colOut in the basis. 
       The status of the leaving variable is given in statOut. Where
@@ -972,7 +968,6 @@ public:
   /// This loads a model from a coinModel object - returns number of errors
   virtual int loadFromCoinModel(CoinModel &modelObject, bool keepSolution = false);
 
-  using OsiSolverInterface::readMps;
   /** Read an mps file from the given filename (defaults to Osi reader) - returns
       number of errors (see OsiMpsReader class) */
   virtual int readMps(const char *filename,

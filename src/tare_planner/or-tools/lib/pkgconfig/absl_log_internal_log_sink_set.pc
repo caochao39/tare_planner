@@ -1,0 +1,12 @@
+prefix=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534
+exec_prefix=${prefix}
+libdir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/lib
+includedir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/include
+
+Name: absl_log_internal_log_sink_set
+Description: Abseil log_internal_log_sink_set library
+URL: https://abseil.io/
+Version: 20230125
+Requires: absl_base = 20230125, absl_cleanup = 20230125, absl_config = 20230125, absl_core_headers = 20230125, absl_log_internal_config = 20230125, absl_log_internal_globals = 20230125, absl_log_globals = 20230125, absl_log_entry = 20230125, absl_log_severity = 20230125, absl_log_sink = 20230125, absl_raw_logging_internal = 20230125, absl_synchronization = 20230125, absl_span = 20230125, absl_strings = 20230125
+Libs: -L${libdir}   -labsl_log_internal_log_sink_set
+Cflags: -I${includedir} -DNOMINMAX

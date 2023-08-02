@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -21,14 +21,14 @@
 
 namespace operations_research {
 
-std::string ExportModelAsLpFormatReturnString(
+inline std::string ExportModelAsLpFormatReturnString(
     const MPModelProto& input_model,
     const MPModelExportOptions& options = MPModelExportOptions()) {
   return operations_research::ExportModelAsLpFormat(input_model, options)
       .value_or("");
 }
 
-std::string ExportModelAsMpsFormatReturnString(
+inline std::string ExportModelAsMpsFormatReturnString(
     const MPModelProto& input_model,
     const MPModelExportOptions& options = MPModelExportOptions()) {
   return operations_research::ExportModelAsMpsFormat(input_model, options)

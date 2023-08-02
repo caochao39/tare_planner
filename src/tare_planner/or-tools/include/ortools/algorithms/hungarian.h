@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -16,6 +16,11 @@
 // graph/linear_assignment.h whose complexity is
 // usually much smaller.
 // TODO(user): base this code on LinearSumAssignment.
+//
+// For each of the four functions declared in this file, in case the input
+// parameter 'cost' contains NaN, the function will return without invoking the
+// Hungarian algorithm, and the output parameters 'direct_assignment' and
+// 'reverse_assignment' will be left unchanged.
 //
 
 // An O(n^4) implementation of the Kuhn-Munkres algorithm (a.k.a. the

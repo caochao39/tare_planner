@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -26,7 +26,7 @@ namespace util {
 //
 // BeginEndWrapper<OutgoingArcIterator> Graph::OutgoingArcs(NodeInde node)
 //      const {
-//   return BeginEndRange(
+//   return BeginEndWrapper(
 //       OutgoingArcIterator(*this, node, /*at_end=*/false),
 //       OutgoingArcIterator(*this, node, /*at_end=*/true));
 // }
@@ -43,6 +43,7 @@ class BeginEndWrapper {
   BeginEndWrapper(Iterator begin, Iterator end) : begin_(begin), end_(end) {}
   Iterator begin() const { return begin_; }
   Iterator end() const { return end_; }
+  size_t size() const { return end_ - begin_; }
 
   bool empty() const { return begin() == end(); }
 
@@ -151,7 +152,7 @@ class IntegerRange : public BeginEndWrapper<IntegerRangeIterator<IntegerType>> {
             IntegerRangeIterator<IntegerType>(end)) {}
 };
 
-// Allow iterating over a std::vector<T> as a mutable std::vector<T*>.
+// Allow iterating over a vector<T> as a mutable vector<T*>.
 template <class T>
 struct MutableVectorIteration {
   explicit MutableVectorIteration(std::vector<T>* v) : v_(v) {}

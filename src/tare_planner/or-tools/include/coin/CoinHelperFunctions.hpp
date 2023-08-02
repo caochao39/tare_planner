@@ -328,7 +328,7 @@ CoinMemcpyN(const T *from, const CoinBigIndex size, T *to)
 	throw CoinError("overlapping arrays", "CoinMemcpyN", "");
 #endif
 
-  for (CoinBigIndex n = size / 8; n > 0; --n, from += 8, to += 8) {
+    for (CoinBigIndex n = static_cast<CoinBigIndex>(size>>3); n > 0; --n, from += 8, to += 8) {
     to[0] = from[0];
     to[1] = from[1];
     to[2] = from[2];
@@ -425,18 +425,25 @@ CoinFillN(T *to, const CoinBigIndex size, const T value)
   switch (size % 8) {
   case 7:
     to[6] = value;
+    // fall through
   case 6:
     to[5] = value;
+    // fall through
   case 5:
     to[4] = value;
+    // fall through
   case 4:
     to[3] = value;
+    // fall through
   case 3:
     to[2] = value;
+    // fall through
   case 2:
     to[1] = value;
+    // fall through
   case 1:
     to[0] = value;
+    // fall through
   case 0:
     break;
   }

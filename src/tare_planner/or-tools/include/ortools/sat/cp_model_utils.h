@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -15,13 +15,22 @@
 #define OR_TOOLS_SAT_CP_MODEL_UTILS_H_
 
 #include <algorithm>
+#include <cstdint>
 #include <functional>
+#include <limits>
 #include <string>
 #include <vector>
 
-#include "absl/container/flat_hash_set.h"
 #include "ortools/base/integral_types.h"
 #include "ortools/base/logging.h"
+#if !defined(__PORTABLE_PLATFORM__)
+#include "google/protobuf/text_format.h"
+#include "ortools/base/helpers.h"
+#endif  // !defined(__PORTABLE_PLATFORM__)
+#include "absl/container/flat_hash_set.h"
+#include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
+#include "ortools/base/hash.h"
 #include "ortools/sat/cp_model.pb.h"
 #include "ortools/util/sorted_interval_list.h"
 
@@ -40,6 +49,10 @@ inline bool HasEnforcementLiteral(const ConstraintProto& ct) {
 inline int EnforcementLiteral(const ConstraintProto& ct) {
   return ct.enforcement_literal(0);
 }
+
+// Fills the target as negated ref.
+void SetToNegatedLinearExpression(const LinearExpressionProto& input_expr,
+                                  LinearExpressionProto* output_negated_expr);
 
 // Collects all the references used by a constraint. This function is used in a
 // few places to have a "generic" code dealing with constraints. Note that the
@@ -75,7 +88,7 @@ std::vector<int> UsedIntervals(const ConstraintProto& ct);
 // Returns true if a proto.domain() contain the given value.
 // The domain is expected to be encoded as a sorted disjoint interval list.
 template <typename ProtoWithDomain>
-bool DomainInProtoContains(const ProtoWithDomain& proto, int64 value) {
+bool DomainInProtoContains(const ProtoWithDomain& proto, int64_t value) {
   for (int i = 0; i < proto.domain_size(); i += 2) {
     if (value >= proto.domain(i) && value <= proto.domain(i + 1)) return true;
   }
@@ -86,6 +99,7 @@ bool DomainInProtoContains(const ProtoWithDomain& proto, int64 value) {
 template <typename ProtoWithDomain>
 void FillDomainInProto(const Domain& domain, ProtoWithDomain* proto) {
   proto->clear_domain();
+  proto->mutable_domain()->Reserve(domain.NumIntervals());
   for (const ClosedInterval& interval : domain) {
     proto->add_domain(interval.start);
     proto->add_domain(interval.end);
@@ -95,11 +109,12 @@ void FillDomainInProto(const Domain& domain, ProtoWithDomain* proto) {
 // Reads a Domain from the domain field of a proto.
 template <typename ProtoWithDomain>
 Domain ReadDomainFromProto(const ProtoWithDomain& proto) {
-  std::vector<ClosedInterval> intervals;
-  for (int i = 0; i < proto.domain_size(); i += 2) {
-    intervals.push_back({proto.domain(i), proto.domain(i + 1)});
-  }
-  return Domain::FromIntervals(intervals);
+#if defined(__PORTABLE_PLATFORM__)
+  return Domain::FromFlatIntervals(
+      {proto.domain().begin(), proto.domain().end()});
+#else
+  return Domain::FromFlatSpanOfIntervals(proto.domain());
+#endif
 }
 
 // Returns the list of values in a given domain.
@@ -107,10 +122,10 @@ Domain ReadDomainFromProto(const ProtoWithDomain& proto) {
 //
 // TODO(user): work directly on the Domain class instead.
 template <typename ProtoWithDomain>
-std::vector<int64> AllValuesInDomain(const ProtoWithDomain& proto) {
-  std::vector<int64> result;
+std::vector<int64_t> AllValuesInDomain(const ProtoWithDomain& proto) {
+  std::vector<int64_t> result;
   for (int i = 0; i < proto.domain_size(); i += 2) {
-    for (int64 v = proto.domain(i); v <= proto.domain(i + 1); ++v) {
+    for (int64_t v = proto.domain(i); v <= proto.domain(i + 1); ++v) {
       CHECK_LE(result.size(), 1e6);
       result.push_back(v);
     }
@@ -118,14 +133,131 @@ std::vector<int64> AllValuesInDomain(const ProtoWithDomain& proto) {
   return result;
 }
 
-// Scale back a objective value to a double value from the original model.
-inline double ScaleObjectiveValue(const CpObjectiveProto& proto, int64 value) {
+// Scales back a objective value to a double value from the original model.
+inline double ScaleObjectiveValue(const CpObjectiveProto& proto,
+                                  int64_t value) {
   double result = static_cast<double>(value);
-  if (value == kint64min) result = -std::numeric_limits<double>::infinity();
-  if (value == kint64max) result = std::numeric_limits<double>::infinity();
+  if (value == std::numeric_limits<int64_t>::min())
+    result = -std::numeric_limits<double>::infinity();
+  if (value == std::numeric_limits<int64_t>::max())
+    result = std::numeric_limits<double>::infinity();
   result += proto.offset();
   if (proto.scaling_factor() == 0) return result;
   return proto.scaling_factor() * result;
+}
+
+// Similar to ScaleObjectiveValue() but uses the integer version.
+inline int64_t ScaleInnerObjectiveValue(const CpObjectiveProto& proto,
+                                        int64_t value) {
+  if (proto.integer_scaling_factor() == 0) {
+    return value + proto.integer_before_offset();
+  }
+  return (value + proto.integer_before_offset()) *
+             proto.integer_scaling_factor() +
+         proto.integer_after_offset();
+}
+
+// Removes the objective scaling and offset from the given value.
+inline double UnscaleObjectiveValue(const CpObjectiveProto& proto,
+                                    double value) {
+  double result = value;
+  if (proto.scaling_factor() != 0) {
+    result /= proto.scaling_factor();
+  }
+  return result - proto.offset();
+}
+
+// Computes the "inner" objective of a response that contains a solution.
+// This is the objective without offset and scaling. Call ScaleObjectiveValue()
+// to get the user facing objective.
+int64_t ComputeInnerObjective(const CpObjectiveProto& objective,
+                              absl::Span<const int64_t> solution);
+
+// Returns true if a linear expression can be reduced to a single ref.
+bool ExpressionContainsSingleRef(const LinearExpressionProto& expr);
+
+// Checks if the expression is affine or constant.
+bool ExpressionIsAffine(const LinearExpressionProto& expr);
+
+// Returns the reference the expression can be reduced to. It will DCHECK that
+// ExpressionContainsSingleRef(expr) is true.
+int GetSingleRefFromExpression(const LinearExpressionProto& expr);
+
+// Adds a linear expression proto to a linear constraint in place.
+//
+// Important: The domain must already be set, otherwise the offset will be lost.
+// We also do not do any duplicate detection, so the constraint might need
+// presolving afterwards.
+void AddLinearExpressionToLinearConstraint(const LinearExpressionProto& expr,
+                                           int64_t coefficient,
+                                           LinearConstraintProto* linear);
+
+// Returns true iff a == b * b_scaling.
+bool LinearExpressionProtosAreEqual(const LinearExpressionProto& a,
+                                    const LinearExpressionProto& b,
+                                    int64_t b_scaling = 1);
+
+// Default seed for fingerprints.
+constexpr uint64_t kDefaultFingerprintSeed = 0xa5b85c5e198ed849;
+
+// T must be castable to uint64_t.
+template <class T>
+inline uint64_t FingerprintRepeatedField(
+    const google::protobuf::RepeatedField<T>& sequence, uint64_t seed) {
+  return fasthash64(reinterpret_cast<const char*>(sequence.data()),
+                    sequence.size() * sizeof(T), seed);
+}
+
+// T must be castable to uint64_t.
+template <class T>
+inline uint64_t FingerprintSingleField(const T& field, uint64_t seed) {
+  return fasthash64(reinterpret_cast<const char*>(&field), sizeof(T), seed);
+}
+
+// Returns a stable fingerprint of a linear expression.
+uint64_t FingerprintExpression(const LinearExpressionProto& lin, uint64_t seed);
+
+// Returns a stable fingerprint of a model.
+uint64_t FingerprintModel(const CpModelProto& model,
+                          uint64_t seed = kDefaultFingerprintSeed);
+
+#if !defined(__PORTABLE_PLATFORM__)
+
+// We register a few custom printers to display variables and linear
+// expression on one line. This is especially nice for variables where it is
+// easy to recover their indices from the line number now.
+//
+// ex:
+//
+// variables { domain: [0, 1] }
+// variables { domain: [0, 1] }
+// variables { domain: [0, 1] }
+//
+// constraints {
+//   linear {
+//     vars: [0, 1, 2]
+//     coeffs: [2, 4, 5 ]
+//     domain: [11, 11]
+//   }
+// }
+void SetupTextFormatPrinter(google::protobuf::TextFormat::Printer* printer);
+#endif  // !defined(__PORTABLE_PLATFORM__)
+
+template <class M>
+bool WriteModelProtoToFile(const M& proto, absl::string_view filename) {
+#if defined(__PORTABLE_PLATFORM__)
+  return false;
+#else   // !defined(__PORTABLE_PLATFORM__)
+  if (absl::EndsWith(filename, "txt")) {
+    std::string proto_string;
+    google::protobuf::TextFormat::Printer printer;
+    SetupTextFormatPrinter(&printer);
+    printer.PrintToString(proto, &proto_string);
+    return file::SetContents(filename, proto_string, file::Defaults()).ok();
+  } else {
+    return file::SetBinaryProto(filename, proto, file::Defaults()).ok();
+  }
+#endif  // !defined(__PORTABLE_PLATFORM__)
 }
 
 }  // namespace sat

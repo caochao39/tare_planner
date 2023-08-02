@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -18,8 +18,11 @@
 #include <string>
 #include <vector>
 
+#if !defined(__PORTABLE_PLATFORM__)
+#include "ortools/base/file.h"
+#endif  // !defined(__PORTABLE_PLATFORM__)
 #include "absl/types/span.h"
-#include "ortools/base/int_type_indexed_vector.h"
+#include "ortools/base/strong_vector.h"
 #include "ortools/sat/drat_checker.h"
 #include "ortools/sat/drat_writer.h"
 #include "ortools/sat/sat_base.h"
@@ -56,7 +59,7 @@ class DratProofHandler {
   // TODO(user): This is exactly the same mecanism as in the SatPostsolver
   // class. Factor out the code.
   void ApplyMapping(
-      const gtl::ITIVector<BooleanVariable, BooleanVariable>& mapping);
+      const absl::StrongVector<BooleanVariable, BooleanVariable>& mapping);
 
   // This need to be called when new variables are created.
   void SetNumVariables(int num_variables);
@@ -97,12 +100,12 @@ class DratProofHandler {
   // We need to keep track of the variable newly created.
   int variable_index_;
 
-  // Temporary vector used for sorting the outputed clauses.
+  // Temporary vector used for sorting the outputted clauses.
   std::vector<Literal> values_;
 
   // This mapping will be applied to all clause passed to AddClause() or
   // DeleteClause() so that they are in term of the original problem.
-  gtl::ITIVector<BooleanVariable, BooleanVariable> reverse_mapping_;
+  absl::StrongVector<BooleanVariable, BooleanVariable> reverse_mapping_;
 
   std::unique_ptr<DratChecker> drat_checker_;
   std::unique_ptr<DratWriter> drat_writer_;

@@ -1,0 +1,12 @@
+prefix=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534
+exec_prefix=${prefix}
+libdir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/lib
+includedir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/include
+
+Name: absl_random_random
+Description: Abseil random_random library
+URL: https://abseil.io/
+Version: 20230125
+Requires: absl_random_distributions = 20230125, absl_random_internal_nonsecure_base = 20230125, absl_random_internal_pcg_engine = 20230125, absl_random_internal_pool_urbg = 20230125, absl_random_internal_randen_engine = 20230125, absl_random_seed_sequences = 20230125
+Libs: -L${libdir}  
+Cflags: -I${includedir} -DNOMINMAX

@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -14,6 +14,13 @@
 #ifndef OR_TOOLS_BOP_BOP_PORTFOLIO_H_
 #define OR_TOOLS_BOP_BOP_PORTFOLIO_H_
 
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "absl/strings/string_view.h"
+#include "ortools/base/strong_vector.h"
 #include "ortools/bop/bop_base.h"
 #include "ortools/bop/bop_lns.h"
 #include "ortools/bop/bop_parameters.pb.h"
@@ -22,13 +29,15 @@
 #include "ortools/glop/lp_solver.h"
 #include "ortools/sat/boolean_problem.pb.h"
 #include "ortools/sat/sat_solver.h"
+#include "ortools/util/random_engine.h"
 #include "ortools/util/stats.h"
+#include "ortools/util/strong_integers.h"
 #include "ortools/util/time_limit.h"
 
 namespace operations_research {
 namespace bop {
 
-DEFINE_INT_TYPE(OptimizerIndex, int);
+DEFINE_STRONG_INDEX_TYPE(OptimizerIndex);
 const OptimizerIndex kInvalidOptimizerIndex(-1);
 
 // Forward declaration.
@@ -75,18 +84,18 @@ class PortfolioOptimizer : public BopOptimizerBase {
  private:
   BopOptimizerBase::Status SynchronizeIfNeeded(
       const ProblemState& problem_state);
-  void AddOptimizer(const LinearBooleanProblem& problem,
+  void AddOptimizer(const sat::LinearBooleanProblem& problem,
                     const BopParameters& parameters,
                     const BopOptimizerMethod& optimizer_method);
-  void CreateOptimizers(const LinearBooleanProblem& problem,
+  void CreateOptimizers(const sat::LinearBooleanProblem& problem,
                         const BopParameters& parameters,
                         const BopSolverOptimizerSet& optimizer_set);
 
-  std::unique_ptr<MTRandom> random_;
-  int64 state_update_stamp_;
+  random_engine_t random_;
+  int64_t state_update_stamp_;
   BopConstraintTerms objective_terms_;
   std::unique_ptr<OptimizerSelector> selector_;
-  gtl::ITIVector<OptimizerIndex, BopOptimizerBase*> optimizers_;
+  absl::StrongVector<OptimizerIndex, BopOptimizerBase*> optimizers_;
   sat::SatSolver sat_propagator_;
   BopParameters parameters_;
   double lower_bound_;
@@ -101,7 +110,7 @@ class OptimizerSelector {
   // Note that the list of optimizers is only used to get the names for
   // debug purposes, the ownership of the optimizers is not transferred.
   explicit OptimizerSelector(
-      const gtl::ITIVector<OptimizerIndex, BopOptimizerBase*>& optimizers);
+      const absl::StrongVector<OptimizerIndex, BopOptimizerBase*>& optimizers);
 
   // Selects the next optimizer to run based on the user defined order and
   // history of success. Returns kInvalidOptimizerIndex if no optimizer is
@@ -127,12 +136,12 @@ class OptimizerSelector {
   // solution.
   //
   // The time spent corresponds to the time the optimizer spent; To make the
-  // behavior deterministic, it is recommanded to use the deterministic time
+  // behavior deterministic, it is recommended to use the deterministic time
   // instead of the elapsed time.
   //
   // The optimizers are sorted based on their score each time a new solution is
   // found.
-  void UpdateScore(int64 gain, double time_spent);
+  void UpdateScore(int64_t gain, double time_spent);
 
   // Marks the given optimizer as not selectable until UpdateScore() is called
   // with a positive gain. In which case, all optimizer will become selectable
@@ -157,7 +166,7 @@ class OptimizerSelector {
  private:
   // Updates internals when a solution has been found using the selected
   // optimizer.
-  void NewSolutionFound(int64 gain);
+  void NewSolutionFound(int64_t gain);
 
   // Updates the deterministic time spent by the selected optimizer.
   void UpdateDeterministicTime(double time_spent);
@@ -166,7 +175,7 @@ class OptimizerSelector {
   void UpdateOrder();
 
   struct RunInfo {
-    RunInfo(OptimizerIndex i, const std::string& n)
+    RunInfo(OptimizerIndex i, absl::string_view n)
         : optimizer_index(i),
           name(n),
           num_successes(0),
@@ -184,7 +193,7 @@ class OptimizerSelector {
     std::string name;
     int num_successes;
     int num_calls;
-    int64 total_gain;
+    int64_t total_gain;
     double time_spent;
     double time_spent_since_last_solution;
     bool runnable;
@@ -193,7 +202,7 @@ class OptimizerSelector {
   };
 
   std::vector<RunInfo> run_infos_;
-  gtl::ITIVector<OptimizerIndex, int> info_positions_;
+  absl::StrongVector<OptimizerIndex, int> info_positions_;
   int selected_index_;
 };
 

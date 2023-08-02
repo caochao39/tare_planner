@@ -1,0 +1,12 @@
+prefix=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534
+exec_prefix=${prefix}
+libdir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/lib
+includedir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/include
+
+Name: absl_civil_time
+Description: Abseil civil_time library
+URL: https://abseil.io/
+Version: 20230125
+Requires:
+Libs: -L${libdir}   -labsl_civil_time
+Cflags: -I${includedir} -DNOMINMAX

@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -29,8 +29,8 @@ namespace operations_research {
   }                                                          \
   return out
 
-// Converts a vector into a std::string by calling the given method (or simply
-// getting the given std::string member), on all elements, and concatenating
+// Converts a vector into a string by calling the given method (or simply
+// getting the given string member), on all elements, and concatenating
 // the obtained strings with the given separator.
 
 // Join v[i].DebugString().

@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -14,86 +14,78 @@
 #ifndef OR_TOOLS_SAT_RINS_H_
 #define OR_TOOLS_SAT_RINS_H_
 
+#include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/random/bit_gen_ref.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/types/optional.h"
 #include "ortools/sat/integer.h"
 #include "ortools/sat/linear_programming_constraint.h"
 #include "ortools/sat/model.h"
+#include "ortools/sat/synchronization.h"
+#include "ortools/util/strong_integers.h"
 
 namespace operations_research {
 namespace sat {
 
-// TODO(user): This is not an ideal place for the solution details. Move to a
-// file with other such stats or create one if needed.
-struct SolutionDetails {
-  int64 solution_count = 0;
-  gtl::ITIVector<IntegerVariable, IntegerValue> best_solution;
-
-  // Loads the solution in best_solution using lower bounds from integer trail.
-  void LoadFromTrail(const IntegerTrail& integer_trail);
-};
-
-// Collection of useful data for RINS for a given variable.
-struct RINSVariable {
+// Links IntegerVariable with model variable and its lp constraint if any.
+struct LPVariable {
   IntegerVariable positive_var = kNoIntegerVariable;
   LinearProgrammingConstraint* lp = nullptr;
   int model_var;
 
-  bool operator==(const RINSVariable other) const {
+  bool operator==(const LPVariable other) const {
     return (positive_var == other.positive_var && lp == other.lp &&
             model_var == other.model_var);
   }
 };
 
-struct RINSVariables {
-  std::vector<RINSVariable> vars;
+// This is used to "cache" in the model the set of relevant LPVariable.
+struct LPVariables {
+  std::vector<LPVariable> vars;
+  int model_vars_size = 0;
 };
 
+// A RINS Neighborhood is actually just a generic neighborhood where the domain
+// of some variable have been reduced (fixed or restricted in [lb, ub]).
+//
+// Important: It might be possible that the value of the variables here are
+// outside the domains of these variables! This happens for RENS type of
+// neighborhood in the presence of holes in the domains because the LP
+// relaxation ignore those.
 struct RINSNeighborhood {
-  std::vector<std::pair<RINSVariable, /*value*/ int64>> fixed_vars;
-};
-
-// Shared object to pass around generated RINS neighborhoods across workers.
-class SharedRINSNeighborhoodManager {
- public:
-  explicit SharedRINSNeighborhoodManager(const int64 num_model_vars)
-      : num_model_vars_(num_model_vars) {}
-
-  // Model will be used to get the CpModelMapping for translation. Returns
-  // true for success.
-  bool AddNeighborhood(const RINSNeighborhood& neighborhood);
-
-  // Returns an unexplored RINS neighborhood if any, otherwise returns nullopt.
-  // TODO(user): This also deletes the returned neighborhood. Consider having
-  // a different method/logic instead for deletion.
-  absl::optional<RINSNeighborhood> GetUnexploredNeighborhood();
-
-  // This is the memory limit we use to avoid storing too many neighborhoods.
-  // The sum of the fixed variables of the stored neighborhood will always
-  // stays smaller than this.
-  int64 max_fixed_vars() const { return 100 * num_model_vars_; }
-
- private:
-  // Used while adding and removing neighborhoods.
-  absl::Mutex mutex_;
-
-  // TODO(user): Use better data structure (e.g. queue) to store this
-  // collection.
-  std::vector<RINSNeighborhood> neighborhoods_;
-
-  // This is the sum of number of fixed variables across all the shared
-  // neighborhoods. This is used for controlling the size of storage.
-  int64 total_num_fixed_vars_ = 0;
-
-  const int64 num_model_vars_;
+  // A variable will appear only once and not in both vectors.
+  std::vector<std::pair</*model_var*/ int, /*value*/ int64_t>> fixed_vars;
+  std::vector<
+      std::pair</*model_var*/ int, /*domain*/ std::pair<int64_t, int64_t>>>
+      reduced_domain_vars;
 };
 
 // Helper method to create a RINS neighborhood by fixing variables with same
-// values in lp and last solution.
-void AddRINSNeighborhood(Model* model);
+// values in relaxation solution and the current best solution in the
+// response_manager. Prioritizes repositories in following order to get a
+// relaxation solution.
+//  1. incomplete_solutions
+//  2. lp_solutions
+//  3. relaxation_solutions
+//
+// If response_manager is not provided, this generates a RENS neighborhood by
+// ignoring the solutions and using the relaxation values. The domain of the
+// variables are reduced to integer values around relaxation values. If the
+// relaxation value is integer, then we fix the domain of the variable to that
+// value.
+RINSNeighborhood GetRINSNeighborhood(
+    const SharedResponseManager* response_manager,
+    const SharedRelaxationSolutionRepository* relaxation_solutions,
+    const SharedLPSolutionRepository* lp_solutions,
+    SharedIncompleteSolutionManager* incomplete_solutions,
+    absl::BitGenRef random);
+
+// Adds the current LP solution to the pool.
+void RecordLPRelaxationValues(Model* model);
 
 }  // namespace sat
 }  // namespace operations_research

@@ -43,6 +43,13 @@ typedef __decltype(SIG_DFL) CoinSighandler_t;
 
 //-----------------------------------------------------------------------------
 
+#if defined(__OpenBSD__) && defined(__GNUC__)
+typedef __decltype(SIG_DFL) CoinSighandler_t;
+#define CoinSighandler_t_defined
+#endif
+
+//-----------------------------------------------------------------------------
+
 #if defined(__FreeBSD__) && defined(__GNUC__)
 typedef __decltype(SIG_DFL) CoinSighandler_t;
 #define CoinSighandler_t_defined

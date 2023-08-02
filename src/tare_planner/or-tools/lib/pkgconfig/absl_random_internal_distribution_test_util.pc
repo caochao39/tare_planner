@@ -1,0 +1,12 @@
+prefix=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534
+exec_prefix=${prefix}
+libdir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/lib
+includedir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.6.2534/include
+
+Name: absl_random_internal_distribution_test_util
+Description: Abseil random_internal_distribution_test_util library
+URL: https://abseil.io/
+Version: 20230125
+Requires: absl_config = 20230125, absl_core_headers = 20230125, absl_raw_logging_internal = 20230125, absl_strings = 20230125, absl_str_format = 20230125, absl_span = 20230125
+Libs: -L${libdir}   -labsl_random_internal_distribution_test_util
+Cflags: -I${includedir} -DNOMINMAX

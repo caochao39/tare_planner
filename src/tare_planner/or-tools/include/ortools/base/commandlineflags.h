@@ -1,4 +1,4 @@
-// Copyright 2010-2018 Google LLC
+// Copyright 2010-2022 Google LLC
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -14,33 +14,9 @@
 #ifndef OR_TOOLS_BASE_COMMANDLINEFLAGS_H_
 #define OR_TOOLS_BASE_COMMANDLINEFLAGS_H_
 
-#include "gflags/gflags.h"
-
-namespace absl {
-
-template <class T>
-inline void SetFlag(T* flag, const T& value) {
-  *flag = value;
-}
-
-template <class T, class V>
-inline void SetFlag(T* flag, const V& value) {
-  *flag = value;
-}
-
-template <class T>
-inline const T& GetFlag(T* flag) {
-  return *flag;
-}
-
-template <class T>
-inline const T& GetFlag(const T& flag) {
-  return flag;
-}
-
-}  // namespace absl
-
-#define ABSL_DECLARE_FLAG(t, n) DECLARE_##t(n)
-#define ABSL_FLAG(t, n, d, h) DEFINE_##t(n, d, h)
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
+#include "absl/flags/parse.h"
+#include "absl/flags/usage.h"
 
 #endif  // OR_TOOLS_BASE_COMMANDLINEFLAGS_H_
