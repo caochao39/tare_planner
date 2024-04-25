@@ -9,19 +9,19 @@
 # The variable CVF_VERSION must be set before calling configure_file().
 
 
-set(PACKAGE_VERSION "8.0.4")
+set(PACKAGE_VERSION "8.1.0")
 
 if(PACKAGE_VERSION VERSION_LESS PACKAGE_FIND_VERSION)
   set(PACKAGE_VERSION_COMPATIBLE FALSE)
 else()
 
-  if("8.0.4" MATCHES "^([0-9]+)\\.")
+  if("8.1.0" MATCHES "^([0-9]+)\\.")
     set(CVF_VERSION_MAJOR "${CMAKE_MATCH_1}")
     if(NOT CVF_VERSION_MAJOR VERSION_EQUAL 0)
       string(REGEX REPLACE "^0+" "" CVF_VERSION_MAJOR "${CVF_VERSION_MAJOR}")
     endif()
   else()
-    set(CVF_VERSION_MAJOR "8.0.4")
+    set(CVF_VERSION_MAJOR "8.1.0")
   endif()
 
   if(PACKAGE_FIND_VERSION_RANGE)
@@ -51,6 +51,11 @@ else()
   endif()
 endif()
 
+
+# if the installed project requested no architecture check, don't perform the check
+if("FALSE")
+  return()
+endif()
 
 # if the installed or the using project don't have CMAKE_SIZEOF_VOID_P set, ignore it:
 if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "" OR "8" STREQUAL "")

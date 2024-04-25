@@ -197,20 +197,20 @@ void SCIPsepaEnableOrDisableClocks(
 
 /** increase count of applied cuts by one */
 void SCIPsepaIncNCutsApplied(
-   SCIP_SEPA*            sepa,                /**< separator */
-   SCIP_Bool             fromcutpool          /**< whether the cuts were added from the cutpool to sepastore */
+   SCIP_SEPA*            sepa,               /**< separator */
+   SCIP_Bool             fromcutpool         /**< whether the cuts were added from the cutpool to sepastore */
    );
 
 /** increase count of found cuts by one */
 void SCIPsepaIncNCutsAdded(
-   SCIP_SEPA*            sepa,                /**< separator */
-   SCIP_Bool             fromcutpool          /**< whether the cuts were added from the cutpool to sepastore */
+   SCIP_SEPA*            sepa,               /**< separator */
+   SCIP_Bool             fromcutpool         /**< whether the cuts were added from the cutpool to sepastore */
    );
 
 /** decrease the count of added cuts by one */
 void SCIPsepaDecNCutsAdded(
-   SCIP_SEPA*            sepa,                /**< separator */
-   SCIP_Bool             fromcutpool          /**< whether the cuts were added from the cutpool to sepastore */
+   SCIP_SEPA*            sepa,               /**< separator */
+   SCIP_Bool             fromcutpool         /**< whether the cuts were added from the cutpool to sepastore */
    );
 
 /** increase count of found cuts by one */

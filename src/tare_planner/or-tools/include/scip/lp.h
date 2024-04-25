@@ -57,6 +57,45 @@
 extern "C" {
 #endif
 
+
+/*
+ * double linked coefficient matrix methods
+ */
+
+/** insert column coefficients in corresponding rows */
+SCIP_RETCODE colLink(
+   SCIP_COL*             col,                /**< column data */
+   BMS_BLKMEM*           blkmem,             /**< block memory */
+   SCIP_SET*             set,                /**< global SCIP settings */
+   SCIP_EVENTQUEUE*      eventqueue,         /**< event queue */
+   SCIP_LP*              lp                  /**< current LP data */
+   );
+
+/** removes column coefficients from corresponding rows */
+SCIP_RETCODE colUnlink(
+   SCIP_COL*             col,                /**< column data */
+   BMS_BLKMEM*           blkmem,             /**< block memory */
+   SCIP_SET*             set,                /**< global SCIP settings */
+   SCIP_EVENTQUEUE*      eventqueue,         /**< event queue */
+   SCIP_LP*              lp                  /**< current LP data */
+   );
+
+/** insert row coefficients in corresponding columns */
+SCIP_RETCODE rowLink(
+   SCIP_ROW*             row,                /**< row data */
+   BMS_BLKMEM*           blkmem,             /**< block memory */
+   SCIP_SET*             set,                /**< global SCIP settings */
+   SCIP_EVENTQUEUE*      eventqueue,         /**< event queue */
+   SCIP_LP*              lp                  /**< current LP data */
+   );
+
+/** removes row coefficients from corresponding columns */
+SCIP_RETCODE rowUnlink(
+   SCIP_ROW*             row,                /**< row data */
+   SCIP_SET*             set,                /**< global SCIP settings */
+   SCIP_LP*              lp                  /**< current LP data */
+   );
+
 /*
  * Column methods
  */

@@ -1,11 +1,11 @@
-prefix=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.8.3296
-exec_prefix=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.8.3296
-libdir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.8.3296/lib
-includedir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.8.3296/include
+prefix=/root/or-tools/or-tools_x86_64_Ubuntu-22.04_cpp_v9.9.3963
+exec_prefix=/root/or-tools/or-tools_x86_64_Ubuntu-22.04_cpp_v9.9.3963
+libdir=/root/or-tools/or-tools_x86_64_Ubuntu-22.04_cpp_v9.9.3963/lib
+includedir=/root/or-tools/or-tools_x86_64_Ubuntu-22.04_cpp_v9.9.3963/include
 
 Name: UTF8 Range
 Description: Google's UTF8 Library
 Version: 1.0
 Requires: absl_strings
-Libs: -L${libdir} -lutf8_validity -lutf8_range -lpthread
+Libs: -L${libdir} -lutf8_validity -lutf8_range 
 Cflags: -I${includedir}

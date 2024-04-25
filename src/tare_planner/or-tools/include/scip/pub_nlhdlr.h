@@ -67,7 +67,7 @@ void SCIPnlhdlrSetFreeHdlrData(
 /** sets the nonlinear handler callback to free expression specific data of nonlinear handler */
 SCIP_EXPORT
 void SCIPnlhdlrSetFreeExprData(
-   SCIP_NLHDLR*          nlhdlr,            /**< nonlinear handler */
+   SCIP_NLHDLR*          nlhdlr,             /**< nonlinear handler */
    SCIP_DECL_NLHDLRFREEEXPRDATA((*freeexprdata)) /**< nonlinear handler expression data free callback (can be NULL if data does not need to be freed) */
 );
 

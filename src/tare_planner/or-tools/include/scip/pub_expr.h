@@ -148,9 +148,9 @@ void SCIPexprhdlrSetReverseProp(
 /** set the estimation callbacks of an expression handler */
 SCIP_EXPORT
 void SCIPexprhdlrSetEstimate(
-   SCIP_EXPRHDLR*        exprhdlr,                /**< expression handler */
+   SCIP_EXPRHDLR*        exprhdlr,           /**< expression handler */
    SCIP_DECL_EXPRINITESTIMATES((*initestimates)), /**< initial estimators callback (can be NULL) */
-   SCIP_DECL_EXPRESTIMATE((*estimate))            /**< estimator callback (can be NULL) */
+   SCIP_DECL_EXPRESTIMATE((*estimate))       /**< estimator callback (can be NULL) */
 );
 
 /** gives the name of an expression handler */
@@ -479,7 +479,7 @@ SCIP_Longint SCIPexprGetEvalTag(
  */
 SCIP_EXPORT
 SCIP_Real SCIPexprGetDerivative(
-   SCIP_EXPR*     expr              /**< expression */
+   SCIP_EXPR*            expr                /**< expression */
    );
 
 /** gives the value of directional derivative from the last evaluation of a directional derivative of expression
@@ -489,7 +489,7 @@ SCIP_Real SCIPexprGetDerivative(
  */
 SCIP_EXPORT
 SCIP_Real SCIPexprGetDot(
-   SCIP_EXPR*     expr              /**< expression */
+   SCIP_EXPR*            expr                /**< expression */
    );
 
 /** gives the value of directional derivative from the last evaluation of a directional derivative of derivative
@@ -499,7 +499,7 @@ SCIP_Real SCIPexprGetDot(
  */
 SCIP_EXPORT
 SCIP_Real SCIPexprGetBardot(
-   SCIP_EXPR*     expr              /**< expression */
+   SCIP_EXPR*            expr                /**< expression */
    );
 
 /** returns the difftag stored in an expression
@@ -941,7 +941,7 @@ SCIP_EXPRITER_USERDATA SCIPexpriterGetExprUserData(
  */
 SCIP_EXPORT
 void SCIPexpriterSetCurrentUserData(
-   SCIP_EXPRITER*         iterator,          /**< expression iterator */
+   SCIP_EXPRITER*        iterator,           /**< expression iterator */
    SCIP_EXPRITER_USERDATA userdata           /**< data to be stored */
    );
 
@@ -951,8 +951,8 @@ void SCIPexpriterSetCurrentUserData(
  */
 SCIP_EXPORT
 void SCIPexpriterSetExprUserData(
-   SCIP_EXPRITER*         iterator,          /**< expression iterator */
-   SCIP_EXPR*             expr,              /**< expression where to set iterator data */
+   SCIP_EXPRITER*        iterator,           /**< expression iterator */
+   SCIP_EXPR*            expr,               /**< expression where to set iterator data */
    SCIP_EXPRITER_USERDATA userdata           /**< data to be stored in current child */
    );
 
@@ -962,7 +962,7 @@ void SCIPexpriterSetExprUserData(
  */
 SCIP_EXPORT
 void SCIPexpriterSetChildUserData(
-   SCIP_EXPRITER*         iterator,          /**< expression iterator */
+   SCIP_EXPRITER*        iterator,           /**< expression iterator */
    SCIP_EXPRITER_USERDATA userdata           /**< data to be stored in current child */
    );
 

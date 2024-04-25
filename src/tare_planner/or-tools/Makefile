@@ -1,4 +1,4 @@
-# Copyright 2010-2022 Google LLC
+# Copyright 2010-2024 Google LLC
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-VERSION := 9.8.3296
+VERSION := 9.9.3963
 # Let's discover something about where we run
 ifeq ($(OS),Windows_NT)
 OS = Windows

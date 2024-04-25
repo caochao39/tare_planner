@@ -43,7 +43,7 @@ namespace scip
 
 /** @brief C++ wrapper for event handlers
  *
- *  This class defines the interface for eventt handlers implemented in C++. Note that there is a pure virtual function
+ *  This class defines the interface for event handlers implemented in C++. Note that there is a pure virtual function
  *  (this function has to be implemented). This function is: scip_exec().
  *
  *  - \ref EVENT "Instructions for implementing an event handler"
@@ -172,7 +172,7 @@ public:
  *
  *  The method should be called in one of the following ways:
  *
- *   1. The user is resposible of deleting the object:
+ *   1. The user is responsible of deleting the object:
  *       SCIP_CALL( SCIPcreate(&scip) );
  *       ...
  *       MyEventhdlr* myeventhdlr = new MyEventhdlr(...);
@@ -192,7 +192,7 @@ SCIP_EXPORT
 SCIP_RETCODE SCIPincludeObjEventhdlr(
    SCIP*                 scip,               /**< SCIP data structure */
    scip::ObjEventhdlr*   objeventhdlr,       /**< event handler object */
-   SCIP_Bool             deleteobject        /**< should the event handler object be deleted when eventhdlristic is freed? */
+   SCIP_Bool             deleteobject        /**< should the event handler object be deleted when eventhdlr is freed? */
    );
 
 /** returns the eventhdlr object of the given name, or 0 if not existing */

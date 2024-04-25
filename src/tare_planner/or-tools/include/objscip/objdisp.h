@@ -41,8 +41,7 @@
 namespace scip
 {
 
-/**
- *  @brief C++ wrapper for display columns
+/** @brief C++ wrapper for display columns
  *
  *  This class defines the interface for display columns implemented in C++. Note that there is a pure virtual function
  *  (this function has to be implemented). This function is: scip_output().

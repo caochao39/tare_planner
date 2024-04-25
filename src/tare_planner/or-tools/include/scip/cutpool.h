@@ -132,43 +132,43 @@ SCIP_RETCODE SCIPcutpoolSeparate(
 /** adds the maximum number of cuts that were stored in the pool;
  *  this is primarily used to keep statistics when SCIP performs a restart */
 void SCIPcutpoolAddMaxNCuts(
-   SCIP_CUTPOOL*         cutpool,             /**< cut pool */
-   SCIP_Longint          ncuts             /**< number of cuts to add */
+   SCIP_CUTPOOL*         cutpool,            /**< cut pool */
+   SCIP_Longint          ncuts               /**< number of cuts to add */
    );
 
 /** sets time in seconds used for separating cuts from the pool;
  *  this is primarily used to keep statistics when SCIP performs a restart */
 void SCIPcutpoolSetTime(
-   SCIP_CUTPOOL*         cutpool,             /**< cut pool */
-   SCIP_Real             time                 /**< poolclock time */
+   SCIP_CUTPOOL*         cutpool,            /**< cut pool */
+   SCIP_Real             time                /**< poolclock time */
    );
 
 /** adds the number of times the cut pool was separated;
  *  this is primarily used to keep statistics when SCIP performs a restart */
 void SCIPcutpoolAddNCalls(
-   SCIP_CUTPOOL*         cutpool,             /**< cut pool */
-   SCIP_Longint          ncalls               /**< ncalls */
+   SCIP_CUTPOOL*         cutpool,            /**< cut pool */
+   SCIP_Longint          ncalls              /**< ncalls */
    );
 
 /** adds the number of times the cut pool was separated at the root;
  *  this is primarily used to keep statistics when SCIP performs a restart */
 void SCIPcutpoolAddNRootCalls(
-   SCIP_CUTPOOL*         cutpool,             /**< cut pool */
-   SCIP_Longint          nrootcalls           /**< nrootcalls */
+   SCIP_CUTPOOL*         cutpool,            /**< cut pool */
+   SCIP_Longint          nrootcalls          /**< nrootcalls */
 );
 
 /** adds the total number of cuts that were added to the pool;
  *  this is primarily used to keep statistics when SCIP performs a restart */
 void SCIPcutpoolAddNCutsFound(
-   SCIP_CUTPOOL*         cutpool,             /**< cut pool */
-   SCIP_Longint          ncutsfound           /**< total number of cuts added to cut pool */
+   SCIP_CUTPOOL*         cutpool,            /**< cut pool */
+   SCIP_Longint          ncutsfound          /**< total number of cuts added to cut pool */
    );
 
 /** adds the total number of cuts that were separated from the pool;
  *  this is primarily used to keep statistics when SCIP performs a restart */
 void SCIPcutpoolAddNCutsAdded(
-   SCIP_CUTPOOL*         cutpool,             /**< cut pool */
-   SCIP_Longint          ncutsadded           /**< total number of cuts added from cut pool to sepastore */
+   SCIP_CUTPOOL*         cutpool,            /**< cut pool */
+   SCIP_Longint          ncutsadded          /**< total number of cuts added from cut pool to sepastore */
    );
 
 #ifdef __cplusplus

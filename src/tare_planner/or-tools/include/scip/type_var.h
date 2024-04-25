@@ -61,9 +61,13 @@ enum SCIP_Vartype
 {
    SCIP_VARTYPE_BINARY     = 0,         /**< binary variable: \f$ x \in \{0,1\} \f$ */
    SCIP_VARTYPE_INTEGER    = 1,         /**< integer variable: \f$ x in \{lb, \dots, ub\} \f$ */
-   SCIP_VARTYPE_IMPLINT    = 2,         /**< implicit integer variable: Integrality of this variable is implied for every optimal
-                                             solution of the remaining problem after any fixing all integer and binary variables,
-                                             without the explicit need to enforce integrality further */
+   SCIP_VARTYPE_IMPLINT    = 2,         /**< continuous variable with optional integrality restriction:
+                                             assigning a fractional value for the variable is feasible and the solver will not enforce
+                                             integrality for this variable, but it may treat the variable as if an additional integrality
+                                             restriction exists in certain cases, e.g., during boundtightening;
+                                             typically, this variable type is used for implicit integer variables, that is, variables which
+                                             are known to take an integral value in a feasible or optimal solution due to other constraints or
+                                             optimality conditions */
    SCIP_VARTYPE_CONTINUOUS = 3          /**< continuous variable: \f$ lb \leq x \leq ub \f$ */
 };
 typedef enum SCIP_Vartype SCIP_VARTYPE;

@@ -498,7 +498,7 @@ SCIP_RETCODE SCIPreoptnodeAddCons(
    BMS_BLKMEM*           blkmem,             /**< block memory */
    SCIP_VAR**            vars,               /**< variables which are part of the constraint */
    SCIP_Real*            bounds,             /**< bounds of the variables */
-   SCIP_BOUNDTYPE*       boundtypes,         /**< boundtypes of the varibales (or NULL is the constraint is a cut) */
+   SCIP_BOUNDTYPE*       boundtypes,         /**< boundtypes of the variables (or NULL is the constraint is a cut) */
    SCIP_Real             lhs,                /**< lhs of the constraint */
    SCIP_Real             rhs,                /**< rhs of the constraint */
    int                   nvars,              /**< number of variables */

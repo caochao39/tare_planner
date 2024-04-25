@@ -12,8 +12,8 @@ set_target_properties(Coin::Clp PROPERTIES
   IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libClp.a"
   )
 
-list(APPEND _cmake_import_check_targets Coin::Clp )
-list(APPEND _cmake_import_check_files_for_Coin::Clp "${_IMPORT_PREFIX}/lib/libClp.a" )
+list(APPEND _IMPORT_CHECK_TARGETS Coin::Clp )
+list(APPEND _IMPORT_CHECK_FILES_FOR_Coin::Clp "${_IMPORT_PREFIX}/lib/libClp.a" )
 
 # Import target "Coin::OsiClp" for configuration "Release"
 set_property(TARGET Coin::OsiClp APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
@@ -22,8 +22,8 @@ set_target_properties(Coin::OsiClp PROPERTIES
   IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libOsiClp.a"
   )
 
-list(APPEND _cmake_import_check_targets Coin::OsiClp )
-list(APPEND _cmake_import_check_files_for_Coin::OsiClp "${_IMPORT_PREFIX}/lib/libOsiClp.a" )
+list(APPEND _IMPORT_CHECK_TARGETS Coin::OsiClp )
+list(APPEND _IMPORT_CHECK_FILES_FOR_Coin::OsiClp "${_IMPORT_PREFIX}/lib/libOsiClp.a" )
 
 # Import target "Coin::ClpSolver" for configuration "Release"
 set_property(TARGET Coin::ClpSolver APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
@@ -32,8 +32,8 @@ set_target_properties(Coin::ClpSolver PROPERTIES
   IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libClpSolver.a"
   )
 
-list(APPEND _cmake_import_check_targets Coin::ClpSolver )
-list(APPEND _cmake_import_check_files_for_Coin::ClpSolver "${_IMPORT_PREFIX}/lib/libClpSolver.a" )
+list(APPEND _IMPORT_CHECK_TARGETS Coin::ClpSolver )
+list(APPEND _IMPORT_CHECK_FILES_FOR_Coin::ClpSolver "${_IMPORT_PREFIX}/lib/libClpSolver.a" )
 
 # Commands beyond this point should not need to know the version.
 set(CMAKE_IMPORT_FILE_VERSION)

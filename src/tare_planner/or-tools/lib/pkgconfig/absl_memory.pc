@@ -1,12 +1,12 @@
-prefix=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.8.3296
+prefix=/root/or-tools/or-tools_x86_64_Ubuntu-22.04_cpp_v9.9.3963
 exec_prefix=${prefix}
-libdir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.8.3296/lib
-includedir=/root/or-tools/or-tools_x86_64_Ubuntu-20.04_cpp_v9.8.3296/include
+libdir=/root/or-tools/or-tools_x86_64_Ubuntu-22.04_cpp_v9.9.3963/lib
+includedir=/root/or-tools/or-tools_x86_64_Ubuntu-22.04_cpp_v9.9.3963/include
 
 Name: absl_memory
 Description: Abseil memory library
 URL: https://abseil.io/
-Version: 20230802
-Requires: absl_core_headers = 20230802, absl_meta = 20230802
+Version: 20240116
+Requires: absl_core_headers = 20240116, absl_meta = 20240116
 Libs: -L${libdir}  
 Cflags: -I${includedir} -DNOMINMAX
