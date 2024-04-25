@@ -79,7 +79,7 @@ void RightRotatePoint(geometry_msgs::msg::Point& pnt)
 }
 
 template <class CloudType>
-void KeyposeToMap(CloudType& cloud, const nav_msgs::msg::Odometry::ConstPtr& keypose)
+void KeyposeToMap(CloudType& cloud, const nav_msgs::msg::Odometry::SharedPtr& keypose)
 {
   float tx = (float)keypose->pose.pose.position.x;
   float ty = (float)keypose->pose.pose.position.y;
@@ -1085,10 +1085,10 @@ void UniquifyIntVector(std::vector<int>& list)
 }  // namespace misc_utils_ns
 
 template void misc_utils_ns::KeyposeToMap<pcl::PointCloud<pcl::PointXYZ>::Ptr>(
-    pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const nav_msgs::msg::Odometry::ConstPtr& keypose);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, const nav_msgs::msg::Odometry::SharedPtr& keypose);
 template void misc_utils_ns::KeyposeToMap<pcl::PointCloud<pcl::PointXYZI>::Ptr>(
-    pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud, const nav_msgs::msg::Odometry::ConstPtr& keypose);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud, const nav_msgs::msg::Odometry::SharedPtr& keypose);
 template void misc_utils_ns::KeyposeToMap<pcl::PointCloud<pcl::PointXYZINormal>::Ptr>(
-    pcl::PointCloud<pcl::PointXYZINormal>::Ptr& cloud, const nav_msgs::msg::Odometry::ConstPtr& keypose);
+    pcl::PointCloud<pcl::PointXYZINormal>::Ptr& cloud, const nav_msgs::msg::Odometry::SharedPtr& keypose);
 template void misc_utils_ns::KeyposeToMap<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>(
-    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr& cloud, const nav_msgs::msg::Odometry::ConstPtr& keypose);
+    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr& cloud, const nav_msgs::msg::Odometry::SharedPtr& keypose);

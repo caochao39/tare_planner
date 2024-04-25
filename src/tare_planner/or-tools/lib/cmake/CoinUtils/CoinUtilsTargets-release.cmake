@@ -12,8 +12,8 @@ set_target_properties(Coin::CoinUtils PROPERTIES
   IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libCoinUtils.a"
   )
 
-list(APPEND _cmake_import_check_targets Coin::CoinUtils )
-list(APPEND _cmake_import_check_files_for_Coin::CoinUtils "${_IMPORT_PREFIX}/lib/libCoinUtils.a" )
+list(APPEND _IMPORT_CHECK_TARGETS Coin::CoinUtils )
+list(APPEND _IMPORT_CHECK_FILES_FOR_Coin::CoinUtils "${_IMPORT_PREFIX}/lib/libCoinUtils.a" )
 
 # Commands beyond this point should not need to know the version.
 set(CMAKE_IMPORT_FILE_VERSION)

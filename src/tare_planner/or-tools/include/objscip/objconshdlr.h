@@ -43,8 +43,7 @@
 namespace scip
 {
 
-/**
- *  @brief C++ wrapper for constraint handlers
+/** @brief C++ wrapper for constraint handlers
  *
  *  This class defines the interface for constraint handlers implemented in C++. Note that there are pure virtual
  *  functions (these have to be implemented). These functions are: scip_trans(), scip_enfolp(), scip_enforelax(),
@@ -430,6 +429,7 @@ public:
     */
    virtual SCIP_DECL_CONSCOPY(scip_copy)
    {  /*lint --e{715}*/
+      assert(valid != NULL);
       *valid = FALSE;
       return SCIP_OKAY;
    }
@@ -449,9 +449,8 @@ public:
     */
    virtual SCIP_DECL_CONSGETVARS(scip_getvars)
    {  /*lint --e{715}*/
-
-      (*success) = FALSE;
-
+      assert(success != NULL);
+      *success = FALSE;
       return SCIP_OKAY;
    }
 
@@ -461,9 +460,11 @@ public:
     */
    virtual SCIP_DECL_CONSGETNVARS(scip_getnvars)
    {  /*lint --e{715}*/
+      assert(nvars != NULL);
+      assert(success != NULL);
 
-      (*nvars) = 0;
-      (*success) = FALSE;
+      *nvars = 0;
+      *success = FALSE;
 
       return SCIP_OKAY;
    }
@@ -474,9 +475,8 @@ public:
     */
    virtual SCIP_DECL_CONSGETDIVEBDCHGS(scip_getdivebdchgs)
    {  /*lint --e{715}*/
-
-      (*success) = FALSE;
-
+      assert(success != NULL);
+      *success = FALSE;
       return SCIP_OKAY;
    }
 };

@@ -373,7 +373,7 @@ SCIP_RETCODE SCIPexprCreate(
    SCIP_EXPRHDLR*        exprhdlr,           /**< expression handler */
    SCIP_EXPRDATA*        exprdata,           /**< expression data (expression assumes ownership) */
    int                   nchildren,          /**< number of children */
-   SCIP_EXPR**           children,            /**< children (can be NULL if nchildren is 0) */
+   SCIP_EXPR**           children,           /**< children (can be NULL if nchildren is 0) */
    SCIP_DECL_EXPR_OWNERCREATE((*ownercreate)), /**< function to call to create ownerdata */
    void*                 ownercreatedata     /**< data to pass to ownercreate */
    );

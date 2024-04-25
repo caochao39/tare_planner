@@ -66,7 +66,7 @@ void RightRotatePoint(PCLPointType& pnt);
 void LeftRotatePoint(geometry_msgs::msg::Point& pnt);
 void RightRotatePoint(geometry_msgs::msg::Point& pnt);
 template <class CloudType>
-void KeyposeToMap(CloudType& cloud, const nav_msgs::msg::Odometry::ConstPtr& keypose);
+void KeyposeToMap(CloudType& cloud, const nav_msgs::msg::Odometry::SharedPtr& keypose);
 double PointXYDist(const geometry_msgs::msg::Point& pnt1, const geometry_msgs::msg::Point& pnt2);
 double PointXYDist(const PCLPointType& pnt1, const PCLPointType& pnt2);
 template <class P1, class P2>

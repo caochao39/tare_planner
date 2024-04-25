@@ -12,8 +12,8 @@ set_target_properties(Coin::Osi PROPERTIES
   IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libOsi.a"
   )
 
-list(APPEND _cmake_import_check_targets Coin::Osi )
-list(APPEND _cmake_import_check_files_for_Coin::Osi "${_IMPORT_PREFIX}/lib/libOsi.a" )
+list(APPEND _IMPORT_CHECK_TARGETS Coin::Osi )
+list(APPEND _IMPORT_CHECK_FILES_FOR_Coin::Osi "${_IMPORT_PREFIX}/lib/libOsi.a" )
 
 # Commands beyond this point should not need to know the version.
 set(CMAKE_IMPORT_FILE_VERSION)

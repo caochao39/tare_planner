@@ -1,4 +1,4 @@
-set(PACKAGE_VERSION "25.0.0")
+set(PACKAGE_VERSION "25.3.0")
 set(${PACKAGE_FIND_NAME}_VERSION_PRERELEASE "" PARENT_SCOPE)
 
 # Prerelease versions cannot be passed in directly via the find_package command,
