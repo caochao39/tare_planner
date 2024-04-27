@@ -1,5 +1,5 @@
 build/
-log/
+/log
 install/
 .catkin_workspace
 devel/
