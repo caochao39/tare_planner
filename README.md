@@ -8,7 +8,7 @@ Please use instructions on our [project page](https://www.cmu-exploration.com/ta
 
 ## Usage
 
-The repository has been tested in Ubuntu 22.04 with ROS2 Humble and Ubuntu 24.04 with ROS2 Jazzy. Previously, due to usage of [OR-Tools](https://developers.google.com/optimization) library, the code only supports AMD64 architecture. A recent upgrade to the library made it compatible with both AMD64 and ARM computers. On ARM computers, please download the corresponding [binary release](https://github.com/google/or-tools/releases) for the target platform, for example, [or-tools_arm64_debian-11_cpp_v9.8.3296.tar.gz
+The repository has been tested in Ubuntu 26.04 with ROS2 Lyrical. Previously, due to usage of [OR-Tools](https://developers.google.com/optimization) library, the code only supports AMD64 architecture. A recent upgrade to the library made it compatible with both AMD64 and ARM computers. On ARM computers, please download the corresponding [binary release](https://github.com/google/or-tools/releases) for the target platform, for example, [or-tools_arm64_debian-11_cpp_v9.8.3296.tar.gz
 ](https://github.com/google/or-tools/releases/download/v9.8/or-tools_arm64_debian-11_cpp_v9.8.3296.tar.gz), extract it, and replace the ```include``` and ```lib``` folders under ```tare_planner/src/tare_planner/or-tools```. 
 
 Follow instructions in [Autonomous Exploration Development Environment](http://cmu-exploration.com) to setup the development environment. Make sure to checkout the branch that matches the computer setup, compile, and download the simulation environments.
@@ -17,11 +17,11 @@ To setup TARE Planner, clone the repository.
 ```
 git clone https://github.com/caochao39/tare_planner.git
 ```
-In a terminal, go to the folder, checkout the 'humble-jazzy' branch, and compile.
+In a terminal, go to the folder, checkout the 'lyrical' branch, and compile.
 
 ```
 cd tare_planner
-git checkout humble-jazzy
+git checkout lyrical
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
 To run the code, go to the development environment folder in a terminal, source the ROS workspace, and launch.
