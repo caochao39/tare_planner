@@ -5,6 +5,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -25,7 +27,6 @@ find_package(Eigen3 REQUIRED)
   include
   or-tools/include
   ${EIGEN3_INCLUDE_DIR}
-  /opt/ros/humble/include
   # /usr/local/include
   # /usr/include
 )
@@ -70,7 +71,7 @@ add_library(rolling_grid src/rolling_grid/rolling_grid.cpp)
 target_link_libraries(rolling_grid rclcpp::rclcpp std_msgs::std_msgs nav_msgs::nav_msgs geometry_msgs::geometry_msgs sensor_msgs::sensor_msgs tf2_ros::tf2_ros tf2_geometry_msgs::tf2_geometry_msgs tf2::tf2 pcl_conversions::pcl_conversions visualization_msgs::visualization_msgs)
 target_link_libraries(rolling_grid ${catkin_LIBRARIES} misc_utils pointcloud_utils)
 
-add_library(viewpoint_manager src/viewpoint_manager/viewpoint_manager.cpp)
+add_library(viewpoint_manager STATIC src/viewpoint_manager/viewpoint_manager.cpp)
 target_link_libraries(viewpoint_manager rclcpp::rclcpp std_msgs::std_msgs nav_msgs::nav_msgs geometry_msgs::geometry_msgs sensor_msgs::sensor_msgs tf2_ros::tf2_ros tf2_geometry_msgs::tf2_geometry_msgs tf2::tf2)
 target_link_libraries(viewpoint_manager ${catkin_LIBRARIES} rolling_grid viewpoint grid_world)
 
@@ -78,7 +79,7 @@ add_library(local_coverage_planner src/local_coverage_planner/local_coverage_pla
 target_link_libraries(local_coverage_planner rclcpp::rclcpp std_msgs::std_msgs nav_msgs::nav_msgs geometry_msgs::geometry_msgs sensor_msgs::sensor_msgs tf2_ros::tf2_ros tf2_geometry_msgs::tf2_geometry_msgs tf2::tf2)
 target_link_libraries(local_coverage_planner ${catkin_LIBRARIES} viewpoint_manager)
 
-add_library(grid_world src/grid_world/grid_world.cpp)
+add_library(grid_world STATIC src/grid_world/grid_world.cpp)
 target_link_libraries(grid_world rclcpp::rclcpp std_msgs::std_msgs nav_msgs::nav_msgs geometry_msgs::geometry_msgs sensor_msgs::sensor_msgs tf2_ros::tf2_ros tf2_geometry_msgs::tf2_geometry_msgs tf2::tf2)
 target_link_libraries(grid_world ${catkin_LIBRARIES} viewpoint_manager tsp_solver keypose_graph exploration_path)
 
@@ -86,7 +87,7 @@ add_library(pointcloud_manager src/pointcloud_manager/pointcloud_manager.cpp)
 target_link_libraries(pointcloud_manager rclcpp::rclcpp std_msgs::std_msgs nav_msgs::nav_msgs geometry_msgs::geometry_msgs sensor_msgs::sensor_msgs tf2_ros::tf2_ros tf2_geometry_msgs::tf2_geometry_msgs tf2::tf2 pcl_conversions::pcl_conversions visualization_msgs::visualization_msgs)
 target_link_libraries(pointcloud_manager ${catkin_LIBRARIES})
 
-add_library(keypose_graph src/keypose_graph/keypose_graph.cpp)
+add_library(keypose_graph STATIC src/keypose_graph/keypose_graph.cpp)
 target_link_libraries(keypose_graph rclcpp::rclcpp std_msgs::std_msgs nav_msgs::nav_msgs geometry_msgs::geometry_msgs sensor_msgs::sensor_msgs tf2_ros::tf2_ros tf2_geometry_msgs::tf2_geometry_msgs tf2::tf2)
 target_link_libraries(keypose_graph ${catkin_LIBRARIES} ${PCL_LIBRARIES} viewpoint_manager)
 
